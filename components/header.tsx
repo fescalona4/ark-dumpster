@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 
 export default function Header() {
@@ -13,7 +14,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
-              <img
+              <Image
                 src="/ark-logo.svg"
                 alt="Ark Dumpster Logo"
                 className="w-8 h-8 object-contain"

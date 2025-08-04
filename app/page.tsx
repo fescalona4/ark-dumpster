@@ -28,7 +28,7 @@ export default function Home() {
           <div className="flex-3">
             <p className="text-4xl bold leading-relaxed indent-28 pr-10">
               Your trusted partner for reliable dumpster rental services.
-              Whether you're tackling a home renovation, construction project, or major cleanout,
+              Whether you are tackling a home renovation, construction project, or major cleanout,
               Ark Dumpster provides convenient, affordable waste management solutions.
               <span className="align-super bold text-2xl">®</span>
               {/* With our commitment to exceptional service and competitive pricing, 
@@ -46,7 +46,7 @@ export default function Home() {
         </div>
       </div>
 
-      <Carousel />
+      <Carousel className="mt-12" />
 
       <Separator className="mx-10 mt-12 mb-16"/>
 
