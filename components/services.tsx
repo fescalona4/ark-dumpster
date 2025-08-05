@@ -55,7 +55,7 @@ export default function ServiceSection() {
       </div>
 
       {/* Accordion */}
-      <div className="space-y-4 mx-32 mt-16">
+      <div className="space-y-4 mx-12 mt-16">
         <Accordion type="single" collapsible className="w-full" defaultValue="3">
           {items.map((item) => (
             <AccordionItem value={item.id} key={item.id} className="py-2">

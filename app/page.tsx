@@ -5,6 +5,7 @@ import Stats from "@/components/stats";
 import Image from "next/image";
 import Link from 'next/link';
 import ServiceSection from "@/components/services";
+import Testimonials from "@/components/testimonials";
 
 export default function Home() {
   return (
@@ -59,34 +60,11 @@ export default function Home() {
 
       <Stats />
 
-      
       <ServiceSection />
 
+      <Testimonials />
 
 
-      <Separator className="mx-10 mt-12 mb-16" />
-
-
-
-      <div className="mx-auto px-10 mt-8">
-        <div className="flex flex-col md:flex-row gap-16">
-          <div className="flex-1">
-            <h1 className="text-lg text-foreground mb-4 pt-4 flex items-center">
-              <span className="w-3 h-3 mr-3" style={{ backgroundColor: '#f9452c', borderRadius: '3px' }}></span>
-              Dumpster / trailer Rental
-            </h1>
-          </div>
-          <div className="flex-3">
-            <div className="flex flex-col space-y-2">
-              {/* <div className="text-center mt-6 text-xl font-semibold text-foreground">Best prices in the area</div> */}
-              <h3 className="text-lg font-semibold">You fill, we haul!</h3>
-              <h3 className="text-lg font-semibold">BBB Accredited  </h3>
-              <h3 className="text-lg font-semibold">Driveway protection available</h3>
-              <h3 className="text-lg font-semibold">Licensed & Insured</h3>
-            </div>
-          </div>
-        </div>
-      </div>
     </main>
   );
 }

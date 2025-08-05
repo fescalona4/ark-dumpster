@@ -36,7 +36,7 @@ export default function Stats() {
                 <div className="mt-16 sm:mt-24 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-16 justify-center">
                     <div>
                         <span className="text-5xl md:text-7xl font-light">
-                            6
+                            8
                         </span>
                         <p className="mt-6 font-semibold text-xl">Years experience</p>
                         <p className="mt-2 text-muted-foreground">
