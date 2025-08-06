@@ -102,19 +102,19 @@ export default function Header() {
                 Home
               </Link>
               <Link
-                href="/about"
+                href="/#about"
                 className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 About
               </Link>
               <Link
-                href="/services"
+                href="/#services"
                 className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 Services
               </Link>
               <Link
-                href="/contact"
+                href="/#contact"
                 className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 Contact
@@ -186,7 +186,7 @@ export default function Header() {
                   transition={{ delay: 0.2, duration: 0.3 }}
                 >
                   <Link
-                    href="/about"
+                    href="/#about"
                     className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -199,7 +199,7 @@ export default function Header() {
                   transition={{ delay: 0.3, duration: 0.3 }}
                 >
                   <Link
-                    href="/services"
+                    href="/#services"
                     className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -212,7 +212,7 @@ export default function Header() {
                   transition={{ delay: 0.4, duration: 0.3 }}
                 >
                   <Link
-                    href="/contact"
+                    href="/#contact"
                     className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >

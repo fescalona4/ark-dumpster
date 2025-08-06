@@ -69,7 +69,9 @@ export default function Home() {
 
 
       {/* About Section - Company introduction and overview */}
-      <AboutSection />
+      <section id="about">
+        <AboutSection />
+      </section>
 
       {/* Carousel Section - Image slideshow/gallery */}
       <Carousel className="mt-12" />
@@ -78,13 +80,17 @@ export default function Home() {
       <Stats />
 
       {/* Services Section - Available dumpster rental services */}
-      <ServiceSection />
+      <section id="services">
+        <ServiceSection />
+      </section>
 
       {/* Testimonials Section - Customer reviews and feedback */}
       <Testimonials />
 
       {/* Contact Section - Contact form and information */}
-      <Contacts />
+      <section id="contact">
+        <Contacts />
+      </section>
 
     </main>
   );

@@ -25,7 +25,7 @@ const Contacts = () => (
       <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10">
 
 
-        <div className="flex flex-col justify-start pr-16 min-h-full gap-4 px-6">
+        <div className="flex flex-col justify-start min-h-full gap-4 px-6">
           <div>
             <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
               Contact Us
