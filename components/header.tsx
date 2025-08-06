@@ -21,7 +21,7 @@ export default function Header() {
                 width={42}
                 height={42}
               />
-              <span className="font-semibold text-xl text-foreground">
+              <span className="font-semibold text-xl text-gray-100/90">
                 ARK Dumpster Rental
               </span>
             </Link>

@@ -27,26 +27,25 @@ const footerLinks = [
 
 const Footer = () => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="grow bg-muted" />
+    <div className="flex flex-col mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
       <footer>
         <div className="max-w-screen-xl mx-auto">
-          <div className="py-12 flex flex-col justify-start ml-12">
+          <div className="py-12 flex flex-col justify-start ml-6 sm:ml-20 sm:mr-12">
             {/* Logo and Quick Links Header */}
             <div className="flex items-center justify-between mr-12">
               <div className="flex items-center space-x-2">
                 <Image
                   src="/ark-logo.svg"
                   alt="Ark Dumpster Logo"
-                  className="w-8 h-8 object-contain"
-                  width={42}
-                  height={42}
+                  className="object-contain"
+                  width={60}
+                  height={60}
                 />
-                <span className="font-semibold text-xl text-foreground">
+                <span className="font-semibold text-5xl text-gray-100/70">
                   ARK
                 </span>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">
+              <h3 className="text-lg font-semibold text-foreground ">
                 Quick Links
               </h3>
             </div>
@@ -56,7 +55,7 @@ const Footer = () => {
                 <li key={title}>
                   <Link
                     href={href}
-                    className="text-muted-foreground hover:text-foreground font-medium"
+                    className="text-gray-300 hover:text-foreground font-medium"
                   >
                     {title}
                   </Link>
@@ -65,7 +64,7 @@ const Footer = () => {
             </ul>
           </div>
           <Separator />
-          <div className="py-8 ml-6 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
+          <div className="py-8 ml-6 sm:ml-14 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
             {/* Copyright */}
             <span className="text-muted-foreground">
               &copy; {new Date().getFullYear()}{" "}
@@ -75,7 +74,7 @@ const Footer = () => {
               . All rights reserved.
             </span>
 
-            <div className="flex items-center gap-5 text-muted-foreground">
+            <div className="flex items-center gap-5 sm:pr-17 text-muted-foreground">
               <Link href="#" target="_blank">
                 <Instagram className="h-5 w-5" />
               </Link>

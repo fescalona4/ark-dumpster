@@ -6,10 +6,11 @@ import Image from "next/image";
 import Link from 'next/link';
 import ServiceSection from "@/components/services";
 import Testimonials from "@/components/testimonials";
+import Contacts from "@/components/contact";
 
 export default function Home() {
   return (
-    <main className="pb-24">
+    <main>
       <div className="w-full flex justify-center items-start mt-4">
         <Image
           src="/ark-background.svg"
@@ -64,6 +65,7 @@ export default function Home() {
 
       <Testimonials />
 
+      <Contacts />
 
     </main>
   );
