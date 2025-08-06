@@ -29,8 +29,8 @@ const Footer = () => {
   return (
     <div className="flex flex-col mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
       <footer>
-        <div className="max-w-screen-xl mx-auto">
-          <div className="py-12 flex flex-col justify-start ml-6 sm:ml-20 sm:mr-12">
+        <div className="">
+          <div className="py-12 flex flex-col justify-between ml-6 sm:ml-16 sm:mr-12">
             {/* Logo and Quick Links Header */}
             <div className="flex items-center justify-between mr-12">
               <div className="flex items-center space-x-2">
@@ -41,7 +41,7 @@ const Footer = () => {
                   width={60}
                   height={60}
                 />
-                <span className="font-semibold text-5xl text-gray-100/70">
+                <span className="font-semibold text-5xl text-gray-100/70 max-md:hidden">
                   ARK
                 </span>
               </div>

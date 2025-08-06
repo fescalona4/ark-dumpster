@@ -16,31 +16,32 @@ import {
 const items = [
   {
     id: "1",
+    icon: Container,
+    title: "Dumpster Rental",
+    content:
+      "We offer flexible dumpster rental options to suit your project needs. Our dumpsters come in various sizes, making it easy to find the perfect fit for your residential or commercial project. With prompt delivery and pickup, we ensure a hassle-free experience.",
+  },
+  {
+    id: "2",
     icon: TreeDeciduous,
     title: "Tree Services",
     content:
       "We provide expert tree services, including trimming, pruning, and removal. Our team is equipped to handle trees of all sizes, ensuring safety and efficiency. Whether you need routine maintenance or emergency tree removal, we have the expertise to manage your needs.",
   },
   {
-    id: "2",
+    id: "3",
     icon: Trash,
     title: "Junk Removal",
     content:
       "We offer comprehensive junk removal services for residential and commercial properties. Our team handles everything from furniture and appliances to yard waste and construction debris, ensuring your space is clutter-free and ready for use.",
   },
-  {
-    id: "3",
-    icon: Container,
-    title: "Dumpster Rental",
-    content:
-      "We offer flexible dumpster rental options to suit your project needs. Our dumpsters come in various sizes, making it easy to find the perfect fit for your residential or commercial project. With prompt delivery and pickup, we ensure a hassle-free experience.",
-  },
+  
 ]
 
 export default function ServiceSection() {
   return (
-    <div>
-      <div className="mx-auto px-10 mt-36 flex justify-center">
+    <div className="flex flex-col items-center">
+      <div className="max-w-screen-xl px-10 mt-36 flex justify-center">
         <div className="flex-1 mt-2 items-center text-center max-w-2xl">
           <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
             Services
@@ -55,8 +56,8 @@ export default function ServiceSection() {
       </div>
 
       {/* Accordion */}
-      <div className="space-y-4 mx-12 mt-16">
-        <Accordion type="single" collapsible className="w-full" defaultValue="3">
+      <div className="max-w-screen-xl space-y-4 mx-12 mt-16">
+        <Accordion type="single" collapsible className="w-full" defaultValue="1">
           {items.map((item) => (
             <AccordionItem value={item.id} key={item.id} className="py-2">
               <AccordionPrimitive.Header className="flex">

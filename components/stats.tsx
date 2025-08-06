@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 
 export default function Stats() {
     return (
-        <div className="min-h-screen flex items-center justify-center">
-            <div className="max-w-screen-xl mx-auto w-full px-6 xl:px-0">
+        <div className="flex items-center justify-center">
+            <div className="max-w-screen-xl w-full mx-6 md:mx-20">
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
                     Reliable dumpster rental services for the
                     <span className="relative inline-block">
@@ -27,7 +27,7 @@ export default function Stats() {
                         </motion.span>
                     </span> area
                 </h2>
-                <p className="mt-6 text-lg max-w-2xl text-foreground/70">
+                <p className="mt-6 text-lg max-w-4xl text-foreground/70">
                     ARK Dumpster provides professional waste management solutions for
                     residential and commercial projects. With our commitment to exceptional
                     service and competitive pricing, we make waste disposal simple.

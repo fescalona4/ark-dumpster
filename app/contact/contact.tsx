@@ -19,8 +19,8 @@ import { DropoffCalendar } from "../../components/dropoffCalendar";
 
 
 const Contacts = () => (
-  <div className="flex items-center justify-center pb-16 sm:px-16 mb-6 mx-4 rounded-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
-    <div className="w-full max-w-screen-xl mx-auto px-6 xl:px-0">
+  <div className="flex items-center justify-center pb-16 md:px-16 mb-6 mx-4 rounded-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+    <div className="w-full max-w-screen-xl mx-auto px-6">
 
       <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10">
 
@@ -64,7 +64,7 @@ const Contacts = () => (
               href="https://maps.app.goo.gl/7q2pPdKkbd7138ZY6"
               target="_blank"
             >
-              3024 29th St N, St. Petersburg, FL 33713
+              St. Petersburg, FL
             </Link>
           </div>
 
