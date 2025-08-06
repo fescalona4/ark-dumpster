@@ -6,9 +6,9 @@ export default function Stats() {
     return (
         <div className="flex items-center justify-center">
             <div className="max-w-screen-xl w-full mx-6 md:mx-20">
-                <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-                    Reliable dumpster rental services for the
-                    <span className="relative inline-block">
+                <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-center">
+                    Reliable dumpster rental services in
+                    <span className="relative inline-block md:mt-2 md:text-6xl">
                         <motion.span
                             className="bg-gradient-to-r from-orange-300 via-red-200 to-pink-400 bg-clip-text text-transparent"
                             initial={{ backgroundPosition: "-100% 0" }}
@@ -25,13 +25,14 @@ export default function Stats() {
                         >
                             St Petersburg &amp; Tampa Bay
                         </motion.span>
-                    </span> area
+                        {/* {" "}area */}
+                    </span>
                 </h2>
-                <p className="mt-6 text-lg max-w-4xl text-foreground/70">
+                {/* <p className="mt-6 text-lg max-w-4xl text-foreground/70 max-md:hidden">
                     ARK Dumpster provides professional waste management solutions for
                     residential and commercial projects. With our commitment to exceptional
                     service and competitive pricing, we make waste disposal simple.
-                </p>
+                </p> */}
 
                 <div className="mt-16 sm:mt-24 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-16 justify-center">
                     <div>

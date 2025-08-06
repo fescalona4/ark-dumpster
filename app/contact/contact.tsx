@@ -19,13 +19,13 @@ import { DropoffCalendar } from "../../components/dropoffCalendar";
 
 
 const Contacts = () => (
-  <div className="flex items-center justify-center pb-16 md:px-16 mb-6 mx-4 rounded-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
-    <div className="w-full max-w-screen-xl mx-auto px-6">
+  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-6 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+    <div className="w-full max-w-screen-xl mx-auto">
 
       <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10">
 
 
-        <div className="flex flex-col justify-start pr-16 min-h-full gap-4">
+        <div className="flex flex-col justify-start pr-16 min-h-full gap-4 px-6">
           <div>
             <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
               Contact Us
@@ -39,7 +39,7 @@ const Contacts = () => (
             </h3>
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex max-md:flex-col justify-between">
             <h3 className="font-semibold text-lg">Phone:</h3>
             <Link
               className="font-light text-lg"
@@ -48,7 +48,7 @@ const Contacts = () => (
               (727) 564-1794
             </Link>
           </div>
-          <div className="flex justify-between">
+          <div className="flex max-md:flex-col justify-between">
             <h3 className="font-semibold text-lg">Email:</h3>
             <Link
               className="font-light text-lg"
@@ -57,8 +57,8 @@ const Contacts = () => (
               arkdumpsterrentals@gmail.com
             </Link>
           </div>
-          <div className="flex justify-between">
-            <h3 className="font-semibold text-lg">Office:</h3>
+          <div className="flex max-md:flex-col justify-between">
+            <h3 className="font-semibold text-lg">Located:</h3>
             <Link
               className="font-light text-lg"
               href="https://maps.app.goo.gl/7q2pPdKkbd7138ZY6"
@@ -68,8 +68,8 @@ const Contacts = () => (
             </Link>
           </div>
 
-          <hr className="my-8 border-border" />
-          <h3 className="text-2xl font-semibold mb-4">Follow us</h3>
+          <hr className="my-4 md:my-8 border-border" />
+          <h3 className="text-2xl font-semibold md:mb-4">Follow us</h3>
           <div className="flex items-center gap-4">
             <Link href="#" target="_blank">
               <Instagram className="h-6 w-6 text-muted-foreground" />
@@ -81,8 +81,8 @@ const Contacts = () => (
         </div>
 
         {/* Form */}
-        <Card className="bg-gray-950/30 backdrop-blur-lg shadow-none border">
-          <CardContent className="p-6 md:p-10">
+        <Card className="bg-gray-950/30 backdrop-blur-lg shadow-none border mx-2">
+          <CardContent className="p-4 md:p-10">
             <form>
               <div className="grid md:grid-cols-6 gap-x-8 gap-y-6">
                 <div className="col-span-6 sm:col-span-3">

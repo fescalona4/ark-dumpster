@@ -11,7 +11,6 @@ export default function Header() {
   const menuRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastScrollY = useRef(0);
-  const scrollUpDistance = useRef(0);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -32,42 +31,25 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const scrollDirection = currentScrollY > lastScrollY.current ? 'down' : 'up';
-      
+
       // Always show header when at the top of the page
-      if (currentScrollY <= 50) {
+      if (currentScrollY <= 100) {
         setIsHeaderVisible(true);
-        scrollUpDistance.current = 0; // Reset scroll distance when at top
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
         lastScrollY.current = currentScrollY;
         return;
       }
-      
+
       // Clear existing timeout
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      if (scrollDirection === 'up') {
-        // Track upward scroll distance
-        scrollUpDistance.current += lastScrollY.current - currentScrollY;
-
-        // Show header after scrolling up 500px or more
-        if (scrollUpDistance.current >= 500 && window.innerWidth < 768) {
-          setIsHeaderVisible(true);
-        }
-      } else {
-        // Reset upward scroll distance when scrolling down
-        scrollUpDistance.current = 0;
-        
-        // Hide header after 1 second of no scrolling (mobile only)
-        scrollTimeoutRef.current = setTimeout(() => {
-          if (window.innerWidth < 768) {
-            setIsHeaderVisible(false);
-          }
-        }, 1000);
+      // Hide header immediately when scrolling down (mobile only)
+      if (window.innerWidth < 768) {
+        setIsHeaderVisible(false);
       }
 
       lastScrollY.current = currentScrollY;
@@ -85,13 +67,13 @@ export default function Header() {
   }, []);
 
   return (
-    <motion.header 
-      className="w-full bg-transparent md:bg-transparent fixed top-0 md:top-10 z-50"
+    <motion.header
+      className="w-full bg-transparent md:bg-transparent fixed md:absolute top-0 md:top-10 z-50"
       initial={{ opacity: 1 }}
       animate={{ opacity: isHeaderVisible ? 1 : 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div ref={menuRef} className="px-4 sm:px-6 lg:px-8 bg-black/60 backdrop-blur-md rounded-lg mx-8 mt-8 md:bg-transparent md:backdrop-blur-none md:rounded-none md:mx-0 md:mt-0">
+      <div ref={menuRef} className="px-4 md:px-6 lg:px-8 bg-black/60 backdrop-blur-md rounded-lg mx-4 mt-6 md:bg-transparent md:backdrop-blur-none md:rounded-none md:mx-0 md:mt-0">
         <div className="flex justify-between items-center md:grid md:grid-cols-2 h-16">
           {/* Logo */}
           <div className="flex-shrink-0 md:ml-20">
@@ -110,30 +92,30 @@ export default function Header() {
           </div>
 
           {/* Right side container for nav and CTA */}
-          <div className="flex items-center justify-end space-x-16 md:ml-12">
+          <div className="space-x-16 md:ml-16">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8 lg:space-x-16">
               <Link
                 href="/"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium"
+                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 Home
               </Link>
               <Link
                 href="/about"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium"
+                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 About
               </Link>
               <Link
                 href="/services"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium"
+                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 Services
               </Link>
               <Link
                 href="/contact"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium"
+                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
               >
                 Contact
               </Link>
@@ -177,7 +159,7 @@ export default function Header() {
         {/* Mobile Navigation */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div 
+            <motion.div
               className="md:hidden border-t border-black/[.08] dark:border-white/[.145] mt-2 pt-8 pb-8"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}

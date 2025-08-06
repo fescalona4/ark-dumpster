@@ -27,7 +27,7 @@ const footerLinks = [
 
 const Footer = () => {
   return (
-    <div className="flex flex-col mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+    <div className="flex flex-col mx-2 md:mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
       <footer>
         <div className="">
           <div className="py-12 flex flex-col justify-between ml-6 sm:ml-16 sm:mr-12">
@@ -64,7 +64,7 @@ const Footer = () => {
             </ul>
           </div>
           <Separator />
-          <div className="py-8 ml-6 sm:ml-14 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
+          <div className="py-8 md:ml-8 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
             {/* Copyright */}
             <span className="text-muted-foreground">
               &copy; {new Date().getFullYear()}{" "}

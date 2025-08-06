@@ -13,11 +13,11 @@ export default function Home() {
     <main>
 
       {/* Top Section */}
-      <div className="min-h-[95vh] bg-neutral-900 max-md:p-6">
-        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+      <div className="min-h-[95vh] bg-neutral-900 max-md:p-2">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
           {/* Left Side Content */}
-          <div className="flex flex-col justify-center items-start px-10 mt-8">
-            <div className="mx-auto px-10 mt-8">
+          <div className="flex flex-col justify-center items-start md:px-10 mt-8">
+            <div className="mx-auto px-6 md:px-10 mt-8">
               <div className="flex flex-col gap-8">
                 <div className="flex-1 mt-2">
                   <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
