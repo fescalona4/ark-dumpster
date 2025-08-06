@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { NumberTicker } from "@/components/ui/number-ticker";
 
 export default function Stats() {
     return (
@@ -37,7 +38,11 @@ export default function Stats() {
                 <div className="mt-16 sm:mt-24 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-16 justify-center">
                     <div>
                         <span className="text-5xl md:text-7xl font-light">
-                            8
+                            <NumberTicker
+                                value={8}
+                                delay={1}
+                                className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
+                            />
                         </span>
                         <p className="mt-6 font-semibold text-xl">Years experience</p>
                         <p className="mt-2 text-muted-foreground">
@@ -47,7 +52,11 @@ export default function Stats() {
                     </div>
                     <div>
                         <span className="text-5xl md:text-7xl font-light">
-                            200+
+                            <NumberTicker
+                                value={200}
+                                delay={2}
+                                className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
+                            />+
                         </span>
                         <p className="mt-6 font-semibold text-xl">Projects completed</p>
                         <p className="mt-2 text-muted-foreground">
@@ -65,22 +74,15 @@ export default function Stats() {
                             waste management needs.
                         </p>
                     </div>
-                    {/* <div>
-            <span className="text-5xl md:text-6xl font-bold">
-              15+
-            </span>
-            <p className="mt-6 font-semibold text-xl">
-              Dumpster sizes available
-            </p>
-            <p className="mt-2 text-muted-foreground">
-              Multiple container sizes from 10 to 40 yards to fit any project
-              requirement.
-            </p>
-          </div> */}
                     <div>
                         <span className="text-5xl md:text-7xl font-light">
-                            100%
+                            <NumberTicker
+                                value={100}
+                                delay={3}
+                                className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
+                            />%
                         </span>
+
                         <p className="mt-6 font-semibold text-xl">Client satisfaction</p>
                         <p className="mt-2 text-muted-foreground">
                             All of our clients are satisfied with our work and service

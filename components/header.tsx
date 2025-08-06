@@ -92,7 +92,7 @@ export default function Header() {
           </div>
 
           {/* Right side container for nav and CTA */}
-          <div className="space-x-16 md:ml-16">
+          <div className="space-x-8 lg:space-x-14 md:ml-16">
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8 lg:space-x-16">
               <Link

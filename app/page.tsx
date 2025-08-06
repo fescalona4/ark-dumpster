@@ -43,7 +43,7 @@ export default function Home() {
                   <div className="w-fit py-8">
                     <Link
                       href="/contact"
-                      className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-neutral-700 md:bg-neutral-700 max-md:bg-white/10 max-md:backdrop-blur-md max-md:border-white/30 text-foreground hover:bg-foreground/90 text-lg h-14 px-8"
+                      className="rounded-full border border-solid transition-colors flex items-center justify-center bg-white/10 backdrop-blur-md border-white/30 text-foreground hover:bg-neutral-600/70 text-lg h-14 px-8"
                     >
                       Get in touch
                     </Link>
