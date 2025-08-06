@@ -13,21 +13,21 @@ export default function Home() {
     <main>
 
       {/* Top Section */}
-      <div className="min-h-[95vh] bg-neutral-900 max-md:p-2">
-        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+      <div className="min-h-[95vh] bg-neutral-900/98 dark:bg-neutral-900 max-md:p-2">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/50 via-orange-800/60 to-rose-900/60 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
           {/* Left Side Content */}
-          <div className="flex flex-col justify-center items-start md:px-10 mt-8">
+          <div className="flex flex-col justify-center items-start md:px-10 mt-8 text-white">
             <div className="mx-auto px-6 md:px-10 mt-8">
               <div className="flex flex-col gap-8">
                 <div className="flex-1 mt-2">
-                  <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
+                  <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-white">
                     <span
                       className="size-1.5 rounded-full bg-emerald-500"
                       aria-hidden="true"
                     ></span>
                     Available for work
                   </Badge>
-                  <h1 className="text-5xl text-foreground pt-2 flex items-center">
+                  <h1 className="text-5xl pt-2 flex items-center">
                     Your trusted partner for reliable dumpster rental services.
                   </h1>
                 </div>
@@ -43,7 +43,7 @@ export default function Home() {
                   <div className="w-fit py-8">
                     <Link
                       href="/contact"
-                      className="rounded-full border border-solid transition-colors flex items-center justify-center bg-white/10 backdrop-blur-md border-white/30 text-foreground hover:bg-neutral-600/70 text-lg h-14 px-8"
+                      className="rounded-full border border-solid transition-colors flex items-center justify-center bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-neutral-600/70 text-lg h-14 px-8"
                     >
                       Get in touch
                     </Link>
@@ -54,7 +54,7 @@ export default function Home() {
           </div>
 
           {/* Background Image */}
-          <div className="rounded-lg md:bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+          <div className="rounded-lg md:bg-gradient-to-r from-orange-900/40 via-orange-800/40 to-rose-900/40 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
             <div className="w-full h-full flex justify-center items-center">
               <Image
                 src="/ark-background.svg"

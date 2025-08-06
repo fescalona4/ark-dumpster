@@ -85,7 +85,7 @@ export default function Header() {
                 width={42}
                 height={42}
               />
-              <span className="font-semibold text-3xl text-gray-100/90 max-md:hidden">
+              <span className="font-semibold text-3xl text-white max-md:hidden">
                 ARK
               </span>
             </Link>
@@ -97,25 +97,25 @@ export default function Header() {
             <nav className="hidden md:flex space-x-8 lg:space-x-16">
               <Link
                 href="/"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
               >
                 Home
               </Link>
               <Link
                 href="/#about"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
               >
                 About
               </Link>
               <Link
                 href="/#services"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
               >
                 Services
               </Link>
               <Link
                 href="/#contact"
-                className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
               >
                 Contact
               </Link>
@@ -125,7 +125,7 @@ export default function Header() {
             <div className="md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-foreground hover:text-foreground/80 transition-colors p-2"
+                className="text-white hover:text-white/80 transition-colors p-2"
                 aria-label="Toggle menu"
               >
                 <svg
@@ -174,7 +174,7 @@ export default function Header() {
                 >
                   <Link
                     href="/"
-                    className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                    className="text-white hover:text-white/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Home
@@ -187,7 +187,7 @@ export default function Header() {
                 >
                   <Link
                     href="/#about"
-                    className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                    className="text-white hover:text-white/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     About
@@ -200,7 +200,7 @@ export default function Header() {
                 >
                   <Link
                     href="/#services"
-                    className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                    className="text-white hover:text-white/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Services
@@ -213,7 +213,7 @@ export default function Header() {
                 >
                   <Link
                     href="/#contact"
-                    className="text-foreground hover:text-foreground/80 transition-colors font-medium text-lg"
+                    className="text-white hover:text-white/80 transition-colors font-medium text-lg"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Contact

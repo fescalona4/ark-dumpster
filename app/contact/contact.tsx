@@ -19,7 +19,7 @@ import { DropoffCalendar } from "../../components/dropoffCalendar";
 
 
 const Contacts = () => (
-  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-6 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/70 via-orange-800/70 to-rose-900/70">
+  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/50 via-orange-800/60 to-rose-900/60 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
     <div className="w-full max-w-screen-xl mx-auto">
 
       <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10">
@@ -71,11 +71,11 @@ const Contacts = () => (
           <hr className="my-4 md:my-8 border-border" />
           <h3 className="text-2xl font-semibold md:mb-4">Follow us</h3>
           <div className="flex items-center gap-4">
-            <Link href="#" target="_blank">
-              <Instagram className="h-6 w-6 text-muted-foreground" />
+            <Link href="#" target="https://instagram.com/arkdumpsterrentals">
+              <Instagram className="h-6 w-6 dark:text-muted-foreground" />
             </Link>
-            <Link href="#" target="_blank">
-              <Facebook className="h-6 w-6 text-muted-foreground" />
+            <Link href="#" target="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr">
+              <Facebook className="h-6 w-6 dark:text-muted-foreground" />
             </Link>
           </div>
         </div>
@@ -195,7 +195,7 @@ const Contacts = () => (
                   />
                 </div>
               </div>
-              <Button className="mt-6 w-full" size="lg">
+              <Button className="mt-6 w-full bg-accent/70 dark:text-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-900/80" size="lg">
                 Submit
               </Button>
             </form>
