@@ -32,7 +32,7 @@ export default function Home() {
                   </h1>
                 </div>
                 <div className="flex-3">
-                  <p className="text-2xl bold leading-relaxed pr-10">
+                  <p className="text-2xl font-light leading-relaxed pr-10">
 
                     Whether you are tackling a home renovation, construction project, or major cleanout,
                     Ark Dumpster provides convenient, affordable waste management solutions.

@@ -33,7 +33,7 @@ const Contacts = () => (
             <h1 className="text-5xl text-foreground mb-4 pt-2 flex">
               Get in touch
             </h1>
-            <h3 className="text-xl mb-8">
+            <h3 className="text-xl mb-8 font-light">
               Need a dumpster rental? We&apos;re here to help with your project.
               Contact us for a free quote today.
             </h3>

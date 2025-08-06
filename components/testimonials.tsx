@@ -71,7 +71,7 @@ const Testimonials = () => (
           <h1 className="text-5xl text-foreground mb-4 pt-2 flex items-center justify-center">
             Hear from our clients
           </h1>
-          <h3 className="text-xl">
+          <h3 className="text-xl font-light">
             Hear from our happy clients about their experience working with ARK Dumpster and the quality of our service.
           </h3>
         </div>

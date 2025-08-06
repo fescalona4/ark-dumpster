@@ -49,7 +49,7 @@ export default function ServiceSection() {
           <h1 className="text-5xl text-foreground mb-4 pt-2 flex items-center justify-center">
             What we do
           </h1>
-          <h3 className="text-xl">
+          <h3 className="text-xl font-light">
             Find out which one of our services fits your project needs
           </h3>
         </div>
