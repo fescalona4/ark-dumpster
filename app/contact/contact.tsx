@@ -71,10 +71,16 @@ const Contacts = () => (
           <hr className="my-4 md:my-8 border-border" />
           <h3 className="text-2xl font-semibold md:mb-4">Follow us</h3>
           <div className="flex items-center gap-4">
-            <Link href="#" target="https://instagram.com/arkdumpsterrentals">
+            <Link
+              href="https://instagram.com/arkdumpsterrentals"
+              target="_blank"
+            >
               <Instagram className="h-6 w-6 dark:text-muted-foreground" />
             </Link>
-            <Link href="#" target="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr">
+            <Link
+              href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr"
+              target="_blank"
+            >
               <Facebook className="h-6 w-6 dark:text-muted-foreground" />
             </Link>
           </div>
@@ -146,7 +152,7 @@ const Contacts = () => (
                 <div className="col-span-6 sm:col-span-2">
                   <DropoffCalendar />
                 </div>
-                
+
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="timeNeeded">Time Needed</Label>
                   <Select>
@@ -165,7 +171,7 @@ const Contacts = () => (
                   </Select>
                 </div>
 
-                
+
 
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="dumpsterSize">Dumpster Size</Label>

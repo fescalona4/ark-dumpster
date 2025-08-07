@@ -40,7 +40,7 @@ export default function Stats() {
                         <span className="text-5xl md:text-7xl font-light">
                             <NumberTicker
                                 value={8}
-                                delay={1}
+                                delay={0}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />
                         </span>
@@ -54,7 +54,7 @@ export default function Stats() {
                         <span className="text-5xl md:text-7xl font-light">
                             <NumberTicker
                                 value={200}
-                                delay={2}
+                                delay={1}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />+
                         </span>
@@ -68,13 +68,13 @@ export default function Stats() {
                         <span className="text-5xl md:text-7xl font-light">
                             <NumberTicker
                                 value={24}
-                                delay={3}
+                                delay={1}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />
                             /
                             <NumberTicker
                                 value={7}
-                                delay={3}
+                                delay={1}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />
                         </span>
@@ -88,7 +88,7 @@ export default function Stats() {
                         <span className="text-5xl md:text-7xl font-light">
                             <NumberTicker
                                 value={100}
-                                delay={4}
+                                delay={1}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />%
                         </span>

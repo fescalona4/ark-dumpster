@@ -76,10 +76,16 @@ const Footer = () => {
             </span>
 
             <div className="flex items-center gap-5 sm:pr-17 text-gray-300 dark:text-muted-foreground">
-              <Link href="#" target="https://instagram.com/arkdumpsterrentals">
+              <Link
+                href="https://instagram.com/arkdumpsterrentals"
+                target="_blank"
+              >
                 <Instagram className="h-5 w-5" />
               </Link>
-              <Link href="#" target="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr">
+              <Link
+                href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr"
+                target="_blank"
+              >
                 <Facebook className="h-5 w-5" />
               </Link>
               <DarkToggle />
