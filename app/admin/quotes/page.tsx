@@ -55,6 +55,25 @@ export default function QuotesAdminPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null);
 
+  // Format phone number for display
+  const formatPhoneNumber = (phone: string) => {
+    // Remove all non-digit characters
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX for 10-digit US numbers
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    
+    // Format as +1 (XXX) XXX-XXXX for 11-digit numbers starting with 1
+    if (cleaned.length === 11 && cleaned[0] === '1') {
+      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+    }
+    
+    // Return original if it doesn't match expected patterns
+    return phone;
+  };
+
   useEffect(() => {
     fetchQuotes();
   }, [statusFilter]);
@@ -233,13 +252,13 @@ export default function QuotesAdminPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-8">
           {quotes.map((quote) => (
             <Card key={quote.id} className="relative">
-              <CardHeader>
+              <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-xl flex items-center gap-2">
+                    <CardTitle className="text-xl flex items-center gap-2 mb-6">
                       {quote.first_name} {quote.last_name || ''}
                       <Badge className={getPriorityColor(quote.priority)}>
                         {quote.priority}
@@ -248,27 +267,34 @@ export default function QuotesAdminPage() {
                         {quote.status}
                       </Badge>
                     </CardTitle>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Mail className="h-4 w-4" />
-                        {quote.email}
-                      </div>
+                    <div className="mt-6 text-sm text-muted-foreground space-y-3">
                       {quote.phone && (
-                        <div className="flex items-center gap-1">
-                          <Phone className="h-4 w-4" />
-                          {quote.phone}
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-green-600" />
+                          <a 
+                            href={`tel:${quote.phone}`}
+                            className="text-green-600 font-semibold hover:text-green-700 hover:underline transition-colors duration-200 px-3 py-2 rounded"
+                          >
+                            {formatPhoneNumber(quote.phone)}
+                          </a>
                         </div>
                       )}
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {format(new Date(quote.created_at), 'MMM dd, yyyy')}
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        <span className="px-1">{quote.email}</span>
                       </div>
-                      {quote.dropoff_date && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}
+                      <div className="flex gap-6 pt-2">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>{format(new Date(quote.created_at), 'MMM dd, yyyy')}</span>
                         </div>
-                      )}
+                        {quote.dropoff_date && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            <span>Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex gap-2">

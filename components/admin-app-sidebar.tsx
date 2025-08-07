@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   IconDashboard,
   IconFileText,
@@ -77,8 +78,14 @@ export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/admin">
-                <IconBuildingWarehouse className="!size-5" />
+              <a href="/admin" className="flex items-center space-x-2">
+                <Image
+                  src="/ark-logo.svg"
+                  alt="Ark Dumpster Logo"
+                  className="object-contain"
+                  width={24}
+                  height={24}
+                />
                 <span className="text-base font-semibold">ARK Dumpster</span>
               </a>
             </SidebarMenuButton>
