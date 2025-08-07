@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,9 +18,105 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DropoffCalendar } from "../../components/dropoffCalendar";
+import { useState } from "react";
 
 
-const Contacts = () => (
+const Contacts = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'service-error'>('idle');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    dropoffDate: '',
+    timeNeeded: '',
+    dumpsterSize: '',
+    message: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      // Validate required fields
+      if (!formData.firstName || !formData.email) {
+        alert('Please fill in required fields: First Name and Email');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Send email with quote details
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          email: formData.email,
+          type: 'quote',
+          subject: 'New Dumpster Rental Request - ARK Dumpster',
+          quoteDetails: {
+            service: formData.dumpsterSize ? `${formData.dumpsterSize} Dumpster` : 'Dumpster Rental',
+            location: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
+            date: formData.dropoffDate || 'TBD',
+            duration: formData.timeNeeded || 'TBD',
+            message: formData.message
+          }
+        }),
+      });
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          dropoffDate: '',
+          timeNeeded: '',
+          dumpsterSize: '',
+          message: ''
+        });
+      } else {
+        const errorData = await response.json();
+        console.error('Form submission error:', errorData);
+        
+        // Set specific error message based on the error type
+        if (errorData.details?.includes('Unable to fetch data')) {
+          setSubmitStatus('service-error');
+        } else {
+          setSubmitStatus('error');
+        }
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
   <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
     <div className="w-full max-w-screen-xl mx-auto">
 
@@ -89,14 +187,17 @@ const Contacts = () => (
         {/* Form */}
         <Card className="bg-gray-950/30 backdrop-blur-lg shadow-none border mx-2">
           <CardContent className="p-4 md:p-10">
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="grid md:grid-cols-6 gap-x-8 gap-y-6">
                 <div className="col-span-6 sm:col-span-3">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name *</Label>
                   <Input
                     placeholder="First name"
                     id="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-3">
@@ -104,16 +205,21 @@ const Contacts = () => (
                   <Input
                     placeholder="Last name"
                     id="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
                   />
                 </div>
                 <div className="col-span-6">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     type="email"
                     placeholder="Email"
                     id="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6">
@@ -121,6 +227,8 @@ const Contacts = () => (
                   <Input
                     placeholder="Street address"
                     id="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
                   />
                 </div>
@@ -129,6 +237,8 @@ const Contacts = () => (
                   <Input
                     placeholder="City"
                     id="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
                   />
                 </div>
@@ -137,6 +247,8 @@ const Contacts = () => (
                   <Input
                     placeholder="State"
                     id="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
                   />
                 </div>
@@ -145,6 +257,8 @@ const Contacts = () => (
                   <Input
                     placeholder="ZIP Code"
                     id="zipCode"
+                    value={formData.zipCode}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
                   />
                 </div>
@@ -155,7 +269,7 @@ const Contacts = () => (
 
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="timeNeeded">Time Needed</Label>
-                  <Select>
+                  <Select onValueChange={(value) => handleSelectChange('timeNeeded', value)}>
                     <SelectTrigger className="mt-1.5 w-full">
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
@@ -171,11 +285,9 @@ const Contacts = () => (
                   </Select>
                 </div>
 
-
-
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="dumpsterSize">Dumpster Size</Label>
-                  <Select>
+                  <Select onValueChange={(value) => handleSelectChange('dumpsterSize', value)}>
                     <SelectTrigger className="mt-1.5 w-full">
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
@@ -189,20 +301,51 @@ const Contacts = () => (
                   </Select>
                 </div>
 
-
-
                 <div className="col-span-6">
                   <Label htmlFor="message">Message</Label>
                   <Textarea
                     id="message"
-                    placeholder="Message"
+                    placeholder="Tell us about your project..."
+                    value={formData.message}
+                    onChange={handleInputChange}
                     className="mt-1.5 bg-white shadow-none"
                     rows={6}
                   />
                 </div>
               </div>
-              <Button className="mt-6 w-full bg-accent/70 dark:text-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-900/80" size="lg">
-                Submit
+              
+              {/* Success/Error Messages */}
+              {submitStatus === 'success' && (
+                <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                  Thank you! Your request has been sent successfully. We'll get back to you soon.
+                </div>
+              )}
+              
+              {submitStatus === 'error' && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  Sorry, there was an error sending your request. Please try again or call us directly at (727) 564-1794.
+                </div>
+              )}
+
+              {submitStatus === 'service-error' && (
+                <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+                  <p className="font-semibold mb-2">Email service temporarily unavailable</p>
+                  <p className="mb-2">We're experiencing technical difficulties with our email system. Please contact us directly:</p>
+                  <div className="space-y-1">
+                    <p><strong>Phone:</strong> <a href="tel:7275641794" className="underline">(727) 564-1794</a></p>
+                    <p><strong>Email:</strong> <a href="mailto:arkdumpsterrentals@gmail.com" className="underline">arkdumpsterrentals@gmail.com</a></p>
+                  </div>
+                  <p className="mt-2 text-sm">Or try submitting the form again in a few minutes.</p>
+                </div>
+              )}
+
+              <Button 
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-6 w-full bg-accent/70 dark:text-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-900/80 disabled:opacity-50" 
+                size="lg"
+              >
+                {isSubmitting ? 'Sending...' : 'Submit Request'}
               </Button>
             </form>
           </CardContent>
@@ -210,6 +353,7 @@ const Contacts = () => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default Contacts;
