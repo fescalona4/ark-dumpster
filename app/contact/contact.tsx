@@ -36,6 +36,7 @@ const Contacts = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    phone: '',
     email: '',
     address: '',
     city: '',
@@ -73,7 +74,7 @@ const Contacts = () => {
         return;
       }
 
-      // Send email with quote details
+      // Send email with quote details and save to database
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: {
@@ -90,7 +91,9 @@ const Contacts = () => {
             date: formData.dropoffDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
             message: formData.message
-          }
+          },
+          // Include full form data for database storage
+          fullFormData: formData
         }),
       });
 
@@ -105,6 +108,7 @@ const Contacts = () => {
         setFormData({
           firstName: '',
           lastName: '',
+          phone: '',
           email: '',
           address: '',
           city: '',
@@ -256,6 +260,17 @@ const Contacts = () => {
                   />
                 </div>
                 <div className="col-span-6">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="mt-1.5 bg-white h-11 shadow-none"
+                  />
+                </div>
+                <div className="col-span-6">
                   <Label htmlFor="email">Email *</Label>
                   <Input
                     type="email"
@@ -309,7 +324,10 @@ const Contacts = () => {
                 </div>
 
                 <div className="col-span-6 sm:col-span-2">
-                  <DropoffCalendar />
+                  <DropoffCalendar 
+                    value={formData.dropoffDate}
+                    onChange={(date) => handleSelectChange('dropoffDate', date)}
+                  />
                 </div>
 
                 <div className="col-span-6 sm:col-span-2">

@@ -12,9 +12,32 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export function DropoffCalendar() {
+interface DropoffCalendarProps {
+  value?: string;
+  onChange?: (date: string) => void;
+}
+
+export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
   const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
+  const [date, setDate] = React.useState<Date | undefined>(
+    value ? new Date(value) : undefined
+  )
+
+  React.useEffect(() => {
+    if (value) {
+      setDate(new Date(value));
+    }
+  }, [value]);
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    setDate(selectedDate);
+    if (selectedDate && onChange) {
+      // Format as YYYY-MM-DD for consistency
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      onChange(formattedDate);
+    }
+    setOpen(false);
+  };
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -26,7 +49,7 @@ export function DropoffCalendar() {
           <Button
             variant="outline"
             id="date"
-            className="justify-between font-normal text-foreground"
+            className="justify-between font-normal text-foreground bg-white h-11 shadow-none"
           >
             {date ? date.toLocaleDateString() : "Date needed"}
             <ChevronDownIcon />
@@ -37,10 +60,8 @@ export function DropoffCalendar() {
             mode="single"
             selected={date}
             captionLayout="dropdown"
-            onSelect={(date) => {
-              setDate(date)
-              setOpen(false)
-            }}
+            onSelect={handleDateSelect}
+            disabled={(date) => date < new Date()}
           />
         </PopoverContent>
       </Popover>

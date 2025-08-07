@@ -1,6 +1,8 @@
 import { EmailTemplate } from '@/components/email-template';
 import { Resend } from 'resend';
 import { NextRequest } from 'next/server';
+import { createServerSupabaseClientSafe } from '@/lib/supabase-server';
+import { render } from '@react-email/render';
 
 // Initialize Resend with error checking
 let resend: Resend;
@@ -43,7 +45,8 @@ export async function POST(request: NextRequest) {
       email, 
       type = 'welcome',
       quoteDetails,
-      subject 
+      subject,
+      fullFormData
     } = body;
 
     // Validate required fields
@@ -55,27 +58,74 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Save to database if we have the full form data
+    let dbSaveError = null;
+    if (fullFormData && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        console.log('Saving quote to database...');
+        const supabase = createServerSupabaseClientSafe();
+        
+        // Save to structured quotes table
+        const { data: quoteData, error: quoteError } = await supabase
+          .from('quotes')
+          .insert([
+            {
+              first_name: fullFormData.firstName,
+              last_name: fullFormData.lastName || null,
+              email: fullFormData.email,
+              phone: fullFormData.phone || null,
+              address: fullFormData.address || null,
+              city: fullFormData.city || null,
+              state: fullFormData.state || null,
+              zip_code: fullFormData.zipCode || null,
+              dumpster_size: fullFormData.dumpsterSize || null,
+              dropoff_date: fullFormData.dropoffDate || null,
+              time_needed: fullFormData.timeNeeded || null,
+              message: fullFormData.message || null,
+              status: 'pending',
+              priority: 'normal'
+            }
+          ])
+          .select();
+
+        if (quoteError) {
+          console.error('Database save error (quotes):', quoteError);
+          dbSaveError = quoteError.message;
+        } else {
+          console.log('Quote saved to database successfully:', quoteData);
+        }
+      } catch (error) {
+        console.error('Unexpected database error:', error);
+        dbSaveError = error instanceof Error ? error.message : 'Database save failed';
+      }
+    }
+
     const emailSubject = subject || getDefaultSubject(type);
     console.log('Sending email with subject:', emailSubject);
     console.log('Sending to:', email);
 
-    // Create email payload using the React template
+    // Render the React email template
+    const emailHtml = await render(EmailTemplate({ 
+      firstName, 
+      type: type as 'welcome' | 'quote' | 'confirmation',
+      quoteDetails: {
+        service: quoteDetails?.service,
+        location: quoteDetails?.location,
+        date: quoteDetails?.date,
+        duration: quoteDetails?.duration,
+        message: quoteDetails?.message,
+        price: quoteDetails?.price
+      }
+    }));
+
+    // Create email payload
     const emailPayload = {
-      from: 'onboarding@resend.dev', 
+      from: 'ARK Dumpster <onboarding@resend.dev>', 
+      replyTo: 'arkdumpsterrentals@gmail.com',
       to: email,
       subject: emailSubject,
-      react: EmailTemplate({ 
-        firstName, 
-        type: type as 'welcome' | 'quote' | 'confirmation',
-        quoteDetails: {
-          service: quoteDetails?.service,
-          location: quoteDetails?.location,
-          date: quoteDetails?.date,
-          duration: quoteDetails?.duration,
-          message: quoteDetails?.message,
-          price: quoteDetails?.price
-        }
-      })
+      html: emailHtml,
+      text: `Hello ${firstName},\n\nThank you for your interest in ARK Dumpster services!\n\nService: ${quoteDetails?.service || 'Dumpster Rental'}\nLocation: ${quoteDetails?.location || 'Not specified'}\nDate: ${quoteDetails?.date || 'TBD'}\nDuration: ${quoteDetails?.duration || 'TBD'}\n\nMessage: ${quoteDetails?.message || 'No additional message'}\n\nWe'll get back to you within 24 hours.\n\nBest regards,\nARK Dumpster Team\nPhone: (727) 564-1794\nEmail: arkdumpsterrentals@gmail.com`
     };
 
     console.log('Email payload prepared (React template):', {
@@ -105,13 +155,23 @@ export async function POST(request: NextRequest) {
       return Response.json({ 
         error: errorMessage, 
         details: result.error.message || 'Unknown Resend error',
-        code: result.error.name
+        code: result.error.name,
+        dbSaveError: dbSaveError // Include database save status
       }, { status: 500 });
     }
 
     console.log('Email sent successfully!');
     console.log('Resend response data:', result.data);
-    return Response.json({ success: true, data: result.data });
+    
+    // Include database save status in success response
+    const response = { 
+      success: true, 
+      data: result.data,
+      dbSaved: !dbSaveError,
+      dbSaveError: dbSaveError
+    };
+    
+    return Response.json(response);
     
   } catch (error) {
     console.error('Unexpected error in email API:', error);

@@ -175,12 +175,38 @@ export function EmailTemplate({
       }}>
         {renderContent()}
 
+        {/* Reply instructions */}
+        <div style={{
+          backgroundColor: '#f0f9ff',
+          border: '2px solid #0ea5e9',
+          borderRadius: '8px',
+          padding: '20px',
+          marginTop: '24px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ 
+            color: '#0369a1', 
+            marginBottom: '8px',
+            fontSize: '18px',
+            fontWeight: 'bold'
+          }}>
+            💬 Have Questions? Just Reply!
+          </h3>
+          <p style={{ 
+            color: '#0369a1', 
+            margin: '0',
+            fontSize: '16px'
+          }}>
+            Simply reply to this email to reach us directly at <strong>arkdumpsterrentals@gmail.com</strong>
+          </p>
+        </div>
+
         {/* Contact information */}
         <div style={{
           backgroundColor: '#f3f4f6',
           padding: '20px',
           borderRadius: '8px',
-          marginTop: '24px',
+          marginTop: '16px',
           textAlign: 'center'
         }}>
           <h3 style={{ 
@@ -188,7 +214,7 @@ export function EmailTemplate({
             marginBottom: '12px',
             fontSize: '18px'
           }}>
-            Need Help?
+            Need Immediate Help?
           </h3>
           <p style={{ 
             color: '#6b7280', 
@@ -202,7 +228,7 @@ export function EmailTemplate({
             fontWeight: 'bold',
             fontSize: '16px'
           }}>
-            📞 (727) 564-1794 | 📧 arkdumpsterrentals@gmail.com
+            📞 <a href="tel:7275641794" style={{ color: '#059669', textDecoration: 'none' }}>(727) 564-1794</a> | 📧 <a href="mailto:arkdumpsterrentals@gmail.com" style={{ color: '#059669', textDecoration: 'none' }}>arkdumpsterrentals@gmail.com</a>
           </div>
         </div>
 

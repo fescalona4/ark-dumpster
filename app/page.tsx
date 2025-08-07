@@ -45,7 +45,7 @@ export default function Home() {
                   </p>
                   <div className="w-fit py-8">
                     <Link
-                      href="/contact"
+                      href="/#contact"
                       className="rounded-full border border-solid transition-colors flex items-center justify-center bg-white/10 backdrop-blur-md border-white/30 text-white hover:bg-neutral-600/70 text-lg h-14 px-8"
                     >
                       Get in touch
