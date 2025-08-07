@@ -14,15 +14,15 @@ const footerLinks = [
   },
   {
     title: "About",
-    href: "/about",
+    href: "/#about",
   },
   {
     title: "Services",
-    href: "/services",
+    href: "/#services",
   },
   {
     title: "Contact",
-    href: "/contact",
+    href: "/#contact",
   },
 ];
 

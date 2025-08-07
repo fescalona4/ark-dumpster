@@ -1,3 +1,5 @@
+"use client";
+
 import Carousel from "@/components/carousel";
 import Stats from "@/components/stats";
 import Image from "next/image";
@@ -7,6 +9,7 @@ import Contacts from "@/app/contact/contact";
 import AboutSection from "@/app/about/about";
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
@@ -69,28 +72,67 @@ export default function Home() {
 
 
       {/* About Section - Company introduction and overview */}
-      <section id="about">
+      <motion.section 
+        id="about"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <AboutSection />
-      </section>
+      </motion.section>
 
       {/* Carousel Section - Image slideshow/gallery */}
-      <Carousel className="mt-12" />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+      >
+        <Carousel className="mt-12" />
+      </motion.div>
 
       {/* Statistics Section - Key company metrics and achievements */}
-      <Stats />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+      >
+        <Stats />
+      </motion.div>
 
       {/* Services Section - Available dumpster rental services */}
-      <section id="services">
+      <motion.section 
+        id="services"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
+      >
         <ServiceSection />
-      </section>
+      </motion.section>
 
       {/* Testimonials Section - Customer reviews and feedback */}
-      <Testimonials />
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
+      >
+        <Testimonials />
+      </motion.div>
 
       {/* Contact Section - Contact form and information */}
-      <section id="contact">
+      <motion.section 
+        id="contact"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0 }}
+      >
         <Contacts />
-      </section>
+      </motion.section>
 
     </main>
   );

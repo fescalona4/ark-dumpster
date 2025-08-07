@@ -66,7 +66,17 @@ export default function Stats() {
                     </div>
                     <div>
                         <span className="text-5xl md:text-7xl font-light">
-                            24/7
+                            <NumberTicker
+                                value={24}
+                                delay={3}
+                                className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
+                            />
+                            /
+                            <NumberTicker
+                                value={7}
+                                delay={3}
+                                className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
+                            />
                         </span>
                         <p className="mt-6 font-semibold text-xl">Customer support</p>
                         <p className="mt-2 text-muted-foreground">
@@ -78,7 +88,7 @@ export default function Stats() {
                         <span className="text-5xl md:text-7xl font-light">
                             <NumberTicker
                                 value={100}
-                                delay={3}
+                                delay={4}
                                 className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                             />%
                         </span>
