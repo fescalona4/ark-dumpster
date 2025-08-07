@@ -7,6 +7,8 @@ interface EmailTemplateProps {
     service?: string;
     location?: string;
     date?: string;
+    duration?: string;
+    message?: string;
     price?: string;
   };
 }
@@ -58,6 +60,16 @@ export function EmailTemplate({
               {quoteDetails?.date && (
                 <div style={{ marginBottom: '12px' }}>
                   <strong style={{ color: '#1f2937' }}>Date:</strong> {quoteDetails.date}
+                </div>
+              )}
+              {quoteDetails?.duration && (
+                <div style={{ marginBottom: '12px' }}>
+                  <strong style={{ color: '#1f2937' }}>Duration:</strong> {quoteDetails.duration}
+                </div>
+              )}
+              {quoteDetails?.message && (
+                <div style={{ marginBottom: '12px' }}>
+                  <strong style={{ color: '#1f2937' }}>Additional Details:</strong> {quoteDetails.message}
                 </div>
               )}
               {quoteDetails?.price && (
@@ -190,13 +202,13 @@ export function EmailTemplate({
             fontWeight: 'bold',
             fontSize: '16px'
           }}>
-            📞 (727) 555-0123 | 📧 info@arkdumpster.com
+            📞 (727) 564-1794 | 📧 arkdumpsterrentals@gmail.com
           </div>
         </div>
 
         {/* Call to action */}
         <div style={{ textAlign: 'center', marginTop: '32px' }}>
-          <a href="https://arkdumpster.com" style={{
+          <a href="https://www.arkdumpsterrentals.com" style={{
             display: 'inline-block',
             backgroundColor: '#f97316',
             color: 'white',
@@ -221,10 +233,10 @@ export function EmailTemplate({
         fontSize: '14px'
       }}>
         <p style={{ margin: '0 0 8px 0' }}>
-          ARK Dumpster - Reliable Waste Management Solutions
+          ARK Dumpster Rentals - Reliable Waste Management Solutions
         </p>
         <p style={{ margin: '0', color: '#9ca3af' }}>
-          St Petersburg & Tampa Bay Area | Follow us on social media
+          St Petersburg & Tampa Bay | Follow us on social media
         </p>
       </div>
     </div>

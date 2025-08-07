@@ -1,3 +1,4 @@
+import { EmailTemplate } from '@/components/email-template';
 import { Resend } from 'resend';
 import { NextRequest } from 'next/server';
 
@@ -58,37 +59,30 @@ export async function POST(request: NextRequest) {
     console.log('Sending email with subject:', emailSubject);
     console.log('Sending to:', email);
 
-    // Create email payload - simplified to text only to test
+    // Create email payload using the React template
     const emailPayload = {
       from: 'onboarding@resend.dev', 
       to: email,
       subject: emailSubject,
-      text: `Hello ${firstName}!
-
-Thank you for your interest in ARK Dumpster services. We've received your request and will get back to you soon.
-
-Request Details:
-Service: ${quoteDetails?.service || 'Dumpster Rental'}
-Location: ${quoteDetails?.location || 'Not specified'}
-Preferred Date: ${quoteDetails?.date || 'TBD'}
-Duration: ${quoteDetails?.duration || 'TBD'}
-${quoteDetails?.message ? `Additional Details: ${quoteDetails.message}` : ''}
-
-Our team will review your request and contact you within 24 hours with a personalized quote.
-
-Need immediate assistance? Call us at (727) 564-1794
-
-Best regards,
-The ARK Dumpster Team
-St. Petersburg, FL
-arkdumpsterrentals@gmail.com`
+      react: EmailTemplate({ 
+        firstName, 
+        type: type as 'welcome' | 'quote' | 'confirmation',
+        quoteDetails: {
+          service: quoteDetails?.service,
+          location: quoteDetails?.location,
+          date: quoteDetails?.date,
+          duration: quoteDetails?.duration,
+          message: quoteDetails?.message,
+          price: quoteDetails?.price
+        }
+      })
     };
 
-    console.log('Email payload prepared (text only):', {
+    console.log('Email payload prepared (React template):', {
       from: emailPayload.from,
       to: emailPayload.to,
       subject: emailPayload.subject,
-      textLength: emailPayload.text.length
+      templateType: type
     });
 
     const result = await resend.emails.send(emailPayload);
