@@ -187,7 +187,7 @@ export default function QuotesAdminPage() {
   }
 
   return (
-    <div>
+    <div className="p-2 md:p-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Quotes Management</h1>
         <p className="text-muted-foreground">
