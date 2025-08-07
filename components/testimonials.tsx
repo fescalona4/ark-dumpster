@@ -6,56 +6,60 @@ import { Badge } from "@/components/ui/badge"
 const testimonials = [
   {
     id: 1,
-    name: "Mike Rodriguez",
-    designation: "Homeowner",
-    company: "St. Petersburg",
+    name: "Elegant Marble & Granite Design Corp",
+    designation: "Home Renovation",
     testimonial:
-      "ARK Dumpster made our kitchen renovation so much easier! They delivered on time and picked up exactly when promised. Great service and fair pricing.",
+      "I recently hired ARK Dumpster Rentals and More Corp. for tree cutting services, and I couldn't be happier with the results. The team was incredibly efficient and completed the job on time. They left the area spotless, with no damage to surrounding property. I highly recommend their services 100% and will definitely be hiring them again for our future projects!",
     avatar: "https://randomuser.me/api/portraits/men/1.jpg",
   },
   {
     id: 2,
-    name: "Sofia Hernandez",
-    designation: "Construction Manager",
-    company: "Tampa Bay Builders",
+    name: "Michelle Amiel",
+    designation: "Homeowner",
     testimonial:
-      "We use ARK Dumpster for all our construction projects. Their reliability and variety of container sizes make them our go-to waste management partner.",
+      "Words cannot explain how amazing ARK dumpster co was. We lost all our belongings to Hurricane Helene and had no way of getting the trash hauled out. They picked up on a weekend and were there within a day with two men to help load. We needed two loads and they were back within hours to complete the job. Thank you so much!!",
     avatar: "https://randomuser.me/api/portraits/women/6.jpg",
   },
   {
     id: 3,
-    name: "Diego Marstons",
-    designation: "Property Manager",
-    company: "Clearwater Properties",
+    name: "Art Vandelay",
+    designation: "Homeowner",
     testimonial:
-      "Professional service from start to finish. The team was courteous, the dumpster was clean, and they protected our driveway perfectly. Highly recommend!",
+      "Katherine was great! Fast service and great communication. They had a dumpster dropped next day and picked up promptly. Will work with Ark again.",
     avatar: "https://randomuser.me/api/portraits/men/3.jpg",
   },
   {
     id: 4,
-    name: "Sarah Garcia",
-    designation: "Small Business Owner",
-    company: "Tampa",
+    name: "Alexander Kurteev",
+    designation: "Homeowner",
     testimonial:
-      "We needed a dumpster for our office cleanout project. ARK Dumpster provided excellent customer service and helped us choose the perfect size container.",
+      "Exceptional service, called for a dumpster. Same day was delivered, easy communication. I will also use this guys for tree removal as the price I received was reasonable.",
     avatar: "https://randomuser.me/api/portraits/women/4.jpg",
   },
   {
     id: 5,
-    name: "Carlos Martinez",
+    name: "Omar Molina",
     designation: "General Contractor",
-    company: "Pinellas County",
     testimonial:
-      "Fast delivery, competitive prices, and they always show up when scheduled. ARK Dumpster has never let us down on any of our job sites.",
+      "I reached out and quickly had an outstanding price with same day drop off. I was impressed with the condition of the equipment, I've worked around trailers with issues and know the difficulty so I inspected and could not find one single thing wrong. When the first load was ready ARK was notified and in no time I realized it had been dumped and replaced. Very satisfied experience.",
     avatar: "https://randomuser.me/api/portraits/men/5.jpg",
   },
   {
     id: 6,
-    name: "Amanda Foster",
+    name: "Julianne",
     designation: "Homeowner",
     company: "Largo",
     testimonial:
-      "Amazing experience during our garage cleanout! The 20-yard dumpster was perfect, and their customer support answered all our questions promptly.",
+      "Highly recommended. Made the process as easy as possible even in the high stress times of a hurricane. Wouldn’t use anyone else for dumpster rental!",
+    avatar: "https://randomuser.me/api/portraits/women/2.jpg",
+  },
+  {
+    id: 7,
+    name: "Karla Eguiguren",
+    designation: "Homeowner",
+    company: "Largo",
+    testimonial:
+      "Excellent service. They’re great at tree service. Great pricing and good work, they are also licensed and insured!",
     avatar: "https://randomuser.me/api/portraits/women/2.jpg",
   },
 ];
