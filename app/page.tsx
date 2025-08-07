@@ -13,8 +13,8 @@ export default function Home() {
     <main>
 
       {/* Top Section */}
-      <div className="min-h-[95vh] bg-neutral-900/98 dark:bg-neutral-900 max-md:p-2">
-        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/50 via-orange-800/60 to-rose-900/60 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
+      <div className="min-h-[95vh] bg-neutral-900/98 dark:bg-neutral-900 max-md:px-2 max-md:py-4">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
           {/* Left Side Content */}
           <div className="flex flex-col justify-center items-start md:px-10 mt-8 text-white">
             <div className="mx-auto px-6 md:px-10 mt-8">
@@ -54,7 +54,7 @@ export default function Home() {
           </div>
 
           {/* Background Image */}
-          <div className="rounded-lg md:bg-gradient-to-r from-orange-900/40 via-orange-800/40 to-rose-900/40 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
+          <div className="rounded-lg md:bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
             <div className="w-full h-full flex justify-center items-center">
               <Image
                 src="/ark-background.svg"

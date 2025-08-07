@@ -19,18 +19,18 @@ import { DropoffCalendar } from "../../components/dropoffCalendar";
 
 
 const Contacts = () => (
-  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/50 via-orange-800/60 to-rose-900/60 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
+  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
     <div className="w-full max-w-screen-xl mx-auto">
 
-      <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10">
+      <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10 text-primary-foreground dark:text-foreground">
 
 
         <div className="flex flex-col justify-start min-h-full gap-4 px-6">
           <div>
-            <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5">
+            <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-primary-foreground dark:text-foreground">
               Contact Us
             </Badge>
-            <h1 className="text-5xl text-foreground mb-4 pt-2 flex">
+            <h1 className="text-5xl mb-4 pt-2 flex">
               Get in touch
             </h1>
             <h3 className="text-xl mb-8 font-light">

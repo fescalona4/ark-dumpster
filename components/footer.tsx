@@ -5,6 +5,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from 'next/image';
+import DarkToggle from "@/components/dark-toggle";
 
 const footerLinks = [
   {
@@ -27,7 +28,7 @@ const footerLinks = [
 
 const Footer = () => {
   return (
-    <div className="flex flex-col mx-2 md:mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/50 via-orange-800/60 to-rose-900/60 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
+    <div className="flex flex-col mx-2 md:mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
       <footer>
         <div className="">
           <div className="py-12 flex flex-col justify-between ml-6 sm:ml-16 sm:mr-12">
@@ -81,6 +82,7 @@ const Footer = () => {
               <Link href="#" target="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr">
                 <Facebook className="h-5 w-5" />
               </Link>
+              <DarkToggle />
             </div>
           </div>
         </div>
