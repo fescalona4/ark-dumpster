@@ -19,11 +19,20 @@ import {
 } from "@/components/ui/select";
 import { DropoffCalendar } from "../../components/dropoffCalendar";
 import { useState } from "react";
+import { Notification } from "@/components/ui/notification";
 
 
 const Contacts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'service-error'>('idle');
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    title: string;
+    description?: string;
+    action?: {
+      label: string;
+      onClick: () => void;
+    };
+  } | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -50,12 +59,16 @@ const Contacts = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitStatus('idle');
+    setNotification(null); // Clear any existing notification
 
     try {
       // Validate required fields
       if (!formData.firstName || !formData.email) {
-        alert('Please fill in required fields: First Name and Email');
+        setNotification({
+          type: 'warning',
+          title: 'Missing Required Fields',
+          description: 'Please fill in your First Name and Email address.',
+        });
         setIsSubmitting(false);
         return;
       }
@@ -82,7 +95,12 @@ const Contacts = () => {
       });
 
       if (response.ok) {
-        setSubmitStatus('success');
+        setNotification({
+          type: 'success',
+          title: 'Request Sent Successfully!',
+          description: "Thank you! We've received your request and will get back to you within 24 hours.",
+        });
+        
         // Reset form
         setFormData({
           firstName: '',
@@ -99,18 +117,45 @@ const Contacts = () => {
         });
       } else {
         const errorData = await response.json();
-        console.error('Form submission error:', errorData);
+        console.log('Form submission error:', errorData);
         
         // Set specific error message based on the error type
         if (errorData.details?.includes('Unable to fetch data')) {
-          setSubmitStatus('service-error');
+          setNotification({
+            type: 'warning',
+            title: 'Email Service Temporarily Unavailable',
+            description: 'We\'re experiencing technical difficulties. Please call us directly or try again in a few minutes.',
+            action: {
+              label: 'Call Now',
+              onClick: () => window.open('tel:7275641794', '_self')
+            }
+          });
         } else {
-          setSubmitStatus('error');
+          setNotification({
+            type: 'error',
+            title: 'Failed to Send Request',
+            description: 'There was an error sending your request. Please try again or contact us directly.',
+            action: {
+              label: 'Call (727) 564-1794',
+              onClick: () => window.open('tel:7275641794', '_self')
+            }
+          });
         }
       }
     } catch (error) {
       console.error('Error sending email:', error);
-      setSubmitStatus('error');
+      setNotification({
+        type: 'error',
+        title: 'Connection Error',
+        description: 'Unable to connect to our servers. Please check your internet connection and try again.',
+        action: {
+          label: 'Retry',
+          onClick: () => {
+            setNotification(null);
+            setIsSubmitting(false);
+          }
+        }
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -314,28 +359,16 @@ const Contacts = () => {
                 </div>
               </div>
               
-              {/* Success/Error Messages */}
-              {submitStatus === 'success' && (
-                <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                  Thank you! Your request has been sent successfully. We'll get back to you soon.
-                </div>
-              )}
-              
-              {submitStatus === 'error' && (
-                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                  Sorry, there was an error sending your request. Please try again or call us directly at (727) 564-1794.
-                </div>
-              )}
-
-              {submitStatus === 'service-error' && (
-                <div className="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-                  <p className="font-semibold mb-2">Email service temporarily unavailable</p>
-                  <p className="mb-2">We're experiencing technical difficulties with our email system. Please contact us directly:</p>
-                  <div className="space-y-1">
-                    <p><strong>Phone:</strong> <a href="tel:7275641794" className="underline">(727) 564-1794</a></p>
-                    <p><strong>Email:</strong> <a href="mailto:arkdumpsterrentals@gmail.com" className="underline">arkdumpsterrentals@gmail.com</a></p>
-                  </div>
-                  <p className="mt-2 text-sm">Or try submitting the form again in a few minutes.</p>
+              {/* Inline Notification */}
+              {notification && (
+                <div className="mt-6">
+                  <Notification
+                    type={notification.type}
+                    title={notification.title}
+                    description={notification.description}
+                    action={notification.action}
+                    onClose={() => setNotification(null)}
+                  />
                 </div>
               )}
 
