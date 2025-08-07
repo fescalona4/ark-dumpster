@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -7,7 +7,35 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env.local file.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Declare global interface for TypeScript
+declare global {
+  var __supabase: SupabaseClient | undefined
+}
+
+// Create or reuse the Supabase client
+let supabase: SupabaseClient
+
+if (typeof globalThis !== 'undefined' && globalThis.__supabase) {
+  supabase = globalThis.__supabase
+} else {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      // Reduce multiple client warnings in development
+      debug: process.env.NODE_ENV !== 'production' ? false : false,
+    },
+  })
+  
+  // Store globally to prevent multiple instances
+  if (typeof globalThis !== 'undefined') {
+    globalThis.__supabase = supabase
+  }
+}
+
+export { supabase }
 
 // Type-safe database interface
 export type Database = {

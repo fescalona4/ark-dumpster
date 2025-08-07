@@ -2,12 +2,18 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Set to true for static exports or when external image optimization is preferred
+    // This allows Next.js Image component benefits (lazy loading, aspect ratio, etc.)
+    // without requiring a running Next.js server for image optimization
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'framerusercontent.com',
-        port: '',
-        pathname: '/images/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
       },
     ],
   },
