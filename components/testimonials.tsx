@@ -1,7 +1,10 @@
+"use client";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Marquee from "@/components/ui/marquee";
 import { StarIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
 
 const testimonials = [
   {
@@ -65,7 +68,13 @@ const testimonials = [
 ];
 
 const Testimonials = () => (
-  <div className="min-h-screen flex justify-center items-center py-12">
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.3 }}
+    transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+  >
+    <div className="min-h-screen flex justify-center items-center py-12">
     <div className="h-full w-full">
       <div className="mx-auto px-10 mt-28 mb-16 flex justify-center">
         <div className="flex-1 mt-2 items-center text-center max-w-2xl">
@@ -92,6 +101,7 @@ const Testimonials = () => (
       </div>
     </div>
   </div>
+  </motion.div>
 );
 
 const TestimonialList = () =>

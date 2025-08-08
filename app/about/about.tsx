@@ -1,9 +1,19 @@
+"use client";
+
 import Link from 'next/link';
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 export default function AboutSection() {
     return (
-        <div className="flex items-center justify-center px-6 md:px-20 mt-24 md:mt-8 mb-24">
+        <motion.section
+            id="about"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+            <div className="flex items-center justify-center px-6 md:px-20 mt-24 md:mt-8 mb-24">
             <div className="max-w-screen-xl flex flex-col md:flex-row gap-10 md:gap-16">
                 <div className="flex-1 mt-2">
                     <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 border-black dark:border-border">
@@ -24,5 +34,6 @@ export default function AboutSection() {
                 </div>
             </div>
         </div>
+        </motion.section>
     );
 }

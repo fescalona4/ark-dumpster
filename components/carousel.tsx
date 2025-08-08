@@ -112,22 +112,29 @@ export default function Carousel({ className }: { className?: string }) {
             </div>
         );
     }
+    
     return (
-        <div
-            className={className}
-            style={{
-                alignContent: "center",
-                alignItems: "center",
-                display: "flex",
-                flexDirection: "column",
-                flexWrap: "nowrap",
-                gap: "40px",
-                height: "400px",
-                justifyContent: "center",
-                overflow: "visible",
-                padding: 0,
-                position: "relative"
-            }}>
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+        >
+            <div
+                className={className}
+                style={{
+                    alignContent: "center",
+                    alignItems: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    flexWrap: "nowrap",
+                    gap: "40px",
+                    height: "400px",
+                    justifyContent: "center",
+                    overflow: "visible",
+                    padding: 0,
+                    position: "relative"
+                }}>
 
 
 
@@ -194,5 +201,6 @@ export default function Carousel({ className }: { className?: string }) {
                 </motion.ul>
             </section>
         </div>
+        </motion.div>
     );
 }

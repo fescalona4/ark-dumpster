@@ -5,7 +5,13 @@ import { NumberTicker } from "@/components/ui/number-ticker";
 
 export default function Stats() {
     return (
-        <div className="flex items-center justify-center">
+        <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+        >
+            <div className="flex items-center justify-center">
             <div className="max-w-screen-xl w-full mx-6 md:mx-20">
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-center">
                     Reliable dumpster rental services in
@@ -101,6 +107,7 @@ export default function Stats() {
                 </div>
             </div>
         </div>
+        </motion.div>
     );
 };
 

@@ -1,3 +1,5 @@
+"use client";
+
 import {
   PlusIcon,
   Trash,
@@ -6,6 +8,7 @@ import {
 } from "lucide-react"
 import { Accordion as AccordionPrimitive } from "radix-ui"
 import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
 
 import {
   Accordion,
@@ -40,7 +43,14 @@ const items = [
 
 export default function ServiceSection() {
   return (
-    <div className="flex flex-col items-center">
+    <motion.section
+      id="services"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+    >
+      <div className="flex flex-col items-center">
       <div className="max-w-screen-xl px-10 mt-36 flex justify-center">
         <div className="flex-1 mt-2 items-center text-center max-w-2xl">
           <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 border-black dark:border-border">
@@ -85,5 +95,6 @@ export default function ServiceSection() {
         </Accordion>
       </div>
     </div>
+    </motion.section>
   )
 }

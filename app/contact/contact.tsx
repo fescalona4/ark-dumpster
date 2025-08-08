@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Instagram, Facebook } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 import {
   Select,
   SelectContent,
@@ -166,7 +167,14 @@ const Contacts = () => {
   };
 
   return (
-  <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
+    <motion.section
+      id="contact"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, ease: "easeOut", delay: 0 }}
+    >
+      <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
     <div className="w-full max-w-screen-xl mx-auto">
 
       <div className="mt-24 grid lg:grid-cols-2 gap-16 md:gap-10 text-primary-foreground dark:text-foreground">
@@ -404,6 +412,7 @@ const Contacts = () => {
       </div>
     </div>
   </div>
+  </motion.section>
   );
 };
 
