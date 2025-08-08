@@ -61,6 +61,7 @@ export default function Home() {
                 alt="Ark Dumpster"
                 width={900}
                 height={900}
+                priority
               />
             </div>
           </div>
