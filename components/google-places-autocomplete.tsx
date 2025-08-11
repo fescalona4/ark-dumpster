@@ -38,6 +38,71 @@ export default function GooglePlacesAutocomplete({
   }, [value]);
 
   useEffect(() => {
+    // Inject dark mode styles for Google Places autocomplete dropdown
+    const injectDarkModeStyles = () => {
+      if (!document.getElementById('google-places-dark-mode')) {
+        const style = document.createElement('style');
+        style.id = 'google-places-dark-mode';
+        style.textContent = `
+          /* Google Places Autocomplete Dark Mode - matching app theme */
+          .pac-container {
+            background-color: oklch(0.2 0 0) !important;
+            border: 1px solid hsl(var(--border)) !important;
+            border-radius: calc(var(--radius) - 2px) !important;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+          }
+
+          .pac-item {
+            background-color: black !important;
+            color: hsl(var(--popover-foreground)) !important;
+            border-bottom: 1px solid hsl(var(--border)) !important;
+            padding: 8px 12px !important;
+            transition: background-color 0.2s !important;
+          }
+
+          .pac-item:hover,
+          .pac-item-selected {
+            background-color: hsl(var(--accent)) !important;
+            color: hsl(var(--accent-foreground)) !important;
+          }
+
+          .pac-item-query {
+            color: hsl(var(--popover-foreground)) !important;
+            font-weight: 600 !important;
+          }
+
+          .pac-matched {
+            color: hsl(var(--primary)) !important;
+            font-weight: 700 !important;
+          }
+
+          .pac-icon {
+            background-image: none !important;
+            background-color: hsl(var(--muted-foreground)) !important;
+            border-radius: 2px !important;
+          }
+
+          .pac-icon-marker {
+            background-color: hsl(var(--primary)) !important;
+          }
+
+          .pac-item:last-child {
+            border-bottom: none !important;
+          }
+
+          /* Powered by Google logo dark mode */
+          .pac-logo:after {
+            filter: invert(1) contrast(0.8) !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    };
+
+    injectDarkModeStyles();
+  }, []);
+
+  useEffect(() => {
     const loadGoogleMaps = () => {
       // Check if API key is available
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -65,7 +130,7 @@ export default function GooglePlacesAutocomplete({
 
       // Load Google Maps script with error handling
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGooglePlaces`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGooglePlaces&loading=async`;
       script.async = true;
       script.defer = true;
       
@@ -98,7 +163,18 @@ export default function GooglePlacesAutocomplete({
       if (!inputRef.current || !window.google || !hasApiKey) return;
 
       try {
-        // Use the legacy Autocomplete with deprecation warning suppression
+        // Suppress console warnings temporarily for the legacy API
+        const originalWarn = console.warn;
+        console.warn = (...args) => {
+          const message = args[0];
+          if (typeof message === 'string' && message.includes('google.maps.places.Autocomplete')) {
+            // Suppress the deprecation warning
+            return;
+          }
+          originalWarn.apply(console, args);
+        };
+
+        // Use the legacy Autocomplete (we know this works)
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
