@@ -20,20 +20,23 @@ interface DropoffCalendarProps {
 export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
   const [open, setOpen] = React.useState(false)
   const [date, setDate] = React.useState<Date | undefined>(
-    value ? new Date(value) : undefined
+    value ? new Date(value + 'T00:00:00') : undefined
   )
 
   React.useEffect(() => {
     if (value) {
-      setDate(new Date(value));
+      setDate(new Date(value + 'T00:00:00'));
     }
   }, [value]);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
     if (selectedDate && onChange) {
-      // Format as YYYY-MM-DD for consistency
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      // Format as YYYY-MM-DD using local timezone to avoid date shifting
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
       onChange(formattedDate);
     }
     setOpen(false);

@@ -41,17 +41,51 @@ const Contacts = () => {
     email: '',
     address: '',
     city: '',
-    state: '',
+    state: 'FL',
     zipCode: '',
     dropoffDate: '',
-    timeNeeded: '',
-    dumpsterSize: '',
+    timeNeeded: '1-day',
+    dumpsterSize: '15',
     message: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    
+    let formattedValue = value;
+    
+    // Format first name and last name to camel case (first letter capitalized)
+    if (id === 'firstName' || id === 'lastName') {
+      formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    }
+    
+    // Format state to uppercase and limit to 2 characters
+    if (id === 'state') {
+      formattedValue = value.toUpperCase().slice(0, 2);
+    }
+    
+    // Format ZIP code to numeric only and limit to 5 digits
+    if (id === 'zipCode') {
+      const numericOnly = value.replace(/\D/g, '');
+      formattedValue = numericOnly.slice(0, 5);
+    }
+    
+    // Format phone number for display
+    if (id === 'phone') {
+      // Remove all non-numeric characters
+      const numericOnly = value.replace(/\D/g, '');
+      
+      // Format as (XXX) XXX-XXXX
+      if (numericOnly.length <= 3) {
+        formattedValue = numericOnly;
+      } else if (numericOnly.length <= 6) {
+        formattedValue = `(${numericOnly.slice(0, 3)}) ${numericOnly.slice(3)}`;
+      } else {
+        formattedValue = `(${numericOnly.slice(0, 3)}) ${numericOnly.slice(3, 6)}-${numericOnly.slice(6, 10)}`;
+      }
+    }
+    
+    setFormData(prev => ({ ...prev, [id]: formattedValue }));
   };
 
   const handleSelectChange = (field: string, value: string) => {
@@ -65,12 +99,67 @@ const Contacts = () => {
 
     try {
       // Validate required fields
-      if (!formData.firstName || !formData.email) {
+      const requiredFields = [
+        { field: 'firstName', label: 'First Name' },
+        { field: 'lastName', label: 'Last Name' },
+        { field: 'phone', label: 'Phone Number' },
+        { field: 'email', label: 'Email' },
+        { field: 'address', label: 'Address' },
+        { field: 'city', label: 'City' },
+        { field: 'state', label: 'State' },
+        { field: 'zipCode', label: 'ZIP Code' },
+        { field: 'dropoffDate', label: 'Drop-off Date' },
+        { field: 'timeNeeded', label: 'Time Needed' },
+        { field: 'dumpsterSize', label: 'Dumpster Size' }
+        // Note: message field is optional
+      ];
+
+      const missingFields = requiredFields.filter(({ field }) => !formData[field as keyof typeof formData]);
+
+      if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(({ label }) => label).join(', ');
         setNotification({
           type: 'warning',
           title: 'Missing Required Fields',
-          description: 'Please fill in your First Name and Email address.',
+          description: `Please fill in the following required fields: ${fieldNames}`,
         });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if we're in local development environment
+      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+      if (isLocalDev) {
+        // Skip email sending in local development
+        console.log('Local development detected - skipping email send');
+        console.log('Form data would be sent:', {
+          ...formData,
+          phone: formData.phone.replace(/\D/g, '') // Show numeric phone in console
+        });
+        
+        setNotification({
+          type: 'info',
+          title: 'Local Development Mode',
+          description: 'Email sending is disabled in local development. Form data logged to console.',
+        });
+        
+        // Reset form
+        setFormData({
+          firstName: '',
+          lastName: '',
+          phone: '',
+          email: '',
+          address: '',
+          city: '',
+          state: 'FL',
+          zipCode: '',
+          dropoffDate: '',
+          timeNeeded: '1-day',
+          dumpsterSize: '15',
+          message: ''
+        });
+        
         setIsSubmitting(false);
         return;
       }
@@ -93,8 +182,11 @@ const Contacts = () => {
             duration: formData.timeNeeded || 'TBD',
             message: formData.message
           },
-          // Include full form data for database storage
-          fullFormData: formData
+          // Include full form data for database storage with numeric phone
+          fullFormData: {
+            ...formData,
+            phone: formData.phone.replace(/\D/g, '') // Keep only numeric characters for submission
+          }
         }),
       });
 
@@ -113,11 +205,11 @@ const Contacts = () => {
           email: '',
           address: '',
           city: '',
-          state: '',
+          state: 'FL',
           zipCode: '',
           dropoffDate: '',
-          timeNeeded: '',
-          dumpsterSize: '',
+          timeNeeded: '1-day',
+          dumpsterSize: '15',
           message: ''
         });
       } else {
@@ -258,17 +350,18 @@ const Contacts = () => {
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-3">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name *</Label>
                   <Input
                     placeholder="Last name"
                     id="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <Input
                     type="tel"
                     placeholder="(555) 123-4567"
@@ -276,6 +369,7 @@ const Contacts = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6">
@@ -291,47 +385,56 @@ const Contacts = () => {
                   />
                 </div>
                 <div className="col-span-6">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Input
                     placeholder="Street address"
                     id="address"
                     value={formData.address}
                     onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Input
                     placeholder="City"
                     id="city"
                     value={formData.city}
                     onChange={handleInputChange}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-2">
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state">State *</Label>
                   <Input
-                    placeholder="State"
+                    placeholder="FL"
                     id="state"
                     value={formData.state}
                     onChange={handleInputChange}
+                    maxLength={2}
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
                 <div className="col-span-6 sm:col-span-2">
-                  <Label htmlFor="zipCode">ZIP Code</Label>
+                  <Label htmlFor="zipCode">ZIP Code *</Label>
                   <Input
-                    placeholder="ZIP Code"
+                    type="tel"
+                    placeholder="12345"
                     id="zipCode"
                     value={formData.zipCode}
                     onChange={handleInputChange}
+                    maxLength={5}
+                    pattern="[0-9]{5}"
                     className="mt-1.5 bg-white h-11 shadow-none"
+                    required
                   />
                 </div>
 
                 <div className="col-span-6 sm:col-span-2">
+                  {/* <Label htmlFor="dropoffDate">Drop-off Date *</Label> */}
                   <DropoffCalendar 
                     value={formData.dropoffDate}
                     onChange={(date) => handleSelectChange('dropoffDate', date)}
@@ -340,7 +443,11 @@ const Contacts = () => {
 
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="timeNeeded">Time Needed</Label>
-                  <Select onValueChange={(value) => handleSelectChange('timeNeeded', value)}>
+                  <Select 
+                    value={formData.timeNeeded}
+                    onValueChange={(value) => handleSelectChange('timeNeeded', value)} 
+                    required
+                  >
                     <SelectTrigger className="mt-1.5 w-full">
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
@@ -358,13 +465,17 @@ const Contacts = () => {
 
                 <div className="col-span-6 sm:col-span-2">
                   <Label htmlFor="dumpsterSize">Dumpster Size</Label>
-                  <Select onValueChange={(value) => handleSelectChange('dumpsterSize', value)}>
+                  <Select 
+                    value={formData.dumpsterSize}
+                    onValueChange={(value) => handleSelectChange('dumpsterSize', value)} 
+                    required
+                  >
                     <SelectTrigger className="mt-1.5 w-full">
-                      <SelectValue placeholder="Select size" />
+                      <SelectValue placeholder="15 Yard Dump Trailer" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectLabel>Select size</SelectLabel>
+                        {/* <SelectLabel>Select size</SelectLabel> */}
                         <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
                         <SelectItem value="20">20 Yard Dumpster</SelectItem>
                       </SelectGroup>
