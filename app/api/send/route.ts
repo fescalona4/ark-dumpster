@@ -1,4 +1,5 @@
 import { EmailTemplate } from '@/components/email-template';
+import { CompanyNotificationEmail } from '@/components/company-notification-email';
 import { Resend } from 'resend';
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
 
     // Save to database if we have the full form data
     let dbSaveError = null;
+    let savedQuoteId = null;
     console.log('Checking database save conditions:');
     console.log('- fullFormData exists:', !!fullFormData);
     console.log('- NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
               email: fullFormData.email,
               phone: fullFormData.phone || null,
               address: fullFormData.address || null,
+              address2: fullFormData.address2 || null,
               city: fullFormData.city || null,
               state: fullFormData.state || null,
               zip_code: fullFormData.zipCode || null,
@@ -100,6 +103,7 @@ export async function POST(request: NextRequest) {
           dbSaveError = quoteError.message;
         } else {
           console.log('Quote saved to database successfully:', quoteData);
+          savedQuoteId = quoteData?.[0]?.id;
         }
       } catch (error) {
         console.error('Unexpected database error:', error);
@@ -107,21 +111,74 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check if we should send user email notifications
+    const sendUserNotifications = process.env.SEND_USER_EMAIL_NOTIFICATIONS === 'true';
+    console.log('Send user email notifications:', sendUserNotifications);
+
+    // Send company notification email if we have company email and form data
+    let companyEmailResult = null;
+    if (fullFormData && process.env.COMPANY_EMAIL && !skipEmail) {
+      try {
+        console.log('Sending company notification email to:', process.env.COMPANY_EMAIL);
+        
+        const companyEmailHtml = await render(CompanyNotificationEmail({ 
+          customerDetails: {
+            firstName: fullFormData.firstName,
+            lastName: fullFormData.lastName || '',
+            phone: fullFormData.phone || '',
+            email: fullFormData.email,
+            address: fullFormData.address || '',
+            address2: fullFormData.address2 || '',
+            city: fullFormData.city || '',
+            state: fullFormData.state || '',
+            zipCode: fullFormData.zipCode || ''
+          },
+          quoteDetails: {
+            dropoffDate: fullFormData.dropoffDate || 'Not specified',
+            timeNeeded: fullFormData.timeNeeded || 'Not specified',
+            dumpsterSize: fullFormData.dumpsterSize || 'Not specified',
+            message: fullFormData.message || ''
+          },
+          quoteId: savedQuoteId ? `QT-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${String(savedQuoteId).padStart(3, '0')}` : undefined,
+          submittedAt: new Date().toISOString()
+        }));
+
+        const companyEmailPayload = {
+          from: 'ARK Dumpster Notifications <onboarding@resend.dev>',
+          replyTo: fullFormData.email,
+          to: process.env.COMPANY_EMAIL,
+          subject: `🚨 NEW QUOTE REQUEST - ${fullFormData.firstName} ${fullFormData.lastName} - ${fullFormData.dumpsterSize} yard dumpster`,
+          html: companyEmailHtml,
+          text: `NEW QUOTE REQUEST ALERT\n\nCustomer: ${fullFormData.firstName} ${fullFormData.lastName}\nPhone: ${fullFormData.phone}\nEmail: ${fullFormData.email}\nAddress: ${fullFormData.address}${fullFormData.address2 ? ', ' + fullFormData.address2 : ''}, ${fullFormData.city}, ${fullFormData.state} ${fullFormData.zipCode}\n\nService Details:\nDumpster Size: ${fullFormData.dumpsterSize} yard\nDropoff Date: ${fullFormData.dropoffDate}\nDuration: ${fullFormData.timeNeeded}\nMessage: ${fullFormData.message || 'None'}\n\nACTION REQUIRED: Contact this customer within 24 hours.\n\nCall: ${fullFormData.phone}\nEmail: ${fullFormData.email}`
+        };
+
+        companyEmailResult = await resend.emails.send(companyEmailPayload);
+        console.log('Company notification email result:', companyEmailResult);
+      } catch (error) {
+        console.error('Failed to send company notification email:', error);
+      }
+    }
+
     const emailSubject = subject || getDefaultSubject(type);
     
-    // Skip email sending if skipEmail flag is true (for local development)
-    if (skipEmail) {
-      console.log('Skipping email send due to skipEmail flag (local development)');
+    // Skip email sending if skipEmail flag is true (for local development) OR if user notifications are disabled
+    if (skipEmail || !sendUserNotifications) {
+      const reason = skipEmail ? 'skipEmail flag (local development)' : 'user email notifications disabled';
+      console.log(`Skipping user email send due to: ${reason}`);
       console.log('Email would have been sent with subject:', emailSubject);
       console.log('Email would have been sent to:', email);
       
-      // Return success response with database save status
+      // Return success response with database save status and company email status
       const response = { 
         success: true, 
         emailSkipped: true,
+        emailSkipReason: reason,
+        userEmailSent: false,
+        companyEmailSent: !!companyEmailResult?.data,
+        companyEmailError: companyEmailResult?.error || null,
         dbSaved: !dbSaveError,
         dbSaveError: dbSaveError,
-        message: 'Request processed successfully (email skipped for local development)'
+        message: `Request processed successfully (user email ${reason})`
       };
       
       return Response.json(response);
@@ -189,10 +246,13 @@ export async function POST(request: NextRequest) {
     console.log('Email sent successfully!');
     console.log('Resend response data:', result.data);
     
-    // Include database save status in success response
+    // Include database save status and company email status in success response
     const response = { 
       success: true, 
       data: result.data,
+      userEmailSent: true,
+      companyEmailSent: !!companyEmailResult?.data,
+      companyEmailError: companyEmailResult?.error || null,
       dbSaved: !dbSaveError,
       dbSaveError: dbSaveError
     };

@@ -164,6 +164,9 @@ function CreateQuoteContent() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('Admin quote creation result:', result);
+        
         setNotification({
           type: 'success',
           title: 'Quote Created Successfully!',

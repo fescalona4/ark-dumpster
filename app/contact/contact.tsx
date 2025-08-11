@@ -170,21 +170,40 @@ const Contacts = () => {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('API Response:', result);
+        
+        // Determine the notification message based on email settings
+        let title = 'Request Sent Successfully!';
+        let description;
+        
+        if (result.emailSkipped || !result.userEmailSent) {
+          description = "Thank you! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.";
+        } else {
+          description = "Thank you! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.";
+        }
+        
+        // Add development info if in local mode
+        if (isLocalDev) {
+          description += " (Email sending may be disabled in development mode)";
+        }
+
         setNotification({
           type: 'success',
-          title: 'Request Sent Successfully!',
-          description: isLocalDev
-            ? "Thank you! Your request has been saved to the database. Email sending is disabled in local development."
-            : "Thank you! We've received your request and will get back to you within 24 hours.",
+          title,
+          description,
         });
 
-        // Log in console for local development
-        if (isLocalDev) {
-          console.log('Local development - Form data saved to database:', {
+        // Log detailed info for development
+        console.log('Quote submission result:', {
+          userEmailSent: result.userEmailSent,
+          companyEmailSent: result.companyEmailSent,
+          dbSaved: result.dbSaved,
+          formData: {
             ...formData,
             phone: formData.phone.replace(/\D/g, '')
-          });
-        }
+          }
+        });
 
         // Reset form
         setFormData({

@@ -1,4 +1,5 @@
 import { EmailTemplate } from '@/components/email-template';
+import { CompanyNotificationEmail } from '@/components/company-notification-email';
 
 export default function EmailPreview() {
   const sampleQuoteData = {
@@ -10,15 +11,47 @@ export default function EmailPreview() {
     price: '$450'
   };
 
+  const sampleCustomerData = {
+    firstName: 'John',
+    lastName: 'Doe',
+    phone: '(727) 555-0123',
+    email: 'john.doe@example.com',
+    address: '123 Main Street',
+    address2: 'Apt 4B',
+    city: 'St. Petersburg',
+    state: 'FL',
+    zipCode: '33701'
+  };
+
+  const sampleQuoteDetails = {
+    dropoffDate: 'August 15, 2025',
+    timeNeeded: '1 Week',
+    dumpsterSize: '20',
+    message: 'Need a dumpster for home renovation project. Please deliver early morning if possible.'
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8">Email Template Preview</h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-white">Email Template Preview</h1>
         
         <div className="grid gap-8">
+          {/* Company Notification Email */}
+          <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-4 text-white">Company Notification Email (NEW)</h2>
+            <div className="border rounded-lg overflow-hidden">
+              <CompanyNotificationEmail 
+                customerDetails={sampleCustomerData}
+                quoteDetails={sampleQuoteDetails}
+                quoteId="QT-2025-0815-001"
+                submittedAt={new Date().toISOString()}
+              />
+            </div>
+          </div>
+
           {/* Quote Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Quote Request Email</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Quote Request Email</h2>
             <div className="border rounded-lg overflow-hidden">
               <EmailTemplate 
                 firstName="John"
@@ -30,7 +63,7 @@ export default function EmailPreview() {
 
           {/* Welcome Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Welcome Email</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Welcome Email</h2>
             <div className="border rounded-lg overflow-hidden">
               <EmailTemplate 
                 firstName="Jane"
@@ -41,7 +74,7 @@ export default function EmailPreview() {
 
           {/* Confirmation Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">Confirmation Email</h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Confirmation Email</h2>
             <div className="border rounded-lg overflow-hidden">
               <EmailTemplate 
                 firstName="Mike"

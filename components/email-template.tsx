@@ -2,7 +2,7 @@ import * as React from 'react';
 
 interface EmailTemplateProps {
   firstName: string;
-  type?: 'welcome' | 'quote' | 'confirmation';
+  type?: 'welcome' | 'quote' | 'confirmation' | 'company-notification';
   quoteDetails?: {
     service?: string;
     location?: string;
@@ -11,15 +11,132 @@ interface EmailTemplateProps {
     message?: string;
     price?: string;
   };
+  customerDetails?: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    address: string;
+    address2?: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  quoteId?: string;
+  submittedAt?: string;
 }
 
 export function EmailTemplate({ 
   firstName, 
   type = 'welcome',
-  quoteDetails 
+  quoteDetails,
+  customerDetails,
+  quoteId,
+  submittedAt
 }: EmailTemplateProps) {
   const renderContent = () => {
     switch (type) {
+      case 'company-notification':
+        if (!customerDetails) return null;
+        
+        const fullAddress = [
+          customerDetails.address,
+          customerDetails.address2,
+          customerDetails.city,
+          customerDetails.state,
+          customerDetails.zipCode
+        ].filter(Boolean).join(', ');
+
+        return (
+          <>
+            <h1 style={{ 
+              fontSize: '24px', 
+              fontWeight: 'bold', 
+              color: '#dc2626',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              🚨 NEW QUOTE ALERT
+            </h1>
+            <p style={{ 
+              fontSize: '16px', 
+              color: '#4b5563', 
+              marginBottom: '24px',
+              textAlign: 'center'
+            }}>
+              A new customer has submitted a quote request and needs your attention.
+            </p>
+
+            {/* Customer Info */}
+            <div style={{
+              backgroundColor: '#f0f9ff',
+              border: '2px solid #0ea5e9',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ color: '#0369a1', marginBottom: '12px' }}>Customer Information</h3>
+              <div><strong>Name:</strong> {customerDetails.firstName} {customerDetails.lastName}</div>
+              <div><strong>Phone:</strong> <a href={`tel:${customerDetails.phone}`} style={{ color: '#0369a1' }}>{customerDetails.phone}</a></div>
+              <div><strong>Email:</strong> <a href={`mailto:${customerDetails.email}`} style={{ color: '#0369a1' }}>{customerDetails.email}</a></div>
+              <div><strong>Address:</strong> {fullAddress}</div>
+            </div>
+
+            {/* Service Details */}
+            {quoteDetails && (
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                border: '2px solid #22c55e',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '20px'
+              }}>
+                <h3 style={{ color: '#166534', marginBottom: '12px' }}>Service Details</h3>
+                {quoteDetails.service && <div><strong>Service:</strong> {quoteDetails.service}</div>}
+                {quoteDetails.date && <div><strong>Date:</strong> {quoteDetails.date}</div>}
+                {quoteDetails.duration && <div><strong>Duration:</strong> {quoteDetails.duration}</div>}
+                {quoteDetails.message && <div><strong>Message:</strong> {quoteDetails.message}</div>}
+              </div>
+            )}
+
+            {/* Action Required */}
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '2px solid #ef4444',
+              borderRadius: '12px',
+              padding: '20px',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ color: '#dc2626', marginBottom: '12px' }}>Action Required</h3>
+              <p style={{ color: '#dc2626', marginBottom: '16px' }}>
+                Contact this customer within 24 hours to provide a quote.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <a href={`tel:${customerDetails.phone}`} style={{
+                  backgroundColor: '#22c55e',
+                  color: 'white',
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: 'bold'
+                }}>
+                  Call Customer
+                </a>
+                <a href={`mailto:${customerDetails.email}`} style={{
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontWeight: 'bold'
+                }}>
+                  Email Customer
+                </a>
+              </div>
+            </div>
+          </>
+        );
+
       case 'quote':
         return (
           <>
