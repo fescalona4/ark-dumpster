@@ -1,7 +1,10 @@
 "use client"
 
 import * as React from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
+import { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 import {
   IconDashboard,
   IconFileText,
@@ -27,12 +30,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
-  user: {
-    name: "Admin User",
-    email: "admin@arkdumpster.com",
-    avatar: "", // No avatar, will use fallback
-  },
+const navData = {
   navMain: [
     {
       title: "Dashboard",
@@ -65,6 +63,30 @@ const data = {
 }
 
 export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+
+    getUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const userData = {
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Admin User",
+    email: user?.email || "admin@arkdumpster.com",
+    avatar: user?.user_metadata?.avatar_url || "",
+  }
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -89,12 +111,12 @@ export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navData.navMain} />
+        <NavSecondary items={navData.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-between p-2">
-          <NavUser user={data.user} />
+          <NavUser user={userData} />
           <div className="opacity-80 hover:opacity-100 transition-opacity">
             <DarkToggle />
           </div>

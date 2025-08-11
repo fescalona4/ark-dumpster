@@ -12,8 +12,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
 import { DropoffCalendar } from '@/components/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
+import AuthGuard from '@/components/auth-guard';
 
 export default function CreateQuotePage() {
+  return (
+    <AuthGuard>
+      <CreateQuoteContent />
+    </AuthGuard>
+  );
+}
+
+function CreateQuoteContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';

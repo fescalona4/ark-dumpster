@@ -7,6 +7,7 @@ import {
   IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
+import { supabase } from "@/lib/supabase"
 
 import {
   Avatar,
@@ -39,6 +40,15 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut()
+      // Redirect will happen automatically via auth state change
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
 
   return (
     <SidebarMenu>
@@ -98,7 +108,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>
               <IconLogout />
               Log out
             </DropdownMenuItem>

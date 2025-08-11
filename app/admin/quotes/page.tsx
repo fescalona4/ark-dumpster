@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Trash2, Edit, Save, X, Calendar, MapPin, Phone, Mail, Package, Clock, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
+import AuthGuard from '@/components/auth-guard';
 
 interface Quote {
   id: string;
@@ -47,6 +48,14 @@ interface Quote {
 }
 
 export default function QuotesAdminPage() {
+  return (
+    <AuthGuard>
+      <QuotesPageContent />
+    </AuthGuard>
+  );
+}
+
+function QuotesPageContent() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
