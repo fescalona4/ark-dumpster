@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
     // Set to true for static exports or when external image optimization is preferred
     // This allows Next.js Image component benefits (lazy loading, aspect ratio, etc.)
     // without requiring a running Next.js server for image optimization
-    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,6 +21,7 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  devIndicators: false,
 };
 
 export default nextConfig;
