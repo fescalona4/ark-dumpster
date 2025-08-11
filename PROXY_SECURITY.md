@@ -67,11 +67,15 @@ if (isDevelopment) {
 - Contains actual proxy settings for Verizon corporate network
 - Should NOT be deployed to production
 - Includes clear comments indicating development-only usage
+- Contains email configuration flags:
+  - `SEND_USER_EMAIL_NOTIFICATIONS=false` - Controls user email notifications
+  - `SKIP_EMAIL_IN_DEVELOPMENT=true` - Skips email sending in development
 
 ### `.env.example` (Template)
 - Proxy settings are commented out by default
 - Includes clear warnings about development-only usage
 - Safe to commit to repository
+- Documents all available environment variables
 
 ## Production Deployment Checklist
 
@@ -83,8 +87,12 @@ if (isDevelopment) {
   - `https_proxy`
   - `NO_PROXY`
   - `no_proxy`
+- [ ] Set email configuration for production:
+  - `SEND_USER_EMAIL_NOTIFICATIONS=true` (if user emails desired)
+  - Remove or set `SKIP_EMAIL_IN_DEVELOPMENT=false` (will be ignored in production)
 - [ ] Verify direct Supabase connection works
 - [ ] Test that proxy routes return 403 errors
+- [ ] Test that email functionality works as expected
 
 ## How It Works
 
@@ -93,12 +101,36 @@ if (isDevelopment) {
    - Custom API routes handle requests through corporate proxy
    - Database service uses proxy-aware client
    - All requests go through `undici` ProxyAgent
+   - Email sending controlled by `SKIP_EMAIL_IN_DEVELOPMENT` environment variable
 
 2. **Production Environment**:
    - No proxy environment variables
    - Direct connections to Supabase
    - Proxy routes return 403 Forbidden
    - Standard fetch API used
+   - Email sending controlled by `SEND_USER_EMAIL_NOTIFICATIONS` environment variable
+
+## Email Configuration
+
+The application uses environment variables to control email behavior:
+
+### Development Email Control
+```bash
+# Skip emails in development environment
+SKIP_EMAIL_IN_DEVELOPMENT=true
+NODE_ENV=development
+```
+
+When both conditions are met, emails are skipped with the reason: "development environment (SKIP_EMAIL_IN_DEVELOPMENT=true)"
+
+### Production Email Control
+```bash
+# Enable user email notifications in production
+SEND_USER_EMAIL_NOTIFICATIONS=true
+NODE_ENV=production
+```
+
+The `SKIP_EMAIL_IN_DEVELOPMENT` variable is ignored in production environments.
 
 ## Testing Proxy Security
 

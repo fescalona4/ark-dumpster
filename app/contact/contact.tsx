@@ -139,10 +139,10 @@ const Contacts = () => {
         return;
       }
 
-      // Check if we're in local development environment
-      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Check if we should skip emails based on environment
+      // This will be determined server-side based on environment variables
 
-      // Send request to API (for database storage) with local dev flag
+      // Send request to API (for database storage) with environment-based email control
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: {
@@ -153,7 +153,7 @@ const Contacts = () => {
           email: formData.email,
           type: 'quote',
           subject: 'New Dumpster Rental Request - ARK Dumpster',
-          skipEmail: isLocalDev, // Add flag to skip email in local development
+          // Remove client-side skipEmail logic - let server decide based on env vars
           quoteDetails: {
             service: formData.dumpsterSize ? `${formData.dumpsterSize} Dumpster` : 'Dumpster Rental',
             location: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
@@ -183,9 +183,9 @@ const Contacts = () => {
           description = "Thank you! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.";
         }
         
-        // Add development info if in local mode
-        if (isLocalDev) {
-          description += " (Email sending may be disabled in development mode)";
+        // Add development info if email was skipped
+        if (result.emailSkipped) {
+          description += " (Email sending disabled in development mode)";
         }
 
         setNotification({

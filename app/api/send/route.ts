@@ -28,9 +28,21 @@ export async function POST(request: NextRequest) {
       type = 'welcome',
       quoteDetails,
       subject,
-      fullFormData,
-      skipEmail = false
+      fullFormData
     } = body;
+
+    // Determine if emails should be skipped based on environment variable
+    const skipEmailInDevelopment = process.env.SKIP_EMAIL_IN_DEVELOPMENT === 'true';
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const skipEmail = isDevelopment && skipEmailInDevelopment;
+
+    console.log('Email skip logic:', {
+      isDevelopment,
+      skipEmailInDevelopment,
+      skipEmail,
+      NODE_ENV: process.env.NODE_ENV,
+      SKIP_EMAIL_IN_DEVELOPMENT: process.env.SKIP_EMAIL_IN_DEVELOPMENT
+    });
 
     // Validate required fields
     if (!firstName || !email) {
@@ -93,7 +105,7 @@ export async function POST(request: NextRequest) {
         console.log('✅ Company notification sent successfully');
       }
     } else {
-      console.log('⚠️ Skipping company email - no form data or skip flag set');
+      console.log('⚠️ Skipping company email - no form data or development environment email skip enabled');
     }
 
     // STEP 3: HANDLE USER EMAIL
@@ -104,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // Skip user email if skipEmail flag is true OR if user notifications are disabled
     if (skipEmail || !sendUserNotifications) {
-      const reason = skipEmail ? 'skipEmail flag (local development)' : 'user email notifications disabled';
+      const reason = skipEmail ? 'development environment (SKIP_EMAIL_IN_DEVELOPMENT=true)' : 'user email notifications disabled';
       console.log(`Skipping user email send due to: ${reason}`);
 
       return Response.json({
