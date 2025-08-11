@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const nextConfig: NextConfig = {
   images: {
     // Set to true for static exports or when external image optimization is preferred
@@ -22,6 +24,39 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: false,
+  
+  // Proxy configuration for corporate networks - development only
+  ...(isDevelopment && {
+    async rewrites() {
+      return [
+        // Proxy Supabase REST API calls through Next.js to bypass corporate firewall
+        {
+          source: '/proxy/supabase/rest/:path*',
+          destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/:path*`,
+        },
+        // Proxy Supabase auth calls
+        {
+          source: '/proxy/supabase/auth/:path*',
+          destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/:path*`,
+        },
+        // Proxy general Supabase calls (fallback)
+        {
+          source: '/proxy/supabase/:path*',
+          destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/:path*`,
+        },
+        // Proxy Resend API calls
+        {
+          source: '/proxy/resend/:path*',
+          destination: 'https://api.resend.com/:path*',
+        },
+        // Proxy Google Maps API
+        {
+          source: '/proxy/google-maps/:path*',
+          destination: 'https://maps.googleapis.com/:path*',
+        },
+      ];
+    },
+  }),
 };
 
 export default nextConfig;

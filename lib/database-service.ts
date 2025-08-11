@@ -27,9 +27,10 @@ export interface SaveQuoteResult {
 export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<SaveQuoteResult> {
   try {
     console.log('=== SAVING QUOTE TO DATABASE ===');
+    console.log('Environment:', process.env.NODE_ENV);
     console.log('Form data to save:', JSON.stringify(formData, null, 2));
     
-    // Check if Supabase is configured (need at least URL and one key)
+    // Check if Supabase is configured
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
       console.error('Supabase not configured - missing NEXT_PUBLIC_SUPABASE_URL');
       return {
@@ -47,40 +48,52 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
     }
 
     console.log('✅ Supabase environment variables found');
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('Service key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
-    console.log('Anon key exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-    // Try the safer client first (uses anon key like the working admin page)
-    let supabase;
-    let clientType = 'unknown';
     
-    try {
-      console.log('🔧 Trying server client with anon key (like admin page)...');
-      supabase = createServerSupabaseClientSafe();
-      clientType = 'anon-key';
-      console.log('✅ Anon key client created successfully');
-    } catch (error) {
-      console.log('❌ Anon key client failed, trying service role key...');
-      try {
-        supabase = createServerSupabaseClient();
-        clientType = 'service-role';
-        console.log('✅ Service role client created successfully');
-      } catch (serviceError) {
-        console.error('❌ Both client types failed:', { error, serviceError });
-        return {
-          success: false,
-          error: 'Failed to create Supabase client with both anon key and service role'
-        };
-      }
+    // Create proxy-aware Supabase client
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    let supabase;
+    
+    if (isDevelopment) {
+      // Use custom API proxy in development to bypass corporate firewall
+      const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy`;
+      console.log('🔀 Using custom API proxy for Supabase:', proxyUrl);
+      console.log('🔧 Environment check - NODE_ENV:', process.env.NODE_ENV);
+      console.log('🔧 App URL:', process.env.NEXT_PUBLIC_APP_URL);
+      
+      supabase = createClient(
+        proxyUrl,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          auth: {
+            persistSession: false
+          }
+        }
+      );
+      console.log('✅ Created proxy-aware Supabase client for development');
+    } else {
+      // Use direct connection in production
+      console.log('🌐 Using direct Supabase URL for production');
+      supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      console.log('✅ Created direct Supabase client for production');
     }
     
-    console.log(`✅ Using Supabase client type: ${clientType}`);
-    
     // Test basic network connectivity first
-    console.log('🔍 Testing network connectivity to Supabase...');
+    console.log('🔍 Testing network connectivity...');
     try {
-      const networkTest = await fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/health');
+      const testUrl = isDevelopment ? 
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy/health` :
+        process.env.NEXT_PUBLIC_SUPABASE_URL + '/health';
+      
+      const networkTest = await fetch(testUrl);
       console.log('✅ Network connectivity test successful, status:', networkTest.status);
     } catch (networkError) {
       console.error('❌ Network connectivity test failed:', {
