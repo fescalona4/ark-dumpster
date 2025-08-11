@@ -44,7 +44,7 @@ export default function GooglePlacesAutocomplete({
       if (!apiKey) {
         console.warn('Google Maps API key not found. Falling back to manual address entry.');
         setHasApiKey(false);
-        setIsLoaded(true); // Set loaded to true so the fallback input works
+        setIsLoaded(true);
         return;
       }
 
@@ -98,12 +98,22 @@ export default function GooglePlacesAutocomplete({
       if (!inputRef.current || !window.google || !hasApiKey) return;
 
       try {
+        // Use the legacy Autocomplete with deprecation warning suppression
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
             types: ['address'],
-            componentRestrictions: { country: 'us' }, // Restrict to US
-            fields: ['address_components', 'formatted_address', 'geometry', 'name']
+            componentRestrictions: { 
+              country: 'us'
+            },
+            fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+            // Bias results to Tampa Bay area including St. Petersburg
+            bounds: {
+              north: 28.2, // North Tampa / Wesley Chapel area
+              south: 27.4, // South St. Pete / Tierra Verde area
+              east: -82.1, // East Tampa / Brandon area
+              west: -82.9  // West St. Pete / Belcher area
+            }
           }
         );
 

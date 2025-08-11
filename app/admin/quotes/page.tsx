@@ -30,6 +30,7 @@ interface Quote {
   email: string;
   phone: number | null;
   address: string | null;
+  address2: string | null;
   city: string | null;
   state: string | null;
   zip_code: string | null;
@@ -403,11 +404,12 @@ function QuotesPageContent() {
                           <span>Size: {quote.dumpster_size}</span>
                         </div>
                       )}
-                      {(quote.address || quote.city || quote.state) && (
+                      {(quote.address || quote.address2 || quote.city || quote.state) && (
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 mt-0.5" />
                           <div>
                             {quote.address && <div>{quote.address}</div>}
+                            {quote.address2 && <div>{quote.address2}</div>}
                             <div>
                               {quote.city && quote.city}
                               {quote.city && quote.state && ', '}

@@ -40,6 +40,7 @@ function CreateQuoteContent() {
     phone: '',
     email: '',
     address: '',
+    address2: '',
     city: '',
     state: 'FL',
     zipCode: '',
@@ -176,6 +177,7 @@ function CreateQuoteContent() {
           phone: '',
           email: '',
           address: '',
+          address2: '',
           city: '',
           state: 'FL',
           zipCode: '',
@@ -285,7 +287,7 @@ function CreateQuoteContent() {
                   required
                 />
               </div>
-              <div className="col-span-6">
+              <div className="col-span-6 sm:col-span-4">
                 <Label htmlFor="address">Address *</Label>
                 <GooglePlacesAutocomplete
                   id="address"
@@ -294,6 +296,17 @@ function CreateQuoteContent() {
                   onPlaceSelect={handlePlaceSelect}
                   className="mt-1.5"
                   required
+                />
+              </div>
+              <div className="col-span-6 sm:col-span-2">
+                <Label htmlFor="address2">Address 2 (Optional)</Label>
+                <Input
+                  placeholder="Apt, suite, unit, etc."
+                  id="address2"
+                  type="text"
+                  value={formData.address2}
+                  onChange={handleInputChange}
+                  className="mt-1.5"
                 />
               </div>
               <div className="col-span-6 sm:col-span-2">

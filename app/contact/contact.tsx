@@ -41,6 +41,7 @@ const Contacts = () => {
     phone: '',
     email: '',
     address: '',
+    address2: '',
     city: '',
     state: 'FL',
     zipCode: '',
@@ -192,6 +193,7 @@ const Contacts = () => {
           phone: '',
           email: '',
           address: '',
+          address2: '',
           city: '',
           state: 'FL',
           zipCode: '',
@@ -372,7 +374,7 @@ const Contacts = () => {
                         required
                       />
                     </div>
-                    <div className="col-span-6">
+                    <div className="col-span-6 sm:col-span-4">
                       <Label htmlFor="address">Address *</Label>
                       <GooglePlacesAutocomplete
                         id="address"
@@ -381,6 +383,17 @@ const Contacts = () => {
                         onPlaceSelect={handlePlaceSelect}
                         className="mt-1.5 bg-white h-11 shadow-none"
                         required
+                      />
+                    </div>
+                    <div className="col-span-6 sm:col-span-2">
+                      <Label htmlFor="address2">Address 2 (Opt)</Label>
+                      <Input
+                        placeholder="Apt, suite, unit, etc."
+                        id="address2"
+                        type="text"
+                        value={formData.address2}
+                        onChange={handleInputChange}
+                        className="mt-1.5 bg-white h-11 shadow-none"
                       />
                     </div>
                     <div className="col-span-6 sm:col-span-2">
