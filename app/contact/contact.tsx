@@ -130,41 +130,7 @@ const Contacts = () => {
       // Check if we're in local development environment
       const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-      if (isLocalDev) {
-        // Skip email sending in local development
-        console.log('Local development detected - skipping email send');
-        console.log('Form data would be sent:', {
-          ...formData,
-          phone: formData.phone.replace(/\D/g, '') // Show numeric phone in console
-        });
-        
-        setNotification({
-          type: 'info',
-          title: 'Local Development Mode',
-          description: 'Email sending is disabled in local development. Form data logged to console.',
-        });
-        
-        // Reset form
-        setFormData({
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          address: '',
-          city: '',
-          state: 'FL',
-          zipCode: '',
-          dropoffDate: '',
-          timeNeeded: '1-day',
-          dumpsterSize: '15',
-          message: ''
-        });
-        
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Send email with quote details and save to database
+      // Send request to API (for database storage) with local dev flag
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: {
@@ -175,6 +141,7 @@ const Contacts = () => {
           email: formData.email,
           type: 'quote',
           subject: 'New Dumpster Rental Request - ARK Dumpster',
+          skipEmail: isLocalDev, // Add flag to skip email in local development
           quoteDetails: {
             service: formData.dumpsterSize ? `${formData.dumpsterSize} Dumpster` : 'Dumpster Rental',
             location: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
@@ -194,8 +161,18 @@ const Contacts = () => {
         setNotification({
           type: 'success',
           title: 'Request Sent Successfully!',
-          description: "Thank you! We've received your request and will get back to you within 24 hours.",
+          description: isLocalDev 
+            ? "Thank you! Your request has been saved to the database. Email sending is disabled in local development."
+            : "Thank you! We've received your request and will get back to you within 24 hours.",
         });
+        
+        // Log in console for local development
+        if (isLocalDev) {
+          console.log('Local development - Form data saved to database:', {
+            ...formData,
+            phone: formData.phone.replace(/\D/g, '')
+          });
+        }
         
         // Reset form
         setFormData({

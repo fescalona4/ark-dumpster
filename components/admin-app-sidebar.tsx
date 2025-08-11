@@ -10,6 +10,7 @@ import {
   IconHelp,
   IconHome,
   IconPhone,
+  IconCirclePlusFilled,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -43,22 +44,17 @@ const data = {
       url: "/admin/quotes",
       icon: IconFileText,
     },
+    {
+      title: "Create Quote",
+      url: "/admin/create",
+      icon: IconCirclePlusFilled,
+    },
   ],
   navSecondary: [
     {
       title: "View Website",
       url: "/",
       icon: IconHome,
-    },
-    {
-      title: "Contact Form",
-      url: "/contact",
-      icon: IconPhone,
-    },
-    {
-      title: "Support",
-      url: "#",
-      icon: IconHelp,
     },
     {
       title: "Settings",

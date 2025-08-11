@@ -1,7 +1,7 @@
 import { EmailTemplate } from '@/components/email-template';
 import { Resend } from 'resend';
 import { NextRequest } from 'next/server';
-import { createServerSupabaseClientSafe } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { render } from '@react-email/render';
 
 // Initialize Resend with error checking
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
       type = 'welcome',
       quoteDetails,
       subject,
-      fullFormData
+      fullFormData,
+      skipEmail = false
     } = body;
 
     // Validate required fields
@@ -60,10 +61,16 @@ export async function POST(request: NextRequest) {
 
     // Save to database if we have the full form data
     let dbSaveError = null;
+    console.log('Checking database save conditions:');
+    console.log('- fullFormData exists:', !!fullFormData);
+    console.log('- NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('- SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+    
     if (fullFormData && process.env.NEXT_PUBLIC_SUPABASE_URL) {
       try {
         console.log('Saving quote to database...');
-        const supabase = createServerSupabaseClientSafe();
+        console.log('Form data to save:', JSON.stringify(fullFormData, null, 2));
+        const supabase = createServerSupabaseClient();
         
         // Save to structured quotes table
         const { data: quoteData, error: quoteError } = await supabase
@@ -101,6 +108,25 @@ export async function POST(request: NextRequest) {
     }
 
     const emailSubject = subject || getDefaultSubject(type);
+    
+    // Skip email sending if skipEmail flag is true (for local development)
+    if (skipEmail) {
+      console.log('Skipping email send due to skipEmail flag (local development)');
+      console.log('Email would have been sent with subject:', emailSubject);
+      console.log('Email would have been sent to:', email);
+      
+      // Return success response with database save status
+      const response = { 
+        success: true, 
+        emailSkipped: true,
+        dbSaved: !dbSaveError,
+        dbSaveError: dbSaveError,
+        message: 'Request processed successfully (email skipped for local development)'
+      };
+      
+      return Response.json(response);
+    }
+    
     console.log('Sending email with subject:', emailSubject);
     console.log('Sending to:', email);
 

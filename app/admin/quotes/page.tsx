@@ -27,7 +27,7 @@ interface Quote {
   first_name: string;
   last_name: string | null;
   email: string;
-  phone: string | null;
+  phone: number | null;
   address: string | null;
   city: string | null;
   state: string | null;
@@ -56,22 +56,24 @@ export default function QuotesAdminPage() {
   const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null);
 
   // Format phone number for display
-  const formatPhoneNumber = (phone: string) => {
-    // Remove all non-digit characters
-    const cleaned = phone.replace(/\D/g, '');
+  const formatPhoneNumber = (phone: number | null) => {
+    if (!phone) return '';
+    
+    // Convert number to string for formatting
+    const phoneStr = phone.toString();
     
     // Format as (XXX) XXX-XXXX for 10-digit US numbers
-    if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    if (phoneStr.length === 10) {
+      return `(${phoneStr.slice(0, 3)}) ${phoneStr.slice(3, 6)}-${phoneStr.slice(6)}`;
     }
     
     // Format as +1 (XXX) XXX-XXXX for 11-digit numbers starting with 1
-    if (cleaned.length === 11 && cleaned[0] === '1') {
-      return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+    if (phoneStr.length === 11 && phoneStr[0] === '1') {
+      return `+1 (${phoneStr.slice(1, 4)}) ${phoneStr.slice(4, 7)}-${phoneStr.slice(7)}`;
     }
     
-    // Return original if it doesn't match expected patterns
-    return phone;
+    // Return original string if it doesn't match expected patterns
+    return phoneStr;
   };
 
   useEffect(() => {
@@ -96,7 +98,25 @@ export default function QuotesAdminPage() {
         setError(error.message);
         console.error('Error fetching quotes:', error);
       } else {
-        setQuotes(data || []);
+        // Filter out any undefined or null entries and ensure data integrity
+        const validQuotes = (data || []).filter((quote): quote is Quote => 
+          quote && 
+          typeof quote === 'object' && 
+          quote.id && 
+          quote.first_name && 
+          quote.email
+        );
+        
+        // Log phone data for debugging
+        validQuotes.forEach(quote => {
+          console.log(`Quote ${quote.id}: phone = "${quote.phone}" (type: ${typeof quote.phone})`);
+        });
+        
+        setQuotes(validQuotes);
+        
+        if (data && data.length !== validQuotes.length) {
+          console.warn(`Filtered out ${data.length - validQuotes.length} invalid quote records`);
+        }
       }
     } catch (err) {
       setError('Failed to fetch quotes');
@@ -253,7 +273,7 @@ export default function QuotesAdminPage() {
         </Card>
       ) : (
         <div className="grid gap-8">
-          {quotes.map((quote) => (
+          {quotes.filter(quote => quote && quote.id && quote.first_name).map((quote) => (
             <Card key={quote.id} className="relative">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
@@ -268,7 +288,7 @@ export default function QuotesAdminPage() {
                       </Badge>
                     </CardTitle>
                     <div className="mt-6 text-sm text-muted-foreground space-y-3">
-                      {quote.phone && (
+                      {quote.phone ? (
                         <div className="flex items-center gap-2">
                           <Phone className="h-4 w-4 text-green-600" />
                           <a 
@@ -277,6 +297,11 @@ export default function QuotesAdminPage() {
                           >
                             {formatPhoneNumber(quote.phone)}
                           </a>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Phone className="h-4 w-4" />
+                          <span>No phone number</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2">
