@@ -53,7 +53,14 @@ export default function StorageTest() {
         disabled={loading}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
       >
-        {loading ? 'Testing...' : 'Test Bucket Connection'}
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Testing...
+          </div>
+        ) : (
+          'Test Bucket Connection'
+        )}
       </button>
       
       {testResult && (

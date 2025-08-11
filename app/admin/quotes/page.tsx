@@ -140,21 +140,26 @@ export default function QuotesAdminPage() {
     if (!editingQuote || !editForm) return;
 
     try {
+      const updateData = {
+        status: editForm.status,
+        quoted_price: editForm.quoted_price,
+        quote_notes: editForm.quote_notes,
+        assigned_to: editForm.assigned_to,
+        priority: editForm.priority,
+        updated_at: new Date().toISOString(),
+        ...(editForm.quoted_price && editForm.quoted_price > 0 && {
+          quoted_at: new Date().toISOString()
+        })
+      };
+
       const { data, error } = await supabase
         .from('quotes')
-        .update({
-          status: editForm.status,
-          quoted_price: editForm.quoted_price,
-          quote_notes: editForm.quote_notes,
-          assigned_to: editForm.assigned_to,
-          priority: editForm.priority
-        })
+        .update(updateData)
         .eq('id', editingQuote)
         .select();
 
       if (error) {
         console.error('Error updating quote:', error);
-        alert('Failed to update quote');
       } else {
         setQuotes(quotes.map(q => q.id === editingQuote ? data[0] : q));
         setEditingQuote(null);
@@ -162,7 +167,6 @@ export default function QuotesAdminPage() {
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      alert('Failed to update quote');
     }
   };
 
@@ -209,7 +213,14 @@ export default function QuotesAdminPage() {
 
   if (loading) {
     return (
-      <div className="text-center">Loading quotes...</div>
+      <div className="p-2 md:p-6">
+        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="text-muted-foreground">Loading quotes...</p>
+          </div>
+        </div>
+      </div>
     );
   }
 

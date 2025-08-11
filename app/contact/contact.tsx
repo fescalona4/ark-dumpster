@@ -492,7 +492,14 @@ const Contacts = () => {
                 className="mt-6 w-full bg-accent/70 dark:text-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-900/80 disabled:opacity-50" 
                 size="lg"
               >
-                {isSubmitting ? 'Sending...' : 'Submit Request'}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Sending...
+                  </div>
+                ) : (
+                  'Submit Request'
+                )}
               </Button>
             </form>
           </CardContent>
