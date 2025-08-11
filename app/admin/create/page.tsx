@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { DropoffCalendar } from '@/components/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
 import AuthGuard from '@/components/auth-guard';
+import GooglePlacesAutocomplete from '@/components/google-places-autocomplete';
 
 export default function CreateQuotePage() {
   return (
@@ -85,6 +86,16 @@ function CreateQuoteContent() {
     }
     
     setFormData(prev => ({ ...prev, [id]: formattedValue }));
+  };
+
+  const handlePlaceSelect = (placeData: any) => {
+    setFormData(prev => ({
+      ...prev,
+      address: placeData.address,
+      city: placeData.city,
+      state: placeData.state || prev.state, // Keep existing state if not provided
+      zipCode: placeData.zipCode
+    }));
   };
 
   const handleSelectChange = (field: string, value: string) => {
@@ -276,11 +287,11 @@ function CreateQuoteContent() {
               </div>
               <div className="col-span-6">
                 <Label htmlFor="address">Address *</Label>
-                <Input
-                  placeholder="Street address"
+                <GooglePlacesAutocomplete
                   id="address"
+                  placeholder="Street address"
                   value={formData.address}
-                  onChange={handleInputChange}
+                  onPlaceSelect={handlePlaceSelect}
                   className="mt-1.5"
                   required
                 />
