@@ -278,10 +278,10 @@ const Contacts = () => {
       <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
         <div className="w-full max-w-screen-xl mx-auto">
 
-          <div className="mt-24 grid xl:grid-cols-2 gap-16 md:gap-10 text-primary-foreground dark:text-foreground">
+          <div className="mt-24 grid lg:grid-cols-5 gap-16 md:gap-10 text-primary-foreground dark:text-foreground">
 
 
-            <div className="flex flex-col justify-start min-h-full gap-4 px-6">
+            <div className="flex flex-col lg:col-span-2 justify-start min-h-full gap-4 px-6">
               <div>
                 <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-primary-foreground dark:text-foreground">
                   Contact Us
@@ -307,8 +307,8 @@ const Contacts = () => {
               <div className="flex max-md:flex-col justify-between">
                 <h3 className="font-semibold text-lg">Email:</h3>
                 <Link
-                  className="font-light text-lg"
-                  href="_blank"
+                  className="font-light text-lg truncate ml-1"
+                  href="mailto:arkdumpsterrentals@gmail.com"
                 >
                   arkdumpsterrentals@gmail.com
                 </Link>
@@ -343,7 +343,7 @@ const Contacts = () => {
             </div>
 
             {/* Form */}
-            <Card className="bg-gray-950/30 backdrop-blur-lg shadow-none border mx-2">
+            <Card className="lg:col-span-3 bg-gray-950/30 backdrop-blur-lg shadow-none border mx-2">
               <CardContent className="p-4 md:p-10">
                 <form onSubmit={handleSubmit}>
                   <div className="grid md:grid-cols-6 gap-x-8 gap-y-6">
