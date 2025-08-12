@@ -257,7 +257,7 @@ export function CompanyNotificationEmail({
                   color: '#15803d',
                   fontStyle: 'italic'
                 }}>
-                  "{quoteDetails.message}"
+                  &ldquo;{quoteDetails.message}&rdquo;
                 </div>
               </div>
             )}

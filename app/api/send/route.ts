@@ -1,10 +1,11 @@
 import { NextRequest } from 'next/server';
-import { saveQuoteToDatabase, generateQuoteId, QuoteFormData } from '@/lib/database-service';
+import { saveQuoteToDatabase, generateQuoteId } from '@/lib/database-service';
 import {
   sendCompanyNotificationEmail,
   sendUserEmail,
   shouldSendUserEmails,
-  QuoteDetails
+  QuoteDetails,
+  EmailResult
 } from '@/lib/email-service';
 
 export async function GET() {
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // STEP 2: SEND COMPANY NOTIFICATION EMAIL
-    let companyEmailResult: any = { success: false, error: null, data: null };
+    let companyEmailResult: EmailResult = { success: false, error: undefined, data: undefined };
 
     if (fullFormData && !skipEmail) {
       console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');

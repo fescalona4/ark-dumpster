@@ -94,7 +94,12 @@ const Contacts = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handlePlaceSelect = (placeData: any) => {
+  const handlePlaceSelect = (placeData: {
+    address: string;
+    city: string;
+    state?: string;
+    zipCode: string;
+  }) => {
     setFormData(prev => ({
       ...prev,
       address: placeData.address,
@@ -174,7 +179,7 @@ const Contacts = () => {
         console.log('API Response:', result);
         
         // Determine the notification message based on email settings
-        let title = 'Request Sent Successfully!';
+        const title = 'Request Sent Successfully!';
         let description;
         
         if (result.emailSkipped || !result.userEmailSent) {

@@ -89,7 +89,12 @@ function CreateQuoteContent() {
     setFormData(prev => ({ ...prev, [id]: formattedValue }));
   };
 
-  const handlePlaceSelect = (placeData: any) => {
+  const handlePlaceSelect = (placeData: {
+    address: string;
+    city: string;
+    state?: string;
+    zipCode: string;
+  }) => {
     setFormData(prev => ({
       ...prev,
       address: placeData.address,

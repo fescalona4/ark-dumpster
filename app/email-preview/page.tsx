@@ -1,5 +1,6 @@
 import { EmailTemplate } from '@/components/email-template';
 import { CompanyNotificationEmail } from '@/components/company-notification-email';
+import Link from 'next/link';
 
 export default function EmailPreview() {
   const sampleQuoteData = {
@@ -85,12 +86,12 @@ export default function EmailPreview() {
         </div>
 
         <div className="mt-8 text-center">
-          <a 
+          <Link 
             href="/"
             className="inline-block bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors"
           >
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

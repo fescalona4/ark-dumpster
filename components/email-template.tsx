@@ -155,7 +155,7 @@ export function EmailTemplate({
               marginBottom: '24px',
               textAlign: 'center'
             }}>
-              Hi {firstName}, here's your personalized quote from ARK Dumpster:
+              Hi {firstName}, here&apos;s your personalized quote from ARK Dumpster:
             </p>
             <div style={{
               backgroundColor: '#f9fafb',
@@ -222,7 +222,7 @@ export function EmailTemplate({
               marginBottom: '24px',
               textAlign: 'center'
             }}>
-              Hi {firstName}, your dumpster rental has been confirmed. We'll be in touch soon with delivery details.
+              Hi {firstName}, your dumpster rental has been confirmed. We&apos;ll be in touch soon with delivery details.
             </p>
           </>
         );
@@ -245,7 +245,7 @@ export function EmailTemplate({
               marginBottom: '24px',
               textAlign: 'center'
             }}>
-              Hi {firstName}, thank you for choosing ARK Dumpster for your waste management needs. We're excited to serve you!
+              Hi {firstName}, thank you for choosing ARK Dumpster for your waste management needs. We&apos;re excited to serve you!
             </p>
           </>
         );

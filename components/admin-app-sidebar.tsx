@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import { User } from '@supabase/supabase-js'

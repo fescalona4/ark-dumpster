@@ -439,7 +439,7 @@ function QuotesPageContent() {
                           <label className="text-sm font-medium">Status</label>
                           <Select 
                             value={editForm.status} 
-                            onValueChange={(value) => setEditForm({...editForm, status: value as any})}
+                            onValueChange={(value) => setEditForm({...editForm, status: value as Quote['status']})}
                           >
                             <SelectTrigger className="mt-1">
                               <SelectValue />
@@ -457,7 +457,7 @@ function QuotesPageContent() {
                           <label className="text-sm font-medium">Priority</label>
                           <Select 
                             value={editForm.priority} 
-                            onValueChange={(value) => setEditForm({...editForm, priority: value as any})}
+                            onValueChange={(value) => setEditForm({...editForm, priority: value as Quote['priority']})}
                           >
                             <SelectTrigger className="mt-1">
                               <SelectValue />

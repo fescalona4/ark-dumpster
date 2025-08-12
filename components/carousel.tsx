@@ -85,8 +85,8 @@ export default async function Carousel({ className }: CarouselProps) {
                         width: "100%",
                         height: "100%",
                     }}>
-                        <MoveSidewayAnimation children={
-                            images.map((image, index) => (
+                        <MoveSidewayAnimation>
+                            {images.map((image, index) => (
                                 <li key={`${image.name}-${index}`} style={{ width: "400px", height: "300px" }}>
                                     <div className="framer-1cosb6b-container" data-framer-name="Ticker Image" style={{ width: "400px", height: "100%", flexShrink: 0 }}>
                                         <div className="framer-8dscJ framer-1cr5qt0 framer-v-1cr5qt0" data-framer-name="Variant 1" style={{ backgroundColor: "rgb(255, 255, 255)", height: "100%", width: "100%", opacity: 1 }}>
@@ -112,8 +112,8 @@ export default async function Carousel({ className }: CarouselProps) {
                                         </div>
                                     </div>
                                 </li>
-                            ))
-                        } />
+                            ))}
+                        </MoveSidewayAnimation>
                     </section>
                 </div>
             </FadeInAnimation>
