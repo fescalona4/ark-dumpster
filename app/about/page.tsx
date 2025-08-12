@@ -1,5 +1,5 @@
-import AboutSection from "@/app/about/about";
-import Carousel from "@/components/carousel";
+import AboutSection from '@/app/about/about';
+import Carousel from '@/components/carousel';
 
 export default function AboutPage() {
   return (

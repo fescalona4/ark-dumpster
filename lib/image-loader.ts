@@ -9,7 +9,11 @@ interface LoaderParams {
   quality?: number;
 }
 
-export default function imageLoader({ src, width, quality }: LoaderParams): string {
+export default function imageLoader({
+  src,
+  width,
+  quality,
+}: LoaderParams): string {
   // For Supabase images, try to use their transformation API
   if (src.includes('supabase.co')) {
     const url = new URL(src);
@@ -21,13 +25,13 @@ export default function imageLoader({ src, width, quality }: LoaderParams): stri
     url.searchParams.set('format', 'webp');
     return url.toString();
   }
-  
+
   // For other images (like Framer), return as-is or use a service like Cloudinary
   // Example with Cloudinary (uncomment and configure if you have an account):
   // if (src.startsWith('https://')) {
   //   return `https://res.cloudinary.com/your-cloud-name/image/fetch/f_auto,c_limit,w_${width},q_${quality || 75}/${encodeURIComponent(src)}`;
   // }
-  
+
   // Fallback: return original URL
   return src;
 }

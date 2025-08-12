@@ -1,68 +1,68 @@
-"use client"
+'use client';
 
-import { useId, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { useId, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SignInForm() {
-  const id = useId()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const id = useId();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        setError(error.message)
+        setError(error.message);
       } else {
         // Success - the user will be redirected by the auth state change
-        console.log("Sign in successful:", data)
+        console.log('Sign in successful:', data);
       }
     } catch (err) {
-      setError("An unexpected error occurred")
-      console.error("Sign in error:", err)
+      setError('An unexpected error occurred');
+      console.error('Sign in error:', err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    setError("")
-
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/admin`
-        }
-      })
-
-      if (error) {
-        setError(error.message)
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-      console.error("Google sign in error:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  // TODO: Implement Google Sign In when OAuth is configured
+  // const handleGoogleSignIn = async () => {
+  //   setIsLoading(true);
+  //   setError('');
+  //   try {
+  //     const { error } = await supabase.auth.signInWithOAuth({
+  //       provider: 'google',
+  //       options: {
+  //         redirectTo: `${window.location.origin}/admin`,
+  //       },
+  //     });
+  //     if (error) {
+  //       setError(error.message);
+  //     }
+  //   } catch (err) {
+  //     setError('An unexpected error occurred');
+  //     console.error('Google sign in error:', err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -72,10 +72,12 @@ export default function SignInForm() {
             className="flex size-11 shrink-0 items-center justify-center rounded-full border"
             aria-hidden="true"
           >
-            <img
+            <Image
               src="/ark-logo.svg"
               alt="Ark Dumpster Logo"
-              className="object-contain w-8 h-8"
+              width={32}
+              height={32}
+              className="object-contain"
             />
           </div>
           <CardTitle>Admin Dashboard</CardTitle>
@@ -99,7 +101,7 @@ export default function SignInForm() {
                 placeholder="admin@arkdumpster.com"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -111,7 +113,7 @@ export default function SignInForm() {
                 placeholder="Enter your password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -159,5 +161,5 @@ export default function SignInForm() {
         </Button> */}
       </CardContent>
     </Card>
-  )
+  );
 }

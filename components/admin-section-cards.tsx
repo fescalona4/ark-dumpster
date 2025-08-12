@@ -1,6 +1,6 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 
-import { Badge } from "@/components/ui/badge"
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardAction,
@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from '@/components/ui/card';
 
 interface QuoteStats {
   total: number;
@@ -23,9 +23,14 @@ interface AdminSectionCardsProps {
 }
 
 export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
-  const acceptanceRate = stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
-  const completionRate = stats.accepted > 0 ? Math.round((stats.completed / stats.accepted) * 100) : 0;
-  
+  const acceptanceRate =
+    stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
+  // TODO: Add completion rate display in future update
+  // const completionRate =
+  //   stats.accepted > 0
+  //     ? Math.round((stats.completed / stats.accepted) * 100)
+  //     : 0;
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
@@ -50,7 +55,7 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
           </div>
         </CardFooter>
       </Card>
-      
+
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Pending Quotes</CardDescription>
@@ -68,9 +73,7 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
           <div className="line-clamp-1 flex gap-2 font-medium">
             Need attention <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">
-            Quotes awaiting response
-          </div>
+          <div className="text-muted-foreground">Quotes awaiting response</div>
         </CardFooter>
       </Card>
 
@@ -120,5 +123,5 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,7 @@ export default function GooglePlacesAutocomplete({
   value,
   onPlaceSelect,
   className,
-  required
+  required,
 }: GooglePlacesAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
@@ -107,7 +107,9 @@ export default function GooglePlacesAutocomplete({
       // Check if API key is available
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        console.warn('Google Maps API key not found. Falling back to manual address entry.');
+        console.warn(
+          'Google Maps API key not found. Falling back to manual address entry.'
+        );
         setHasApiKey(false);
         setIsLoaded(true);
         return;
@@ -133,20 +135,25 @@ export default function GooglePlacesAutocomplete({
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGooglePlaces&loading=async`;
       script.async = true;
       script.defer = true;
-      
+
       // Handle script loading errors
       script.onerror = () => {
-        console.error('Failed to load Google Maps API. Falling back to manual address entry.');
+        console.error(
+          'Failed to load Google Maps API. Falling back to manual address entry.'
+        );
         setHasApiKey(false);
         setIsLoaded(true);
       };
-      
+
       window.initGooglePlaces = () => {
         try {
           initializeAutocomplete();
           setIsLoaded(true);
         } catch (error) {
-          console.error('Failed to initialize Google Places autocomplete:', error);
+          console.error(
+            'Failed to initialize Google Places autocomplete:',
+            error
+          );
           setHasApiKey(false);
           setIsLoaded(true);
         }
@@ -167,7 +174,10 @@ export default function GooglePlacesAutocomplete({
         const originalWarn = console.warn;
         console.warn = (...args) => {
           const message = args[0];
-          if (typeof message === 'string' && message.includes('google.maps.places.Autocomplete')) {
+          if (
+            typeof message === 'string' &&
+            message.includes('google.maps.places.Autocomplete')
+          ) {
             // Suppress the deprecation warning
             return;
           }
@@ -179,25 +189,30 @@ export default function GooglePlacesAutocomplete({
           inputRef.current,
           {
             types: ['address'],
-            componentRestrictions: { 
-              country: 'us'
+            componentRestrictions: {
+              country: 'us',
             },
-            fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+            fields: [
+              'address_components',
+              'formatted_address',
+              'geometry',
+              'name',
+            ],
             // Bias results to Tampa Bay area including St. Petersburg
             bounds: {
               north: 28.2, // North Tampa / Wesley Chapel area
               south: 27.4, // South St. Pete / Tierra Verde area
               east: -82.1, // East Tampa / Brandon area
-              west: -82.9  // West St. Pete / Belcher area
-            }
+              west: -82.9, // West St. Pete / Belcher area
+            },
           }
         );
 
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
-          
+
           if (!place.address_components) {
-            console.log("No address components found");
+            console.log('No address components found');
             return;
           }
 
@@ -211,7 +226,7 @@ export default function GooglePlacesAutocomplete({
 
           addressComponents.forEach((component: any) => {
             const types = component.types;
-            
+
             if (types.includes('street_number')) {
               streetNumber = component.long_name;
             }
@@ -230,10 +245,10 @@ export default function GooglePlacesAutocomplete({
           });
 
           const address = `${streetNumber} ${streetName}`.trim();
-          
+
           // Update the input value
           setInputValue(address);
-          
+
           // Call the callback with parsed data
           onPlaceSelect({
             address,
@@ -241,13 +256,16 @@ export default function GooglePlacesAutocomplete({
             state,
             zipCode,
             fullAddress: place.formatted_address,
-            geometry: place.geometry
+            geometry: place.geometry,
           });
         });
 
         autocompleteRef.current = autocomplete;
       } catch (error) {
-        console.error('Failed to initialize Google Places autocomplete:', error);
+        console.error(
+          'Failed to initialize Google Places autocomplete:',
+          error
+        );
         setHasApiKey(false);
       }
     };
@@ -256,10 +274,12 @@ export default function GooglePlacesAutocomplete({
 
     return () => {
       if (autocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
+        window.google?.maps?.event?.clearInstanceListeners(
+          autocompleteRef.current
+        );
       }
     };
-  }, [onPlaceSelect]);
+  }, [onPlaceSelect, hasApiKey]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -271,7 +291,7 @@ export default function GooglePlacesAutocomplete({
         state: '',
         zipCode: '',
         fullAddress: e.target.value,
-        geometry: null
+        geometry: null,
       });
     }
   };

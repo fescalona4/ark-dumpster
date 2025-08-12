@@ -1,18 +1,17 @@
-import type { Metadata } from "next";
-import { ThemeProvider } from "@/components/theme-provider"
-import { Manrope } from "next/font/google";
-import "./globals.css";
-import ConditionalLayout from "@/components/conditional-layout";
+import type { Metadata } from 'next';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Manrope } from 'next/font/google';
+import './globals.css';
+import ConditionalLayout from '@/components/conditional-layout';
 
 const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
+  variable: '--font-manrope',
+  subsets: ['latin'],
 });
 
-
 export const metadata: Metadata = {
-  title: "ARK Dumpster Rentals",
-  description: "Your go-to solution for dumpster rentals and waste management.",
+  title: 'ARK Dumpster Rentals',
+  description: 'Your go-to solution for dumpster rentals and waste management.',
 };
 
 export default function RootLayout({
@@ -22,16 +21,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${manrope.variable} antialiased`} >
+      <body className={`${manrope.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem={true}
           disableTransitionOnChange
         >
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <ConditionalLayout>{children}</ConditionalLayout>
         </ThemeProvider>
       </body>
     </html>

@@ -43,44 +43,53 @@ export interface CompanyNotificationOptions {
   submittedAt: string;
 }
 
-export async function sendCompanyNotificationEmail(options: CompanyNotificationOptions): Promise<EmailResult> {
+export async function sendCompanyNotificationEmail(
+  options: CompanyNotificationOptions
+): Promise<EmailResult> {
   try {
     console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');
-    
+
     if (!resend) {
       console.error('Resend not initialized');
       return {
         success: false,
-        error: 'Email service not configured'
+        error: 'Email service not configured',
       };
     }
 
     if (!process.env.COMPANY_EMAIL) {
-      console.warn('Company email not configured - skipping company notification');
+      console.warn(
+        'Company email not configured - skipping company notification'
+      );
       return {
         success: false,
-        error: 'Company email not configured'
+        error: 'Company email not configured',
       };
     }
 
-    console.log('Sending company notification email to:', process.env.COMPANY_EMAIL);
-    
-    const companyEmailHtml = await render(CompanyNotificationEmail({ 
-      customerDetails: {
-        firstName: options.customerDetails.firstName,
-        lastName: options.customerDetails.lastName || '',
-        phone: options.customerDetails.phone || '',
-        email: options.customerDetails.email,
-        address: options.customerDetails.address || '',
-        address2: options.customerDetails.address2 || '',
-        city: options.customerDetails.city || '',
-        state: options.customerDetails.state || '',
-        zipCode: options.customerDetails.zipCode || ''
-      },
-      quoteDetails: options.quoteDetails,
-      quoteId: options.quoteId || 'PENDING-DB-SAVE',
-      submittedAt: options.submittedAt
-    }));
+    console.log(
+      'Sending company notification email to:',
+      process.env.COMPANY_EMAIL
+    );
+
+    const companyEmailHtml = await render(
+      CompanyNotificationEmail({
+        customerDetails: {
+          firstName: options.customerDetails.firstName,
+          lastName: options.customerDetails.lastName || '',
+          phone: options.customerDetails.phone || '',
+          email: options.customerDetails.email,
+          address: options.customerDetails.address || '',
+          address2: options.customerDetails.address2 || '',
+          city: options.customerDetails.city || '',
+          state: options.customerDetails.state || '',
+          zipCode: options.customerDetails.zipCode || '',
+        },
+        quoteDetails: options.quoteDetails,
+        quoteId: options.quoteId || 'PENDING-DB-SAVE',
+        submittedAt: options.submittedAt,
+      })
+    );
 
     const companyEmailPayload = {
       from: 'ARK Dumpster Notifications <onboarding@resend.dev>',
@@ -88,32 +97,35 @@ export async function sendCompanyNotificationEmail(options: CompanyNotificationO
       to: process.env.COMPANY_EMAIL,
       subject: `🚨 NEW QUOTE REQUEST - ${options.customerDetails.firstName} ${options.customerDetails.lastName || ''} - ${options.quoteDetails.dumpsterSize} yard dumpster`,
       html: companyEmailHtml,
-      text: generateCompanyEmailText(options)
+      text: generateCompanyEmailText(options),
     };
 
     const result = await resend.emails.send(companyEmailPayload);
-    
+
     if (result.error) {
       console.error('❌ Company email send error:', result.error);
       return {
         success: false,
         error: result.error.message || 'Company email send failed',
-        data: result.error
+        data: result.error,
       };
     }
 
-    console.log('✅ Company notification email sent successfully:', result.data);
+    console.log(
+      '✅ Company notification email sent successfully:',
+      result.data
+    );
     return {
       success: true,
       data: result.data,
-      error: undefined
+      error: undefined,
     };
-
   } catch (error) {
     console.error('❌ Failed to send company notification email:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Company email send failed'
+      error:
+        error instanceof Error ? error.message : 'Company email send failed',
     };
   }
 }
@@ -134,32 +146,34 @@ export async function sendUserEmail(
       console.error('Resend not initialized');
       return {
         success: false,
-        error: 'Email service not configured'
+        error: 'Email service not configured',
       };
     }
 
     // Render the React email template
-    const emailHtml = await render(EmailTemplate({ 
-      firstName, 
-      type,
-      quoteDetails
-    }));
+    const emailHtml = await render(
+      EmailTemplate({
+        firstName,
+        type,
+        quoteDetails,
+      })
+    );
 
     // Create email payload
     const emailPayload = {
-      from: 'ARK Dumpster <onboarding@resend.dev>', 
+      from: 'ARK Dumpster <onboarding@resend.dev>',
       replyTo: 'arkdumpsterrentals@gmail.com',
       to: email,
       subject: subject,
       html: emailHtml,
-      text: generateUserEmailText(firstName, quoteDetails)
+      text: generateUserEmailText(firstName, quoteDetails),
     };
 
     console.log('Email payload prepared:', {
       from: emailPayload.from,
       to: emailPayload.to,
       subject: emailPayload.subject,
-      templateType: type
+      templateType: type,
     });
 
     const result = await resend.emails.send(emailPayload);
@@ -169,7 +183,7 @@ export async function sendUserEmail(
       return {
         success: false,
         error: result.error.message || 'User email send failed',
-        data: result.error
+        data: result.error,
       };
     }
 
@@ -177,14 +191,13 @@ export async function sendUserEmail(
     return {
       success: true,
       data: result.data,
-      error: undefined
+      error: undefined,
     };
-
   } catch (error) {
     console.error('❌ Failed to send user email:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'User email send failed'
+      error: error instanceof Error ? error.message : 'User email send failed',
     };
   }
 }
@@ -211,8 +224,10 @@ function generateCompanyEmailText(options: CompanyNotificationOptions): string {
     customerDetails.address2,
     customerDetails.city,
     customerDetails.state,
-    customerDetails.zipCode
-  ].filter(Boolean).join(', ');
+    customerDetails.zipCode,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return `NEW QUOTE REQUEST ALERT
 
@@ -236,7 +251,10 @@ Quote ID: ${options.quoteId || 'PENDING'}
 Submitted: ${new Date(options.submittedAt).toLocaleString()}`;
 }
 
-function generateUserEmailText(firstName: string, quoteDetails?: QuoteDetails): string {
+function generateUserEmailText(
+  firstName: string,
+  quoteDetails?: QuoteDetails
+): string {
   return `Hello ${firstName},
 
 Thank you for your interest in ARK Dumpster services!

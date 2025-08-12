@@ -1,8 +1,8 @@
-import { useId, useState } from "react"
-import { supabase } from "@/lib/supabase"
+import { useId, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -10,64 +10,64 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function SignInDialog() {
-  const id = useId()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const id = useId();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      })
+      });
 
       if (error) {
-        setError(error.message)
+        setError(error.message);
       } else {
         // Success - the user will be redirected by the auth state change
-        console.log("Sign in successful:", data)
+        console.log('Sign in successful:', data);
       }
     } catch (err) {
-      setError("An unexpected error occurred")
-      console.error("Sign in error:", err)
+      setError('An unexpected error occurred');
+      console.error('Sign in error:', err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
-    setError("")
+  // TODO: Implement Google Sign In when OAuth is configured
+  // const handleGoogleSignIn = async () => {
+  //   setIsLoading(true);
+  //   setError('');
+  //   try {
+  //     const { error } = await supabase.auth.signInWithOAuth({
+  //       provider: 'google',
+  //       options: {
+  //         redirectTo: `${window.location.origin}/admin`,
+  //       },
+  //     });
+  //     if (error) {
+  //       setError(error.message);
+  //     }
+  //   } catch (err) {
+  //     setError('An unexpected error occurred');
+  //     console.error('Google sign in error:', err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/admin`
-        }
-      })
-
-      if (error) {
-        setError(error.message)
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
-      console.error("Google sign in error:", err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -112,7 +112,7 @@ export default function SignInDialog() {
                 placeholder="admin@arkdumpster.com"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -124,7 +124,7 @@ export default function SignInDialog() {
                 placeholder="Enter your password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -172,5 +172,5 @@ export default function SignInDialog() {
         </Button> */}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

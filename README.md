@@ -5,6 +5,7 @@ A modern, full-stack web application for dumpster rental services built with Nex
 ## ✨ Features
 
 ### 🌐 Customer Experience
+
 - **Modern Landing Page** - Professional homepage with service information
 - **Interactive Quote System** - Smart form with Google Places autocomplete
 - **Calendar Integration** - Advanced date picker with availability
@@ -14,6 +15,7 @@ A modern, full-stack web application for dumpster rental services built with Nex
 - **Professional Email Templates** - React-based email designs
 
 ### 🔧 Admin Dashboard
+
 - **Modern Interface** - Clean dashboard with shadcn/ui components and unified header
 - **Comprehensive Quote Management** - Create, view, edit, update, and track all customer quotes
 - **Advanced Data Table** - Interactive table with drag-and-drop sorting, filtering, and pagination
@@ -24,6 +26,7 @@ A modern, full-stack web application for dumpster rental services built with Nex
 - **User Management** - Supabase auth integration with user profiles
 
 ### 🗄️ Database & Backend
+
 - **Supabase Integration** - PostgreSQL database with Row Level Security
 - **Structured Data Model** - Comprehensive quotes table with status and priority tracking
 - **Dual Email System** - Customer notifications + company alerts via Resend
@@ -32,6 +35,7 @@ A modern, full-stack web application for dumpster rental services built with Nex
 - **Type Safety** - Full TypeScript coverage with generated database types
 
 ### 🛠️ Developer Experience
+
 - **Clean Architecture** - Well-organized component structure and API routes
 - **ESLint Configuration** - Production-ready linting with custom rules
 - **Zero Unused Dependencies** - Optimized package.json (41 packages)
@@ -109,12 +113,14 @@ ark-dumpster/
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm/yarn/pnpm
 - Supabase account
 - Resend account (for email)
 
 ### 1. Clone & Install
+
 ```bash
 git clone https://github.com/fescalona4/ark-dumpster.git
 cd ark-dumpster
@@ -122,7 +128,9 @@ npm install
 ```
 
 ### 2. Environment Variables
+
 Create `.env.local`:
+
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -134,16 +142,19 @@ RESEND_API_KEY=your_resend_api_key
 ```
 
 ### 3. Database Setup
+
 1. Create a new Supabase project
 2. Run the migration: `supabase/002_create_quotes_table.sql`
 3. (Optional) Add dummy data: `supabase/insert_dummy_quotes.sql`
 
 ### 4. Run Development Server
+
 ```bash
 npm run dev
 ```
 
 Visit:
+
 - **Website**: http://localhost:3000
 - **Admin Dashboard**: http://localhost:3000/admin
 - **Quote Form**: http://localhost:3000/contact
@@ -151,6 +162,7 @@ Visit:
 ## 📊 Database Schema
 
 ### Quotes Table
+
 ```sql
 quotes {
   id: UUID (Primary Key)
@@ -180,6 +192,7 @@ quotes {
 ## 🎨 UI Components
 
 ### Admin Dashboard Features
+
 - **Interactive Data Table** - Sort, filter, paginate quotes
 - **Statistics Cards** - Real-time business metrics
 - **Professional Sidebar** - Navigation with user profile
@@ -188,6 +201,7 @@ quotes {
 - **Charts** - Visual analytics and trends
 
 ### Form Components
+
 - **Quote Request Form** - Multi-step form with validation
 - **Calendar Picker** - Date selection for dropoff
 - **Notification System** - Success/error feedback
@@ -203,16 +217,19 @@ quotes {
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 1. Connect your GitHub repository to Vercel
 2. Add environment variables in Vercel dashboard
 3. Deploy automatically on push to main branch
 
 ### Environment Variables for Production
+
 Ensure all `.env.local` variables are set in your deployment platform.
 
 ## 📈 Business Features
 
 ### Quote Management Workflow
+
 1. **Customer Submission** - Quote request via contact form
 2. **Admin Review** - View in dashboard, set status to "quoted"
 3. **Customer Response** - Accept/decline quote
@@ -220,10 +237,11 @@ Ensure all `.env.local` variables are set in your deployment platform.
 5. **Analytics** - Track conversion rates and business metrics
 
 ### Status Tracking
+
 - `pending` - New quote request
 - `quoted` - Price provided to customer
 - `accepted` - Customer accepted quote
-- `declined` - Customer declined quote  
+- `declined` - Customer declined quote
 - `completed` - Job finished successfully
 
 ## 🤝 Contributing
@@ -237,6 +255,7 @@ Ensure all `.env.local` variables are set in your deployment platform.
 ## 📞 Support
 
 For support or questions about ARK Dumpster Rentals:
+
 - Email: arkdumpsterrentals@gmail.com
 - Phone: (727) 564-1794
 

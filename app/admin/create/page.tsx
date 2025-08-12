@@ -1,15 +1,23 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+  SelectLabel,
+} from '@/components/ui/select';
 import { DropoffCalendar } from '@/components/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
 import AuthGuard from '@/components/auth-guard';
@@ -47,35 +55,38 @@ function CreateQuoteContent() {
     dropoffDate: '',
     timeNeeded: '1-day',
     dumpsterSize: '15',
-    message: ''
+    message: '',
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { id, value } = e.target;
-    
+
     let formattedValue = value;
-    
+
     // Format first name and last name to camel case (first letter capitalized)
     if (id === 'firstName' || id === 'lastName') {
-      formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      formattedValue =
+        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
-    
+
     // Format state to uppercase and limit to 2 characters
     if (id === 'state') {
       formattedValue = value.toUpperCase().slice(0, 2);
     }
-    
+
     // Format ZIP code to numeric only and limit to 5 digits
     if (id === 'zipCode') {
       const numericOnly = value.replace(/\D/g, '');
       formattedValue = numericOnly.slice(0, 5);
     }
-    
+
     // Format phone number for display
     if (id === 'phone') {
       // Remove all non-numeric characters
       const numericOnly = value.replace(/\D/g, '');
-      
+
       // Format as (XXX) XXX-XXXX
       if (numericOnly.length <= 3) {
         formattedValue = numericOnly;
@@ -85,7 +96,7 @@ function CreateQuoteContent() {
         formattedValue = `(${numericOnly.slice(0, 3)}) ${numericOnly.slice(3, 6)}-${numericOnly.slice(6, 10)}`;
       }
     }
-    
+
     setFormData(prev => ({ ...prev, [id]: formattedValue }));
   };
 
@@ -100,7 +111,7 @@ function CreateQuoteContent() {
       address: placeData.address,
       city: placeData.city,
       state: placeData.state || prev.state, // Keep existing state if not provided
-      zipCode: placeData.zipCode
+      zipCode: placeData.zipCode,
     }));
   };
 
@@ -126,10 +137,12 @@ function CreateQuoteContent() {
         { field: 'zipCode', label: 'ZIP Code' },
         { field: 'dropoffDate', label: 'Drop-off Date' },
         { field: 'timeNeeded', label: 'Time Needed' },
-        { field: 'dumpsterSize', label: 'Dumpster Size' }
+        { field: 'dumpsterSize', label: 'Dumpster Size' },
       ];
 
-      const missingFields = requiredFields.filter(({ field }) => !formData[field as keyof typeof formData]);
+      const missingFields = requiredFields.filter(
+        ({ field }) => !formData[field as keyof typeof formData]
+      );
 
       if (missingFields.length > 0) {
         const fieldNames = missingFields.map(({ label }) => label).join(', ');
@@ -155,29 +168,33 @@ function CreateQuoteContent() {
           subject: 'New Dumpster Rental Request (Admin Created) - ARK Dumpster',
           skipEmail: true, // Always skip email for admin-created quotes
           quoteDetails: {
-            service: formData.dumpsterSize ? `${formData.dumpsterSize} Dumpster` : 'Dumpster Rental',
-            location: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
+            service: formData.dumpsterSize
+              ? `${formData.dumpsterSize} Dumpster`
+              : 'Dumpster Rental',
+            location:
+              `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
             date: formData.dropoffDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
-            message: formData.message
+            message: formData.message,
           },
           fullFormData: {
             ...formData,
-            phone: formData.phone.replace(/\D/g, '')
-          }
+            phone: formData.phone.replace(/\D/g, ''),
+          },
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('Admin quote creation result:', result);
-        
+
         setNotification({
           type: 'success',
           title: 'Quote Created Successfully!',
-          description: "The quote has been saved to the database and is ready for review.",
+          description:
+            'The quote has been saved to the database and is ready for review.',
         });
-        
+
         // Reset form
         setFormData({
           firstName: '',
@@ -192,14 +209,15 @@ function CreateQuoteContent() {
           dropoffDate: '',
           timeNeeded: '1-day',
           dumpsterSize: '15',
-          message: ''
+          message: '',
         });
       } else {
-        const errorData = await response.json();
+        // const errorData = await response.json(); // TODO: Use error data for better user feedback
         setNotification({
           type: 'error',
           title: 'Failed to Create Quote',
-          description: 'There was an error creating the quote. Please try again.',
+          description:
+            'There was an error creating the quote. Please try again.',
         });
       }
     } catch (error) {
@@ -207,7 +225,8 @@ function CreateQuoteContent() {
       setNotification({
         type: 'error',
         title: 'Connection Error',
-        description: 'Unable to connect to the server. Please check your connection and try again.',
+        description:
+          'Unable to connect to the server. Please check your connection and try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -338,17 +357,19 @@ function CreateQuoteContent() {
               </div>
 
               <div className="col-span-6 sm:col-span-2">
-                <DropoffCalendar 
+                <DropoffCalendar
                   value={formData.dropoffDate}
-                  onChange={(date) => handleSelectChange('dropoffDate', date)}
+                  onChange={date => handleSelectChange('dropoffDate', date)}
                 />
               </div>
 
               <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="timeNeeded">Time Needed</Label>
-                <Select 
+                <Select
                   value={formData.timeNeeded}
-                  onValueChange={(value) => handleSelectChange('timeNeeded', value)} 
+                  onValueChange={value =>
+                    handleSelectChange('timeNeeded', value)
+                  }
                   required
                 >
                   <SelectTrigger className="mt-1.5 w-full">
@@ -368,9 +389,11 @@ function CreateQuoteContent() {
 
               <div className="col-span-6 sm:col-span-2">
                 <Label htmlFor="dumpsterSize">Dumpster Size</Label>
-                <Select 
+                <Select
                   value={formData.dumpsterSize}
-                  onValueChange={(value) => handleSelectChange('dumpsterSize', value)} 
+                  onValueChange={value =>
+                    handleSelectChange('dumpsterSize', value)
+                  }
                   required
                 >
                   <SelectTrigger className="mt-1.5 w-full">
@@ -397,7 +420,7 @@ function CreateQuoteContent() {
                 />
               </div>
             </div>
-            
+
             {/* Inline Notification */}
             {notification && (
               <div className="mt-6">
@@ -412,7 +435,7 @@ function CreateQuoteContent() {
             )}
 
             <div className="flex gap-4 mt-6">
-              <Button 
+              <Button
                 type="submit"
                 disabled={isSubmitting}
                 className="flex-1"
@@ -427,12 +450,7 @@ function CreateQuoteContent() {
                   'Create Quote'
                 )}
               </Button>
-              <Button 
-                type="button"
-                variant="outline"
-                asChild
-                size="lg"
-              >
+              <Button type="button" variant="outline" asChild size="lg">
                 <Link href="/admin/quotes">Cancel</Link>
               </Button>
             </div>

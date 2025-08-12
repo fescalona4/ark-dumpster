@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -16,6 +16,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: '*.supabase.co',
       },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
+
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      '@tabler/icons-react',
     ],
   },
   eslint: {
@@ -24,7 +36,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: false,
-  
+
   // Proxy configuration for corporate networks - development only
   ...(isDevelopment && {
     async rewrites() {

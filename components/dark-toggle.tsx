@@ -1,31 +1,31 @@
-"use client"
+'use client';
 
-import { useId, useEffect, useState } from "react"
-import { useTheme } from "next-themes"
-import { MoonIcon, SunIcon } from "lucide-react"
+import { useId, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { MoonIcon, SunIcon } from 'lucide-react';
 
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function DarkToggle() {
-  const id = useId()
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  
+  const id = useId();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
   // Avoid hydration mismatch
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
-    return null
+    return null;
   }
 
-  const isDark = theme === 'dark'
+  const isDark = theme === 'dark';
 
   const handleToggle = (checked: boolean) => {
-    setTheme(checked ? 'dark' : 'light')
-  }
+    setTheme(checked ? 'dark' : 'light');
+  };
 
   return (
     <div>
@@ -47,5 +47,5 @@ export default function DarkToggle() {
         Labeled switch
       </Label>
     </div>
-  )
+  );
 }

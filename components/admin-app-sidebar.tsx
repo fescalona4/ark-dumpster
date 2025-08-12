@@ -1,24 +1,21 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import Image from "next/image"
-import { User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import {
   IconDashboard,
   IconFileText,
-  IconBuildingWarehouse,
   IconSettings,
-  IconHelp,
   IconHome,
-  IconPhone,
   IconCirclePlusFilled,
-} from "@tabler/icons-react"
+} from '@tabler/icons-react';
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
-import DarkToggle from "@/components/dark-toggle"
+import { NavMain } from '@/components/nav-main';
+import { NavSecondary } from '@/components/nav-secondary';
+import { NavUser } from '@/components/nav-user';
+import DarkToggle from '@/components/dark-toggle';
 import {
   Sidebar,
   SidebarContent,
@@ -27,65 +24,72 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
 const navData = {
   navMain: [
     {
-      title: "Dashboard",
-      url: "/admin",
+      title: 'Dashboard',
+      url: '/admin',
       icon: IconDashboard,
     },
     {
-      title: "Quotes",
-      url: "/admin/quotes",
+      title: 'Quotes',
+      url: '/admin/quotes',
       icon: IconFileText,
     },
     {
-      title: "Create Quote",
-      url: "/admin/create",
+      title: 'Create Quote',
+      url: '/admin/create',
       icon: IconCirclePlusFilled,
     },
   ],
   navSecondary: [
     {
-      title: "View Website",
-      url: "/",
+      title: 'View Website',
+      url: '/',
       icon: IconHome,
     },
     {
-      title: "Settings",
-      url: "#",
+      title: 'Settings',
+      url: '#',
       icon: IconSettings,
     },
   ],
-}
+};
 
-export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = useState<User | null>(null)
+export function AdminAppSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-    }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
 
-    getUser()
+    getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null)
-      }
-    )
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => subscription.unsubscribe();
+  }, []);
 
   const userData = {
-    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || "Admin User",
-    email: user?.email || "admin@arkdumpster.com",
-    avatar: user?.user_metadata?.avatar_url || "",
-  }
+    name:
+      user?.user_metadata?.full_name ||
+      user?.email?.split('@')[0] ||
+      'Admin User',
+    email: user?.email || 'admin@arkdumpster.com',
+    avatar: user?.user_metadata?.avatar_url || '',
+  };
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -122,5 +126,5 @@ export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sideba
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }

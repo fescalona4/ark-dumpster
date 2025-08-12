@@ -1,17 +1,16 @@
-import Carousel from "@/components/carousel";
-import Stats from "@/components/stats";
-import Image from "next/image";
-import ServiceSection from "@/app/services/services";
-import Testimonials from "@/components/testimonials";
-import Contacts from "@/app/contact/contact";
-import AboutSection from "@/app/about/about";
+import Carousel from '@/components/carousel';
+import Stats from '@/components/stats';
+import Image from 'next/image';
+import ServiceSection from '@/app/services/services';
+import Testimonials from '@/components/testimonials';
+import Contacts from '@/app/contact/contact';
+import AboutSection from '@/app/about/about';
 import Link from 'next/link';
-import { Badge } from "@/components/ui/badge";
+import { Badge } from '@/components/ui/badge';
 
 export default function Home() {
   return (
     <main>
-
       {/* Top Section */}
       <div className="min-h-[95vh] bg-neutral-900/98 dark:bg-neutral-900 max-md:px-2 max-md:py-4">
         <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-4 max-md:pt-36 md:p-6 md:mb-36 min-h-[95vh] rounded-lg max-md:bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
@@ -20,7 +19,10 @@ export default function Home() {
             <div className="mx-auto px-6 md:px-10 mt-8">
               <div className="flex flex-col gap-8">
                 <div className="flex-1 mt-2">
-                  <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-white">
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 text-sm px-2 py-0.5 text-white"
+                  >
                     <span
                       className="size-1.5 rounded-full bg-emerald-500"
                       aria-hidden="true"
@@ -33,9 +35,9 @@ export default function Home() {
                 </div>
                 <div className="flex-3">
                   <p className="text-2xl font-light leading-relaxed pr-10">
-
-                    Whether you are tackling a home renovation, construction project, or major cleanout,
-                    Ark Dumpster provides convenient, affordable waste management solutions.
+                    Whether you are tackling a home renovation, construction
+                    project, or major cleanout, Ark Dumpster provides
+                    convenient, affordable waste management solutions.
                     <span className="align-super bold text-2xl">®</span>
                     {/* With our commitment to exceptional service and competitive pricing, 
               we make waste disposal simple so you can focus on what matters most. */}
@@ -68,7 +70,6 @@ export default function Home() {
         </div>
       </div>
 
-
       {/* About Section - Company introduction and overview */}
       <AboutSection />
 
@@ -86,7 +87,6 @@ export default function Home() {
 
       {/* Contact Section - Contact form and information */}
       <Contacts />
-
     </main>
   );
 }

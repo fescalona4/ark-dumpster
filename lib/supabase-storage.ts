@@ -9,10 +9,8 @@ const BUCKET_NAME = 'ark-bucket';
  * @returns Public URL string
  */
 export function getImageUrl(imagePath: string): string {
-  const { data } = supabase.storage
-    .from(BUCKET_NAME)
-    .getPublicUrl(imagePath);
-  
+  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(imagePath);
+
   return data.publicUrl;
 }
 
@@ -22,7 +20,10 @@ export function getImageUrl(imagePath: string): string {
  * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
  * @returns Promise with signed URL
  */
-export async function getSignedImageUrl(imagePath: string, expiresIn: number = 3600) {
+export async function getSignedImageUrl(
+  imagePath: string,
+  expiresIn: number = 3600
+) {
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
     .createSignedUrl(imagePath, expiresIn);
@@ -81,7 +82,7 @@ export async function downloadImage(imagePath: string) {
  * @returns Transformed image URL
  */
 export function getOptimizedImageUrl(
-  imagePath: string, 
+  imagePath: string,
   options: {
     width?: number;
     height?: number;
@@ -90,18 +91,18 @@ export function getOptimizedImageUrl(
   } = {}
 ): string {
   const baseUrl = getImageUrl(imagePath);
-  
+
   // If no transformations needed, return original URL
   if (Object.keys(options).length === 0) {
     return baseUrl;
   }
-  
+
   // Build transformation URL (Note: This depends on your Supabase plan and configuration)
   const params = new URLSearchParams();
   if (options.width) params.append('width', options.width.toString());
   if (options.height) params.append('height', options.height.toString());
   if (options.quality) params.append('quality', options.quality.toString());
   if (options.format) params.append('format', options.format);
-  
+
   return `${baseUrl}?${params.toString()}`;
 }

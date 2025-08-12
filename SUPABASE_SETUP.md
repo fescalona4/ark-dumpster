@@ -3,9 +3,11 @@
 Your ARK Dumpster project is now connected to Supabase database. Here's what was set up:
 
 ## 📦 Dependencies Added
+
 - `@supabase/supabase-js` - Supabase JavaScript client
 
 ## 🗂️ Files Created
+
 - `lib/supabase.ts` - Client-side Supabase configuration with TypeScript types
 - `lib/supabase-server.ts` - Server-side Supabase clients for API routes
 - `lib/database.ts` - Utility functions for database operations
@@ -16,6 +18,7 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
 - `test-supabase.js` - Connection test script
 
 ## 📝 Files Modified
+
 - `.env.example` - Added Supabase environment variables template
 - `app/api/send/route.ts` - Added database saving functionality
 - `app/contact/contact.tsx` - Enhanced to send full form data for database storage
@@ -26,10 +29,11 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
 
 2. **Get your credentials** from Project Settings > API:
    - Project URL
-   - Anon public key  
+   - Anon public key
    - Service role key
 
 3. **Update your `.env.local`** file:
+
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
@@ -44,6 +48,7 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
    - If upgrading from an older version with contacts table, run `supabase/003_drop_contacts_table.sql`
 
 5. **Test your setup**:
+
    ```bash
    node test-supabase.js
    ```
@@ -69,6 +74,7 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
 ## 📊 Database Schema
 
 **contacts** table (legacy format):
+
 - `id` (UUID) - Primary key
 - `name` (VARCHAR) - Customer name
 - `email` (VARCHAR) - Customer email
@@ -78,6 +84,7 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
 - `updated_at` (TIMESTAMP) - Last modified
 
 **quotes** table (structured format):
+
 - `id` (UUID) - Primary key
 - `first_name`, `last_name` (VARCHAR) - Customer name
 - `email` (VARCHAR) - Customer email
@@ -111,6 +118,7 @@ Your ARK Dumpster project is now connected to Supabase database. Here's what was
 ## 🛠️ Troubleshooting
 
 If you encounter issues:
+
 1. Run `node test-supabase.js` to check connection
 2. Verify environment variables in `.env.local`
 3. Check Supabase dashboard for table creation
@@ -120,6 +128,7 @@ If you encounter issues:
 ## 📚 Next Steps
 
 Consider adding:
+
 - User authentication for admin features
 - Real-time updates with Supabase subscriptions
 - File upload capabilities
@@ -130,6 +139,7 @@ Consider adding:
 ## 🎯 Success Metrics
 
 Your integration is successful when:
+
 - ✅ Contact form submissions appear in Supabase table
 - ✅ Emails are sent AND database is updated
 - ✅ Admin page shows contact submissions

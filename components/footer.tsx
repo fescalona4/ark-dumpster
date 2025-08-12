@@ -1,28 +1,25 @@
-import { Separator } from "@/components/ui/separator";
-import {
-  Instagram,
-  Facebook,
-} from "lucide-react";
-import Link from "next/link";
+import { Separator } from '@/components/ui/separator';
+import { Instagram, Facebook } from 'lucide-react';
+import Link from 'next/link';
 import Image from 'next/image';
-import DarkToggle from "@/components/dark-toggle";
+import DarkToggle from '@/components/dark-toggle';
 
 const footerLinks = [
   {
-    title: "Home",
-    href: "/",
+    title: 'Home',
+    href: '/',
   },
   {
-    title: "About",
-    href: "/#about",
+    title: 'About',
+    href: '/#about',
   },
   {
-    title: "Services",
-    href: "/#services",
+    title: 'Services',
+    href: '/#services',
   },
   {
-    title: "Contact",
-    href: "/#contact",
+    title: 'Contact',
+    href: '/#contact',
   },
 ];
 
@@ -68,7 +65,7 @@ const Footer = () => {
           <div className="py-8 md:ml-8 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
             {/* Copyright */}
             <span className="text-gray-300 dark:text-muted-foreground">
-              &copy; {new Date().getFullYear()}{" "}
+              &copy; {new Date().getFullYear()}{' '}
               <Link href="/" target="_blank">
                 ARK Dumpsters
               </Link>

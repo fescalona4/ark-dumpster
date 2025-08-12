@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 interface SiteHeaderProps {
   title?: string;
@@ -14,25 +14,27 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ title, actions }: SiteHeaderProps) {
   const pathname = usePathname();
-  
+
   // Generate page title based on pathname if not provided
   const getPageTitle = () => {
     if (title) return title;
-    
+
     if (pathname === '/admin') return 'Dashboard';
     if (pathname === '/admin/quotes') return 'Quotes';
     if (pathname === '/admin/create') return 'Create Quote';
-    
+
     // Extract page name from pathname
     const segments = pathname.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
-    return lastSegment ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1) : 'Dashboard';
+    return lastSegment
+      ? lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)
+      : 'Dashboard';
   };
 
   // Generate default actions based on pathname
   const getDefaultActions = () => {
     if (actions) return actions;
-    
+
     if (pathname === '/admin/create') {
       return (
         <Button variant="outline" asChild size="sm">
@@ -43,7 +45,7 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
         </Button>
       );
     }
-    
+
     return null;
   };
 
@@ -61,5 +63,5 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
         </div>
       </div>
     </header>
-  )
+  );
 }

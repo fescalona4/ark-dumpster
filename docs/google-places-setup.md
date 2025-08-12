@@ -42,9 +42,10 @@ This application uses Google Places API for address autocomplete functionality. 
 ## 6. API Restrictions (Security)
 
 For production, restrict your API key:
+
 - **HTTP referrers**: Only your domain(s)
 - **API restrictions**: Only enable required APIs
-- Never expose API keys in client-side code (use NEXT_PUBLIC_ prefix carefully)
+- Never expose API keys in client-side code (use NEXT*PUBLIC* prefix carefully)
 
 ## Features Implemented
 

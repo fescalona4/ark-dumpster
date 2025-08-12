@@ -5,9 +5,12 @@ export async function GET(request: NextRequest) {
     // Extract the path from the request
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
-    
+
     if (!targetUrl) {
-      return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'URL parameter is required' },
+        { status: 400 }
+      );
     }
 
     // Forward the request to the target URL
@@ -21,7 +24,7 @@ export async function GET(request: NextRequest) {
     });
 
     const data = await response.text();
-    
+
     return new NextResponse(data, {
       status: response.status,
       headers: {
@@ -45,9 +48,12 @@ export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const targetUrl = searchParams.get('url');
-    
+
     if (!targetUrl) {
-      return NextResponse.json({ error: 'URL parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'URL parameter is required' },
+        { status: 400 }
+      );
     }
 
     const body = await request.text();
@@ -55,18 +61,20 @@ export async function POST(request: NextRequest) {
     const response = await fetch(targetUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': request.headers.get('content-type') || 'application/json',
+        'Content-Type':
+          request.headers.get('content-type') || 'application/json',
         'User-Agent': request.headers.get('user-agent') || 'Next.js Proxy',
       },
       body,
     });
 
     const data = await response.text();
-    
+
     return new NextResponse(data, {
       status: response.status,
       headers: {
-        'Content-Type': response.headers.get('content-type') || 'application/json',
+        'Content-Type':
+          response.headers.get('content-type') || 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',

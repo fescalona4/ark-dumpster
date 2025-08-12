@@ -1,15 +1,18 @@
 # Corporate Proxy Configuration - Security Summary
 
 ## Overview
+
 This application includes corporate proxy support for development environments only. The proxy configuration is designed with multiple layers of security to ensure it's never active in production.
 
 ## Security Measures
 
 ### 1. Environment Variable Restrictions
+
 - Proxy settings are only loaded and used when `NODE_ENV=development`
 - Production deployments should NOT include proxy environment variables
 
 ### 2. API Route Protection
+
 All proxy routes include explicit environment checks:
 
 ```typescript
@@ -24,6 +27,7 @@ if (process.env.NODE_ENV !== 'development') {
 ```
 
 ### 3. Next.js Configuration Protection
+
 The `next.config.ts` file uses conditional configuration:
 
 ```typescript
@@ -38,6 +42,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 ```
 
 ### 4. Database Service Protection
+
 The database service only uses proxy-aware clients in development:
 
 ```typescript
@@ -52,11 +57,13 @@ if (isDevelopment) {
 ## Protected Routes
 
 ### `/api/supabase-proxy/[...path]`
+
 - **Purpose**: Proxy Supabase API calls through corporate firewall
 - **Protection**: Returns 403 error if `NODE_ENV !== 'development'`
 - **Method**: GET, POST both protected
 
 ### `/api/test-proxy`
+
 - **Purpose**: Test proxy functionality
 - **Protection**: Returns 403 error if `NODE_ENV !== 'development'`
 - **Method**: GET only
@@ -64,6 +71,7 @@ if (isDevelopment) {
 ## Environment Files
 
 ### `.env.local` (Development)
+
 - Contains actual proxy settings for Verizon corporate network
 - Should NOT be deployed to production
 - Includes clear comments indicating development-only usage
@@ -72,6 +80,7 @@ if (isDevelopment) {
   - `SKIP_EMAIL_IN_DEVELOPMENT=true` - Skips email sending in development
 
 ### `.env.example` (Template)
+
 - Proxy settings are commented out by default
 - Includes clear warnings about development-only usage
 - Safe to commit to repository
@@ -82,7 +91,7 @@ if (isDevelopment) {
 - [ ] Ensure `NODE_ENV=production` is set
 - [ ] Remove all proxy-related environment variables:
   - `HTTP_PROXY`
-  - `HTTPS_PROXY` 
+  - `HTTPS_PROXY`
   - `http_proxy`
   - `https_proxy`
   - `NO_PROXY`
@@ -115,6 +124,7 @@ if (isDevelopment) {
 The application uses environment variables to control email behavior:
 
 ### Development Email Control
+
 ```bash
 # Skip emails in development environment
 SKIP_EMAIL_IN_DEVELOPMENT=true
@@ -124,6 +134,7 @@ NODE_ENV=development
 When both conditions are met, emails are skipped with the reason: "development environment (SKIP_EMAIL_IN_DEVELOPMENT=true)"
 
 ### Production Email Control
+
 ```bash
 # Enable user email notifications in production
 SEND_USER_EMAIL_NOTIFICATIONS=true

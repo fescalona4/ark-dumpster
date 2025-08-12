@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -60,8 +60,11 @@ export default function Header() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      // Store the current timeout reference before cleanup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const currentTimeout = scrollTimeoutRef.current;
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
       }
     };
   }, []);
@@ -73,7 +76,10 @@ export default function Header() {
       animate={{ opacity: isHeaderVisible ? 1 : 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div ref={menuRef} className="px-4 md:px-6 lg:px-8 bg-black/60 backdrop-blur-md rounded-lg mx-4 mt-6 md:bg-transparent md:backdrop-blur-none md:rounded-none md:mx-0 md:mt-0">
+      <div
+        ref={menuRef}
+        className="px-4 md:px-6 lg:px-8 bg-black/60 backdrop-blur-md rounded-lg mx-4 mt-6 md:bg-transparent md:backdrop-blur-none md:rounded-none md:mx-0 md:mt-0"
+      >
         <div className="flex justify-between items-center md:grid md:grid-cols-2 h-16">
           {/* Logo */}
           <div className="flex-shrink-0 md:ml-20">
@@ -152,7 +158,6 @@ export default function Header() {
                 </svg>
               </button>
             </div>
-
           </div>
         </div>
 
@@ -162,9 +167,9 @@ export default function Header() {
             <motion.div
               className="md:hidden border-t border-black/[.08] dark:border-white/[.145] mt-2 pt-8 pb-8"
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
+              animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
             >
               <nav className="flex flex-col space-y-8 mb-8">
                 <motion.div

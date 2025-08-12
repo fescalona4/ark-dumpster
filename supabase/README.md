@@ -42,6 +42,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 5. Your `quotes` table should now be created with proper security policies
 
 **If upgrading from a previous version:**
+
 - Also run `supabase/003_drop_contacts_table.sql` to remove the deprecated contacts table
 
 ## 5. Verify Your Setup
@@ -89,6 +90,7 @@ You can test the connection by:
 ## 8. Next Steps
 
 Consider setting up:
+
 - **Authentication**: Add user login for admin dashboard
 - **Admin Dashboard**: Create pages to view/manage contacts
 - **Real-time**: Subscribe to new contact submissions
@@ -97,7 +99,7 @@ Consider setting up:
 ## Files Created
 
 - `lib/supabase.ts` - Client-side Supabase configuration
-- `lib/supabase-server.ts` - Server-side Supabase configuration  
+- `lib/supabase-server.ts` - Server-side Supabase configuration
 - `lib/database.ts` - Database utility functions
 - `supabase/002_create_quotes_table.sql` - Database migration for quotes
 - `supabase/003_drop_contacts_table.sql` - Migration to remove deprecated contacts table

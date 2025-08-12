@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { ChevronDownIcon } from "lucide-react"
+import * as React from 'react';
+import { ChevronDownIcon } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Label } from "@/components/ui/label"
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from '@/components/ui/popover';
 
 interface DropoffCalendarProps {
   value?: string;
@@ -18,10 +18,10 @@ interface DropoffCalendarProps {
 }
 
 export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date | undefined>(
     value ? new Date(value + 'T00:00:00') : undefined
-  )
+  );
 
   React.useEffect(() => {
     if (value) {
@@ -54,7 +54,7 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
             id="date"
             className="justify-between font-normal text-foreground bg-white h-11 shadow-none"
           >
-            {date ? date.toLocaleDateString() : "Date needed"}
+            {date ? date.toLocaleDateString() : 'Date needed'}
             <ChevronDownIcon />
           </Button>
         </PopoverTrigger>
@@ -64,10 +64,10 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
             selected={date}
             captionLayout="dropdown"
             onSelect={handleDateSelect}
-            disabled={(date) => date < new Date()}
+            disabled={date => date < new Date()}
           />
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

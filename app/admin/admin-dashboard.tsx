@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AdminSectionCards } from "@/components/admin-section-cards";
-import { DataTable } from "@/components/data-table";
-import { ChartAreaInteractive } from "@/components/chart-area-interactive";
+import { AdminSectionCards } from '@/components/admin-section-cards';
+import { DataTable } from '@/components/data-table';
+import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 
 interface Quote {
   id: string;
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
     pending: 0,
     quoted: 0,
     accepted: 0,
-    completed: 0
+    completed: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +57,14 @@ export default function AdminDashboard() {
   const fetchQuotes = async () => {
     try {
       setLoading(true);
-      
+
       // Check if Supabase is properly configured
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error('Supabase is not configured. Please check your environment variables.');
+        throw new Error(
+          'Supabase is not configured. Please check your environment variables.'
+        );
       }
-      
+
       const { data, error } = await supabase
         .from('quotes')
         .select('*')
@@ -74,7 +76,7 @@ export default function AdminDashboard() {
       } else {
         const quotesData = data || [];
         setQuotes(quotesData);
-        
+
         // Calculate stats
         const stats = {
           total: quotesData.length,
@@ -101,7 +103,7 @@ export default function AdminDashboard() {
     status: quote.status.charAt(0).toUpperCase() + quote.status.slice(1), // Capitalize status
     target: quote.dropoff_date || 'TBD',
     limit: quote.quoted_price ? `$${quote.quoted_price}` : 'Pending',
-    reviewer: quote.email
+    reviewer: quote.email,
   }));
 
   if (loading) {
@@ -121,9 +123,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center">
-          <div className="text-center text-red-500">
-            Error: {error}
-          </div>
+          <div className="text-center text-red-500">Error: {error}</div>
         </div>
       </div>
     );

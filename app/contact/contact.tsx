@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Instagram, Facebook } from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Instagram, Facebook } from 'lucide-react';
+import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import {
   Select,
   SelectContent,
@@ -17,12 +17,11 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { DropoffCalendar } from "../../components/dropoffCalendar";
-import { useState } from "react";
-import { Notification } from "@/components/ui/notification";
-import GooglePlacesAutocomplete from "@/components/google-places-autocomplete";
-
+} from '@/components/ui/select';
+import { DropoffCalendar } from '../../components/dropoffCalendar';
+import { useState } from 'react';
+import { Notification } from '@/components/ui/notification';
+import GooglePlacesAutocomplete from '@/components/google-places-autocomplete';
 
 const Contacts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,17 +47,20 @@ const Contacts = () => {
     dropoffDate: '',
     timeNeeded: '1-day',
     dumpsterSize: '15',
-    message: ''
+    message: '',
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { id, value } = e.target;
 
     let formattedValue = value;
 
     // Format first name and last name to camel case (first letter capitalized)
     if (id === 'firstName' || id === 'lastName') {
-      formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      formattedValue =
+        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
     // Format state to uppercase and limit to 2 characters
@@ -105,7 +107,7 @@ const Contacts = () => {
       address: placeData.address,
       city: placeData.city,
       state: placeData.state || prev.state, // Keep existing state if not provided
-      zipCode: placeData.zipCode
+      zipCode: placeData.zipCode,
     }));
   };
 
@@ -127,11 +129,13 @@ const Contacts = () => {
         { field: 'zipCode', label: 'ZIP Code' },
         { field: 'dropoffDate', label: 'Drop-off Date' },
         { field: 'timeNeeded', label: 'Time Needed' },
-        { field: 'dumpsterSize', label: 'Dumpster Size' }
+        { field: 'dumpsterSize', label: 'Dumpster Size' },
         // Note: message field is optional
       ];
 
-      const missingFields = requiredFields.filter(({ field }) => !formData[field as keyof typeof formData]);
+      const missingFields = requiredFields.filter(
+        ({ field }) => !formData[field as keyof typeof formData]
+      );
 
       if (missingFields.length > 0) {
         const fieldNames = missingFields.map(({ label }) => label).join(', ');
@@ -160,37 +164,42 @@ const Contacts = () => {
           subject: 'New Dumpster Rental Request - ARK Dumpster',
           // Remove client-side skipEmail logic - let server decide based on env vars
           quoteDetails: {
-            service: formData.dumpsterSize ? `${formData.dumpsterSize} Dumpster` : 'Dumpster Rental',
-            location: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
+            service: formData.dumpsterSize
+              ? `${formData.dumpsterSize} Dumpster`
+              : 'Dumpster Rental',
+            location:
+              `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
             date: formData.dropoffDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
-            message: formData.message
+            message: formData.message,
           },
           // Include full form data for database storage with numeric phone
           fullFormData: {
             ...formData,
-            phone: formData.phone.replace(/\D/g, '') // Keep only numeric characters for submission
-          }
+            phone: formData.phone.replace(/\D/g, ''), // Keep only numeric characters for submission
+          },
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('API Response:', result);
-        
+
         // Determine the notification message based on email settings
         const title = 'Request Sent Successfully!';
         let description;
-        
+
         if (result.emailSkipped || !result.userEmailSent) {
-          description = "Thank you! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.";
+          description =
+            "Thank you! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.";
         } else {
-          description = "Thank you! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.";
+          description =
+            "Thank you! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.";
         }
-        
+
         // Add development info if email was skipped
         if (result.emailSkipped) {
-          description += " (Email sending disabled in development mode)";
+          description += ' (Email sending disabled in development mode)';
         }
 
         setNotification({
@@ -206,8 +215,8 @@ const Contacts = () => {
           dbSaved: result.dbSaved,
           formData: {
             ...formData,
-            phone: formData.phone.replace(/\D/g, '')
-          }
+            phone: formData.phone.replace(/\D/g, ''),
+          },
         });
 
         // Reset form
@@ -224,7 +233,7 @@ const Contacts = () => {
           dropoffDate: '',
           timeNeeded: '1-day',
           dumpsterSize: '15',
-          message: ''
+          message: '',
         });
       } else {
         const errorData = await response.json();
@@ -235,21 +244,23 @@ const Contacts = () => {
           setNotification({
             type: 'warning',
             title: 'Email Service Temporarily Unavailable',
-            description: 'We\'re experiencing technical difficulties. Please call us directly or try again in a few minutes.',
+            description:
+              "We're experiencing technical difficulties. Please call us directly or try again in a few minutes.",
             action: {
               label: 'Call Now',
-              onClick: () => window.open('tel:7275641794', '_self')
-            }
+              onClick: () => window.open('tel:7275641794', '_self'),
+            },
           });
         } else {
           setNotification({
             type: 'error',
             title: 'Failed to Send Request',
-            description: 'There was an error sending your request. Please try again or contact us directly.',
+            description:
+              'There was an error sending your request. Please try again or contact us directly.',
             action: {
               label: 'Call (727) 564-1794',
-              onClick: () => window.open('tel:7275641794', '_self')
-            }
+              onClick: () => window.open('tel:7275641794', '_self'),
+            },
           });
         }
       }
@@ -258,14 +269,15 @@ const Contacts = () => {
       setNotification({
         type: 'error',
         title: 'Connection Error',
-        description: 'Unable to connect to our servers. Please check your internet connection and try again.',
+        description:
+          'Unable to connect to our servers. Please check your internet connection and try again.',
         action: {
           label: 'Retry',
           onClick: () => {
             setNotification(null);
             setIsSubmitting(false);
-          }
-        }
+          },
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -278,34 +290,29 @@ const Contacts = () => {
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.5, ease: "easeOut", delay: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut', delay: 0 }}
     >
       <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
         <div className="w-full max-w-screen-xl mx-auto">
-
           <div className="mt-24 grid lg:grid-cols-5 gap-16 md:gap-10 text-primary-foreground dark:text-foreground">
-
-
             <div className="flex flex-col lg:col-span-2 justify-start min-h-full gap-4 px-6">
               <div>
-                <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-primary-foreground dark:text-foreground">
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 text-sm px-2 py-0.5 text-primary-foreground dark:text-foreground"
+                >
                   Contact Us
                 </Badge>
-                <h1 className="text-5xl mb-4 pt-2 flex">
-                  Get in touch
-                </h1>
+                <h1 className="text-5xl mb-4 pt-2 flex">Get in touch</h1>
                 <h3 className="text-xl mb-8 font-light">
-                  Need a dumpster rental? We&apos;re here to help with your project.
-                  Contact us for a free quote today.
+                  Need a dumpster rental? We&apos;re here to help with your
+                  project. Contact us for a free quote today.
                 </h3>
               </div>
 
               <div className="flex max-md:flex-col justify-between">
                 <h3 className="font-semibold text-lg">Phone:</h3>
-                <Link
-                  className="font-light text-lg"
-                  href="tel:7275641794  "
-                >
+                <Link className="font-light text-lg" href="tel:7275641794  ">
                   (727) 564-1794
                 </Link>
               </div>
@@ -462,7 +469,9 @@ const Contacts = () => {
                       {/* <Label htmlFor="dropoffDate">Drop-off Date *</Label> */}
                       <DropoffCalendar
                         value={formData.dropoffDate}
-                        onChange={(date) => handleSelectChange('dropoffDate', date)}
+                        onChange={date =>
+                          handleSelectChange('dropoffDate', date)
+                        }
                       />
                     </div>
 
@@ -470,7 +479,9 @@ const Contacts = () => {
                       <Label htmlFor="timeNeeded">Time Needed</Label>
                       <Select
                         value={formData.timeNeeded}
-                        onValueChange={(value) => handleSelectChange('timeNeeded', value)}
+                        onValueChange={value =>
+                          handleSelectChange('timeNeeded', value)
+                        }
                         required
                       >
                         <SelectTrigger className="mt-1.5 w-full">
@@ -492,7 +503,9 @@ const Contacts = () => {
                       <Label htmlFor="dumpsterSize">Dumpster Size</Label>
                       <Select
                         value={formData.dumpsterSize}
-                        onValueChange={(value) => handleSelectChange('dumpsterSize', value)}
+                        onValueChange={value =>
+                          handleSelectChange('dumpsterSize', value)
+                        }
                         required
                       >
                         <SelectTrigger className="mt-1.5 w-full">
@@ -501,7 +514,9 @@ const Contacts = () => {
                         <SelectContent>
                           <SelectGroup>
                             {/* <SelectLabel>Select size</SelectLabel> */}
-                            <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
+                            <SelectItem value="15">
+                              15 Yard Dump Trailer
+                            </SelectItem>
                             <SelectItem value="20">20 Yard Dumpster</SelectItem>
                           </SelectGroup>
                         </SelectContent>
