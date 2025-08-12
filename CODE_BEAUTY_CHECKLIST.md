@@ -23,7 +23,7 @@
 #### **Developer Experience**
 
 - [x] **VS Code Settings** - Shared workspace configuration
-- [x] **GitHub Actions** - CI/CD pipeline automation
+- [ ] **Manual Quality Control** - Run commands before commits (`npm run format`, `npm run lint:fix`)
 - [ ] **Dependabot** - Automated dependency updates
 - [ ] **Code Coverage** - Test coverage reports
 
@@ -55,9 +55,9 @@
    - Shared formatting settings
    - Recommended extensions
 
-3. **GitHub Actions** ✅ (completed)
-   - Automatic code quality checks
-   - Build verification on PRs
+3. **Manual Development Workflow** ✅ (completed)
+   - Quality commands available when needed
+   - No automated overhead
 
 4. **Add Error Boundaries** (15 minutes)
    - Graceful error handling
