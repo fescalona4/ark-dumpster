@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
       },
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/api/image-proxy**',
+      },
+      {
         protocol: 'https',
         hostname: '**',
       },
@@ -46,6 +52,11 @@ const nextConfig: NextConfig = {
         {
           source: '/proxy/supabase/auth/:path*',
           destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/:path*`,
+        },
+        // Proxy Supabase storage for image optimization
+        {
+          source: '/proxy/supabase/storage/:path*',
+          destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/:path*`,
         },
         // Proxy general Supabase calls (fallback)
         {

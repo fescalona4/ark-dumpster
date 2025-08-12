@@ -39,6 +39,10 @@ export async function GET(request: NextRequest) {
 
         console.log('✅ Undici proxy agent configured');
 
+        // Note: Using anon key here because this proxy is designed to handle 
+        // client-side requests that should maintain the same permission level
+        // as the original client request. For server-side admin operations,
+        // use the service role key directly (not through this proxy).
         const response = await undiciFetch(targetUrl, {
           method: 'GET',
           headers: {

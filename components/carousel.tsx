@@ -9,14 +9,14 @@ interface CarouselImage {
 
 async function getCarouselImages(): Promise<CarouselImage[]> {
   try {
-    console.log('Fetching images dynamically from dump folder for carousel...');
+    console.log('Fetching images dynamically from carousel folder...');
 
-    // Fetch images from the dump folder
-    const { data: files, error } = await listImages('dump');
+    // Fetch images from the carousel folder
+    const { data: files, error } = await listImages('carousel');
 
     if (error) {
       console.warn('Error fetching carousel images:', error);
-      return getFallbackImages();
+      return [];
     }
 
     if (files && files.length > 0) {
@@ -26,48 +26,26 @@ async function getCarouselImages(): Promise<CarouselImage[]> {
       );
 
       if (imageFiles.length === 0) {
-        console.warn('No image files found in dump folder');
-        return getFallbackImages();
+        console.warn('No image files found in carousel folder');
+        return [];
       }
 
-      console.log(`Found ${imageFiles.length} images in dump folder for carousel`);
+      console.log(`Found ${imageFiles.length} images in carousel folder`);
 
       // Create carousel images with duplicates for seamless scrolling
       const baseImages = imageFiles.map(file => ({
         name: file.name,
-        url: getImageUrl(`dump/${file.name}`)
+        url: getImageUrl(`carousel/${file.name}`)
       }));
 
       // Duplicate images for seamless infinite scroll
       return [...baseImages, ...baseImages];
     } else {
       console.warn('No files found in carousel folder');
-      return getFallbackImages();
+      return [];
     }
   } catch (err) {
     console.error('Error in getCarouselImages:', err);
-    return getFallbackImages();
-  }
-}
-
-function getFallbackImages(): CarouselImage[] {
-  // Fallback to hardcoded images if dynamic fetching fails
-  console.log('Using fallback images for carousel...');
-  try {
-    return [
-      { name: 'dump1.jpg', url: getImageUrl('carousel/dump1.jpg') },
-      { name: 'dump2.jpg', url: getImageUrl('carousel/dump2.jpg') },
-      { name: 'dump3.jpg', url: getImageUrl('carousel/dump3.jpg') },
-      { name: 'dump4.jpg', url: getImageUrl('carousel/dump4.jpg') },
-      // Duplicate for seamless scrolling
-      { name: 'dump1.jpg', url: getImageUrl('carousel/dump1.jpg') },
-      { name: 'dump2.jpg', url: getImageUrl('carousel/dump2.jpg') },
-      { name: 'dump3.jpg', url: getImageUrl('carousel/dump3.jpg') },
-      { name: 'dump4.jpg', url: getImageUrl('carousel/dump4.jpg') },
-    ];
-  } catch (error) {
-    // If getImageUrl also fails, use local fallback images
-    console.warn('Falling back to empty carousel due to URL generation error:', error);
     return [];
   }
 }
@@ -78,6 +56,12 @@ interface CarouselProps {
 
 export default async function Carousel({ className }: CarouselProps) {
   const images = await getCarouselImages();
+
+  // If no images are available, don't render the carousel
+  if (images.length === 0) {
+    console.log('No carousel images available, skipping carousel render');
+    return null;
+  }
 
   return (
     <FadeInAnimation>

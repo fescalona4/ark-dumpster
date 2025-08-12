@@ -96,6 +96,7 @@ export default function ServiceSection() {
         }
 
         setServiceImages(newServiceImages);
+        console.log('Final service images state:', newServiceImages);
       } catch (error) {
         console.error('Error setting up service images:', error);
         // Use empty arrays in case of complete failure

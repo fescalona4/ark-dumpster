@@ -1,7 +1,11 @@
 import { supabase } from './supabase';
+import { createServerSupabaseClient } from './supabase-server';
 
 // Hardcoded bucket name
 const BUCKET_NAME = 'ark-bucket';
+
+// Use server client with service role for admin operations (listing, etc.)
+const serverSupabase = typeof window === 'undefined' ? createServerSupabaseClient() : null;
 
 /**
  * Get public URL for an image from Supabase storage
@@ -10,6 +14,11 @@ const BUCKET_NAME = 'ark-bucket';
  */
 export function getImageUrl(imagePath: string): string {
   const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(imagePath);
+
+  // In development, use image proxy to bypass corporate firewall for Next.js image optimization
+  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+    return `/api/image-proxy?url=${encodeURIComponent(data.publicUrl)}`;
+  }
 
   return data.publicUrl;
 }
@@ -21,7 +30,10 @@ export function getImageUrl(imagePath: string): string {
  * @returns Promise with signed URL
  */
 export async function getSignedImageUrl(imagePath: string, expiresIn: number = 3600) {
-  const { data, error } = await supabase.storage
+  // Use server client for signed URLs (requires elevated permissions)
+  const client = serverSupabase || supabase;
+
+  const { data, error } = await client.storage
     .from(BUCKET_NAME)
     .createSignedUrl(imagePath, expiresIn);
 
@@ -39,26 +51,40 @@ export async function getSignedImageUrl(imagePath: string, expiresIn: number = 3
  * @returns Promise with list of files
  */
 export async function listImages(folder: string = '') {
-  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(folder, {
-    limit: 100,
-    offset: 0,
-  });
+  try {
+    console.log(`📁 Listing images from folder: ${folder}`);
 
-  if (error) {
-    console.error('Error listing images:', error);
-    return { data: null, error };
+    // Use our custom proxy endpoint with service role key
+    const baseUrl = process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000'  // Back to port 3000
+      : `https://${process.env.VERCEL_URL}` || 'http://localhost:3000';
+
+    const response = await fetch(`${baseUrl}/api/storage-list?folder=${encodeURIComponent(folder)}`);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error listing images via proxy:', errorData.error);
+      return { data: [], error: new Error(errorData.error) };
+    }
+
+    const data = await response.json();
+    console.log(`✅ Successfully listed ${data.length} files from folder "${folder}" via service role proxy`);
+
+    return { data, error: null };
+  } catch (error: any) {
+    console.error('Error in listImages proxy call:', error);
+    return { data: [], error };
   }
-
-  return { data, error: null };
-}
-
-/**
+}/**
  * Download an image as a blob
  * @param imagePath - Path to the image in the bucket
  * @returns Promise with image blob
  */
 export async function downloadImage(imagePath: string) {
-  const { data, error } = await supabase.storage.from(BUCKET_NAME).download(imagePath);
+  // Use server client for downloads (may require elevated permissions)
+  const client = serverSupabase || supabase;
+
+  const { data, error } = await client.storage.from(BUCKET_NAME).download(imagePath);
 
   if (error) {
     console.error('Error downloading image:', error);

@@ -1,6 +1,6 @@
-import {} from // createServerSupabaseClient, // TODO: Use for server-side operations
-// createServerSupabaseClientSafe, // TODO: Use for safe server operations
-'@/lib/supabase-server';
+import { } from // createServerSupabaseClient, // TODO: Use for server-side operations
+  // createServerSupabaseClientSafe, // TODO: Use for safe server operations
+  '@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 
 export interface QuoteFormData {
@@ -62,7 +62,11 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
       console.log('🔧 Environment check - NODE_ENV:', process.env.NODE_ENV);
       console.log('🔧 App URL:', process.env.NEXT_PUBLIC_APP_URL);
 
-      supabase = createClient(proxyUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      // Prefer service role key for server-side operations, fallback to anon key
+      const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      console.log('🔑 Using API key type:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Service Role' : 'Anon');
+
+      supabase = createClient(proxyUrl, apiKey, {
         auth: {
           persistSession: false,
         },
