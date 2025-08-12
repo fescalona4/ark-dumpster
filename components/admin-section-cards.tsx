@@ -23,8 +23,7 @@ interface AdminSectionCardsProps {
 }
 
 export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
-  const acceptanceRate =
-    stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
+  const acceptanceRate = stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
   // TODO: Add completion rate display in future update
   // const completionRate =
   //   stats.accepted > 0
@@ -50,9 +49,7 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
           <div className="line-clamp-1 flex gap-2 font-medium">
             Customer requests <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">
-            Total quote requests received
-          </div>
+          <div className="text-muted-foreground">Total quote requests received</div>
         </CardFooter>
       </Card>
 
@@ -94,9 +91,7 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
           <div className="line-clamp-1 flex gap-2 font-medium">
             Quote conversions <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">
-            Quotes that became accepted jobs
-          </div>
+          <div className="text-muted-foreground">Quotes that became accepted jobs</div>
         </CardFooter>
       </Card>
 
@@ -117,9 +112,7 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
           <div className="line-clamp-1 flex gap-2 font-medium">
             Finished rentals <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">
-            Successfully completed dumpster rentals
-          </div>
+          <div className="text-muted-foreground">Successfully completed dumpster rentals</div>
         </CardFooter>
       </Card>
     </div>

@@ -52,8 +52,8 @@ export default function Stats() {
               </span>
               <p className="mt-6 font-semibold text-xl">Years experience</p>
               <p className="mt-2 text-muted-foreground">
-                From home renovations to large construction sites, we&apos;ve
-                handled it all with professional service.
+                From home renovations to large construction sites, we&apos;ve handled it all with
+                professional service.
               </p>
             </div>
             <div>
@@ -67,8 +67,8 @@ export default function Stats() {
               </span>
               <p className="mt-6 font-semibold text-xl">Projects completed</p>
               <p className="mt-2 text-muted-foreground">
-                From home renovations to large construction sites, we&apos;ve
-                handled it all with professional service.
+                From home renovations to large construction sites, we&apos;ve handled it all with
+                professional service.
               </p>
             </div>
             <div>
@@ -87,8 +87,8 @@ export default function Stats() {
               </span>
               <p className="mt-6 font-semibold text-xl">Customer support</p>
               <p className="mt-2 text-muted-foreground">
-                Our dedicated team is available around the clock to assist with
-                your waste management needs.
+                Our dedicated team is available around the clock to assist with your waste
+                management needs.
               </p>
             </div>
             <div>

@@ -22,18 +22,15 @@ export default function AboutSection() {
             >
               About us
             </Badge>
-            <h1 className="text-5xl md:mb-4 pt-2 flex items-center">
-              dumpster rental specialists
-            </h1>
+            <h1 className="text-5xl md:mb-4 pt-2 flex items-center">dumpster rental specialists</h1>
           </div>
           <div className="flex-3">
             <p className="text-2xl font-light leading-relaxed pr-10 md:pt-2">
-              Your trusted partner for reliable dumpster rental services.
-              Whether you are tackling a home renovation, construction project,
-              or major cleanout, Ark Dumpster provides convenient, affordable
-              waste management solutions. With our commitment to exceptional
-              service and competitive pricing, we make waste disposal simple so
-              you can focus on what matters most.
+              Your trusted partner for reliable dumpster rental services. Whether you are tackling a
+              home renovation, construction project, or major cleanout, Ark Dumpster provides
+              convenient, affordable waste management solutions. With our commitment to exceptional
+              service and competitive pricing, we make waste disposal simple so you can focus on
+              what matters most.
               {/* <span className="align-super bold text-2xl">®</span> */}
             </p>
           </div>

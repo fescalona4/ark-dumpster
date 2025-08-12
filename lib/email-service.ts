@@ -58,19 +58,14 @@ export async function sendCompanyNotificationEmail(
     }
 
     if (!process.env.COMPANY_EMAIL) {
-      console.warn(
-        'Company email not configured - skipping company notification'
-      );
+      console.warn('Company email not configured - skipping company notification');
       return {
         success: false,
         error: 'Company email not configured',
       };
     }
 
-    console.log(
-      'Sending company notification email to:',
-      process.env.COMPANY_EMAIL
-    );
+    console.log('Sending company notification email to:', process.env.COMPANY_EMAIL);
 
     const companyEmailHtml = await render(
       CompanyNotificationEmail({
@@ -111,10 +106,7 @@ export async function sendCompanyNotificationEmail(
       };
     }
 
-    console.log(
-      '✅ Company notification email sent successfully:',
-      result.data
-    );
+    console.log('✅ Company notification email sent successfully:', result.data);
     return {
       success: true,
       data: result.data,
@@ -124,8 +116,7 @@ export async function sendCompanyNotificationEmail(
     console.error('❌ Failed to send company notification email:', error);
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : 'Company email send failed',
+      error: error instanceof Error ? error.message : 'Company email send failed',
     };
   }
 }
@@ -251,10 +242,7 @@ Quote ID: ${options.quoteId || 'PENDING'}
 Submitted: ${new Date(options.submittedAt).toLocaleString()}`;
 }
 
-function generateUserEmailText(
-  firstName: string,
-  quoteDetails?: QuoteDetails
-): string {
+function generateUserEmailText(firstName: string, quoteDetails?: QuoteDetails): string {
   return `Hello ${firstName},
 
 Thank you for your interest in ARK Dumpster services!

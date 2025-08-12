@@ -19,10 +19,7 @@ export default function Home() {
             <div className="mx-auto px-6 md:px-10 mt-8">
               <div className="flex flex-col gap-8">
                 <div className="flex-1 mt-2">
-                  <Badge
-                    variant="outline"
-                    className="gap-1.5 text-sm px-2 py-0.5 text-white"
-                  >
+                  <Badge variant="outline" className="gap-1.5 text-sm px-2 py-0.5 text-white">
                     <span
                       className="size-1.5 rounded-full bg-emerald-500"
                       aria-hidden="true"
@@ -35,9 +32,9 @@ export default function Home() {
                 </div>
                 <div className="flex-3">
                   <p className="text-2xl font-light leading-relaxed pr-10">
-                    Whether you are tackling a home renovation, construction
-                    project, or major cleanout, Ark Dumpster provides
-                    convenient, affordable waste management solutions.
+                    Whether you are tackling a home renovation, construction project, or major
+                    cleanout, Ark Dumpster provides convenient, affordable waste management
+                    solutions.
                     <span className="align-super bold text-2xl">®</span>
                     {/* With our commitment to exceptional service and competitive pricing, 
               we make waste disposal simple so you can focus on what matters most. */}

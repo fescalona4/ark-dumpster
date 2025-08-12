@@ -36,9 +36,7 @@ export default function EmailPreview() {
   return (
     <div className="min-h-screen bg-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8 text-white">
-          Email Template Preview
-        </h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-white">Email Template Preview</h1>
 
         <div className="grid gap-8">
           {/* Company Notification Email */}
@@ -58,23 +56,15 @@ export default function EmailPreview() {
 
           {/* Quote Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Quote Request Email
-            </h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Quote Request Email</h2>
             <div className="border rounded-lg overflow-hidden">
-              <EmailTemplate
-                firstName="John"
-                type="quote"
-                quoteDetails={sampleQuoteData}
-              />
+              <EmailTemplate firstName="John" type="quote" quoteDetails={sampleQuoteData} />
             </div>
           </div>
 
           {/* Welcome Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Welcome Email
-            </h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Welcome Email</h2>
             <div className="border rounded-lg overflow-hidden">
               <EmailTemplate firstName="Jane" type="welcome" />
             </div>
@@ -82,9 +72,7 @@ export default function EmailPreview() {
 
           {/* Confirmation Email */}
           <div className="bg-gray-700 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4 text-white">
-              Confirmation Email
-            </h2>
+            <h2 className="text-xl font-semibold mb-4 text-white">Confirmation Email</h2>
             <div className="border rounded-lg overflow-hidden">
               <EmailTemplate firstName="Mike" type="confirmation" />
             </div>

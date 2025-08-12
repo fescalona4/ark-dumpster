@@ -58,17 +58,14 @@ function CreateQuoteContent() {
     message: '',
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
 
     let formattedValue = value;
 
     // Format first name and last name to camel case (first letter capitalized)
     if (id === 'firstName' || id === 'lastName') {
-      formattedValue =
-        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
     // Format state to uppercase and limit to 2 characters
@@ -191,8 +188,7 @@ function CreateQuoteContent() {
         setNotification({
           type: 'success',
           title: 'Quote Created Successfully!',
-          description:
-            'The quote has been saved to the database and is ready for review.',
+          description: 'The quote has been saved to the database and is ready for review.',
         });
 
         // Reset form
@@ -216,8 +212,7 @@ function CreateQuoteContent() {
         setNotification({
           type: 'error',
           title: 'Failed to Create Quote',
-          description:
-            'There was an error creating the quote. Please try again.',
+          description: 'There was an error creating the quote. Please try again.',
         });
       }
     } catch (error) {
@@ -225,8 +220,7 @@ function CreateQuoteContent() {
       setNotification({
         type: 'error',
         title: 'Connection Error',
-        description:
-          'Unable to connect to the server. Please check your connection and try again.',
+        description: 'Unable to connect to the server. Please check your connection and try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -367,9 +361,7 @@ function CreateQuoteContent() {
                 <Label htmlFor="timeNeeded">Time Needed</Label>
                 <Select
                   value={formData.timeNeeded}
-                  onValueChange={value =>
-                    handleSelectChange('timeNeeded', value)
-                  }
+                  onValueChange={value => handleSelectChange('timeNeeded', value)}
                   required
                 >
                   <SelectTrigger className="mt-1.5 w-full">
@@ -391,9 +383,7 @@ function CreateQuoteContent() {
                 <Label htmlFor="dumpsterSize">Dumpster Size</Label>
                 <Select
                   value={formData.dumpsterSize}
-                  onValueChange={value =>
-                    handleSelectChange('dumpsterSize', value)
-                  }
+                  onValueChange={value => handleSelectChange('dumpsterSize', value)}
                   required
                 >
                   <SelectTrigger className="mt-1.5 w-full">
@@ -435,12 +425,7 @@ function CreateQuoteContent() {
             )}
 
             <div className="flex gap-4 mt-6">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1"
-                size="lg"
-              >
+              <Button type="submit" disabled={isSubmitting} className="flex-1" size="lg">
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

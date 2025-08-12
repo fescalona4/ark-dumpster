@@ -99,11 +99,7 @@ export default function SignInDialog() {
         </div>
 
         <form className="space-y-5" onSubmit={handleSignIn}>
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</div>}
           <div className="space-y-4">
             <div className="*:not-first:mt-2">
               <Label htmlFor={`${id}-email`}>Email</Label>
@@ -133,10 +129,7 @@ export default function SignInDialog() {
           <div className="flex justify-between gap-2">
             <div className="flex items-center gap-2">
               <Checkbox id={`${id}-remember`} />
-              <Label
-                htmlFor={`${id}-remember`}
-                className="text-muted-foreground font-normal"
-              >
+              <Label htmlFor={`${id}-remember`} className="text-muted-foreground font-normal">
                 Remember me
               </Label>
             </div>

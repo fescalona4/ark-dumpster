@@ -39,9 +39,7 @@ const Footer = () => {
                   width={60}
                   height={60}
                 />
-                <span className="font-semibold text-5xl text-gray-100/70 max-md:hidden">
-                  ARK
-                </span>
+                <span className="font-semibold text-5xl text-gray-100/70 max-md:hidden">ARK</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-300 dark:text-foreground">
                 Quick Links
@@ -73,16 +71,10 @@ const Footer = () => {
             </span>
 
             <div className="flex items-center gap-5 sm:pr-17 text-gray-300 dark:text-muted-foreground">
-              <Link
-                href="https://instagram.com/arkdumpsterrentals"
-                target="_blank"
-              >
+              <Link href="https://instagram.com/arkdumpsterrentals" target="_blank">
                 <Instagram className="h-5 w-5" />
               </Link>
-              <Link
-                href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr"
-                target="_blank"
-              >
+              <Link href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr" target="_blank">
                 <Facebook className="h-5 w-5" />
               </Link>
               <DarkToggle />

@@ -26,9 +26,7 @@ export interface SaveQuoteResult {
   data?: any;
 }
 
-export async function saveQuoteToDatabase(
-  formData: QuoteFormData
-): Promise<SaveQuoteResult> {
+export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<SaveQuoteResult> {
   try {
     console.log('=== SAVING QUOTE TO DATABASE ===');
     console.log('Environment:', process.env.NODE_ENV);
@@ -36,22 +34,15 @@ export async function saveQuoteToDatabase(
 
     // Check if Supabase is configured
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.error(
-        'Supabase not configured - missing NEXT_PUBLIC_SUPABASE_URL'
-      );
+      console.error('Supabase not configured - missing NEXT_PUBLIC_SUPABASE_URL');
       return {
         success: false,
         error: 'Database not configured - missing Supabase URL',
       };
     }
 
-    if (
-      !process.env.SUPABASE_SERVICE_ROLE_KEY &&
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      console.error(
-        'Supabase not configured - missing both service role and anon keys'
-      );
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Supabase not configured - missing both service role and anon keys');
       return {
         success: false,
         error: 'Database not configured - missing Supabase credentials',
@@ -71,15 +62,11 @@ export async function saveQuoteToDatabase(
       console.log('🔧 Environment check - NODE_ENV:', process.env.NODE_ENV);
       console.log('🔧 App URL:', process.env.NEXT_PUBLIC_APP_URL);
 
-      supabase = createClient(
-        proxyUrl,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          auth: {
-            persistSession: false,
-          },
-        }
-      );
+      supabase = createClient(proxyUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: {
+          persistSession: false,
+        },
+      });
       console.log('✅ Created proxy-aware Supabase client for development');
     } else {
       // Use direct connection in production
@@ -105,50 +92,32 @@ export async function saveQuoteToDatabase(
         : process.env.NEXT_PUBLIC_SUPABASE_URL + '/health';
 
       const networkTest = await fetch(testUrl);
-      console.log(
-        '✅ Network connectivity test successful, status:',
-        networkTest.status
-      );
+      console.log('✅ Network connectivity test successful, status:', networkTest.status);
     } catch (networkError) {
       console.error('❌ Network connectivity test failed:', {
-        message:
-          networkError instanceof Error
-            ? networkError.message
-            : 'Unknown network error',
-        details:
-          networkError instanceof Error
-            ? networkError.stack
-            : 'No stack trace available',
+        message: networkError instanceof Error ? networkError.message : 'Unknown network error',
+        details: networkError instanceof Error ? networkError.stack : 'No stack trace available',
       });
 
       // If basic network fails, maybe try a different approach
       console.log('🔄 Trying alternative network test...');
       try {
         const altTest = await fetch('https://httpbin.org/status/200');
-        console.log(
-          '✅ Alternative network test successful, status:',
-          altTest.status
-        );
+        console.log('✅ Alternative network test successful, status:', altTest.status);
         console.log('❌ Issue seems to be specifically with Supabase URL');
       } catch {
         // altError not used - just checking if alternative network fails
-        console.log(
-          '❌ Alternative network test also failed - general network issue'
-        );
+        console.log('❌ Alternative network test also failed - general network issue');
         return {
           success: false,
-          error:
-            'Network connectivity issue - unable to reach external services',
+          error: 'Network connectivity issue - unable to reach external services',
         };
       }
     }
 
     // Test connection first
     console.log('🔍 Testing Supabase connection...');
-    const { error: testError } = await supabase
-      .from('quotes')
-      .select('count')
-      .limit(1);
+    const { error: testError } = await supabase.from('quotes').select('count').limit(1);
 
     if (testError) {
       console.error('❌ Supabase connection test failed:', testError);

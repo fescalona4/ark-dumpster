@@ -107,10 +107,7 @@ function QuotesPageContent() {
   const fetchQuotes = useCallback(async () => {
     try {
       setLoading(true);
-      let query = supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('quotes').select('*').order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
         query = query.eq('status', statusFilter);
@@ -125,26 +122,18 @@ function QuotesPageContent() {
         // Filter out any undefined or null entries and ensure data integrity
         const validQuotes = (data || []).filter(
           (quote): quote is Quote =>
-            quote &&
-            typeof quote === 'object' &&
-            quote.id &&
-            quote.first_name &&
-            quote.email
+            quote && typeof quote === 'object' && quote.id && quote.first_name && quote.email
         );
 
         // Log phone data for debugging
         validQuotes.forEach(quote => {
-          console.log(
-            `Quote ${quote.id}: phone = "${quote.phone}" (type: ${typeof quote.phone})`
-          );
+          console.log(`Quote ${quote.id}: phone = "${quote.phone}" (type: ${typeof quote.phone})`);
         });
 
         setQuotes(validQuotes);
 
         if (data && data.length !== validQuotes.length) {
-          console.warn(
-            `Filtered out ${data.length - validQuotes.length} invalid quote records`
-          );
+          console.warn(`Filtered out ${data.length - validQuotes.length} invalid quote records`);
         }
       }
     } catch (err) {
@@ -330,12 +319,8 @@ function QuotesPageContent() {
                     <div>
                       <CardTitle className="text-xl flex items-center gap-2 mb-6">
                         {quote.first_name} {quote.last_name || ''}
-                        <Badge className={getPriorityColor(quote.priority)}>
-                          {quote.priority}
-                        </Badge>
-                        <Badge className={getStatusColor(quote.status)}>
-                          {quote.status}
-                        </Badge>
+                        <Badge className={getPriorityColor(quote.priority)}>{quote.priority}</Badge>
+                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
                       </CardTitle>
                       <div className="mt-6 text-sm text-muted-foreground space-y-3">
                         {quote.phone ? (
@@ -361,20 +346,12 @@ function QuotesPageContent() {
                         <div className="flex gap-6 pt-2">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
-                            <span>
-                              {format(
-                                new Date(quote.created_at),
-                                'MMM dd, yyyy'
-                              )}
-                            </span>
+                            <span>{format(new Date(quote.created_at), 'MMM dd, yyyy')}</span>
                           </div>
                           {quote.dropoff_date && (
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4" />
-                              <span>
-                                Dropoff:{' '}
-                                {format(new Date(quote.dropoff_date), 'MMM dd')}
-                              </span>
+                              <span>Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}</span>
                             </div>
                           )}
                         </div>
@@ -386,21 +363,13 @@ function QuotesPageContent() {
                           <Button size="sm" onClick={saveQuote}>
                             <Save className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={cancelEditing}
-                          >
+                          <Button variant="outline" size="sm" onClick={cancelEditing}>
                             <X className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => startEditing(quote)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => startEditing(quote)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
@@ -415,13 +384,10 @@ function QuotesPageContent() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Delete Quote
-                                </AlertDialogTitle>
+                                <AlertDialogTitle>Delete Quote</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete this quote
-                                  from {quote.first_name} {quote.last_name}?
-                                  This action cannot be undone.
+                                  Are you sure you want to delete this quote from {quote.first_name}{' '}
+                                  {quote.last_name}? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -452,10 +418,7 @@ function QuotesPageContent() {
                             <span>Size: {quote.dumpster_size}</span>
                           </div>
                         )}
-                        {(quote.address ||
-                          quote.address2 ||
-                          quote.city ||
-                          quote.state) && (
+                        {(quote.address || quote.address2 || quote.city || quote.state) && (
                           <div className="flex items-start gap-2">
                             <MapPin className="h-4 w-4 mt-0.5" />
                             <div>
@@ -480,9 +443,7 @@ function QuotesPageContent() {
                       {quote.message && (
                         <div className="mt-4">
                           <h5 className="font-medium mb-2">Customer Message</h5>
-                          <p className="text-sm bg-muted/50 p-3 rounded">
-                            {quote.message}
-                          </p>
+                          <p className="text-sm bg-muted/50 p-3 rounded">{quote.message}</p>
                         </div>
                       )}
                     </div>
@@ -493,9 +454,7 @@ function QuotesPageContent() {
                       {editingQuote === quote.id ? (
                         <div className="space-y-4">
                           <div>
-                            <label className="text-sm font-medium">
-                              Status
-                            </label>
+                            <label className="text-sm font-medium">Status</label>
                             <Select
                               value={editForm.status}
                               onValueChange={value =>
@@ -511,22 +470,14 @@ function QuotesPageContent() {
                               <SelectContent>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="quoted">Quoted</SelectItem>
-                                <SelectItem value="accepted">
-                                  Accepted
-                                </SelectItem>
-                                <SelectItem value="declined">
-                                  Declined
-                                </SelectItem>
-                                <SelectItem value="completed">
-                                  Completed
-                                </SelectItem>
+                                <SelectItem value="accepted">Accepted</SelectItem>
+                                <SelectItem value="declined">Declined</SelectItem>
+                                <SelectItem value="completed">Completed</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           <div>
-                            <label className="text-sm font-medium">
-                              Priority
-                            </label>
+                            <label className="text-sm font-medium">Priority</label>
                             <Select
                               value={editForm.priority}
                               onValueChange={value =>
@@ -548,9 +499,7 @@ function QuotesPageContent() {
                             </Select>
                           </div>
                           <div>
-                            <label className="text-sm font-medium">
-                              Quoted Price ($)
-                            </label>
+                            <label className="text-sm font-medium">Quoted Price ($)</label>
                             <Input
                               type="number"
                               step="0.01"
@@ -558,8 +507,7 @@ function QuotesPageContent() {
                               onChange={e =>
                                 setEditForm({
                                   ...editForm,
-                                  quoted_price:
-                                    parseFloat(e.target.value) || null,
+                                  quoted_price: parseFloat(e.target.value) || null,
                                 })
                               }
                               className="mt-1"
@@ -567,9 +515,7 @@ function QuotesPageContent() {
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">
-                              Quote Notes
-                            </label>
+                            <label className="text-sm font-medium">Quote Notes</label>
                             <Textarea
                               value={editForm.quote_notes || ''}
                               onChange={e =>
@@ -584,9 +530,7 @@ function QuotesPageContent() {
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">
-                              Assigned To
-                            </label>
+                            <label className="text-sm font-medium">Assigned To</label>
                             <Input
                               value={editForm.assigned_to || ''}
                               onChange={e =>
@@ -612,25 +556,18 @@ function QuotesPageContent() {
                           )}
                           {quote.assigned_to && (
                             <div className="text-sm">
-                              <span className="font-medium">Assigned to:</span>{' '}
-                              {quote.assigned_to}
+                              <span className="font-medium">Assigned to:</span> {quote.assigned_to}
                             </div>
                           )}
                           {quote.quote_notes && (
                             <div>
                               <h5 className="font-medium mb-1">Notes</h5>
-                              <p className="text-sm bg-muted/50 p-2 rounded">
-                                {quote.quote_notes}
-                              </p>
+                              <p className="text-sm bg-muted/50 p-2 rounded">{quote.quote_notes}</p>
                             </div>
                           )}
                           {quote.quoted_at && (
                             <div className="text-sm text-muted-foreground">
-                              Quoted:{' '}
-                              {format(
-                                new Date(quote.quoted_at),
-                                'MMM dd, yyyy h:mm a'
-                              )}
+                              Quoted: {format(new Date(quote.quoted_at), 'MMM dd, yyyy h:mm a')}
                             </div>
                           )}
                         </div>

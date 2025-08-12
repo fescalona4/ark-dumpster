@@ -107,9 +107,7 @@ export default function GooglePlacesAutocomplete({
       // Check if API key is available
       const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!apiKey) {
-        console.warn(
-          'Google Maps API key not found. Falling back to manual address entry.'
-        );
+        console.warn('Google Maps API key not found. Falling back to manual address entry.');
         setHasApiKey(false);
         setIsLoaded(true);
         return;
@@ -138,9 +136,7 @@ export default function GooglePlacesAutocomplete({
 
       // Handle script loading errors
       script.onerror = () => {
-        console.error(
-          'Failed to load Google Maps API. Falling back to manual address entry.'
-        );
+        console.error('Failed to load Google Maps API. Falling back to manual address entry.');
         setHasApiKey(false);
         setIsLoaded(true);
       };
@@ -150,10 +146,7 @@ export default function GooglePlacesAutocomplete({
           initializeAutocomplete();
           setIsLoaded(true);
         } catch (error) {
-          console.error(
-            'Failed to initialize Google Places autocomplete:',
-            error
-          );
+          console.error('Failed to initialize Google Places autocomplete:', error);
           setHasApiKey(false);
           setIsLoaded(true);
         }
@@ -174,10 +167,7 @@ export default function GooglePlacesAutocomplete({
         const originalWarn = console.warn;
         console.warn = (...args) => {
           const message = args[0];
-          if (
-            typeof message === 'string' &&
-            message.includes('google.maps.places.Autocomplete')
-          ) {
+          if (typeof message === 'string' && message.includes('google.maps.places.Autocomplete')) {
             // Suppress the deprecation warning
             return;
           }
@@ -185,28 +175,20 @@ export default function GooglePlacesAutocomplete({
         };
 
         // Use the legacy Autocomplete (we know this works)
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            types: ['address'],
-            componentRestrictions: {
-              country: 'us',
-            },
-            fields: [
-              'address_components',
-              'formatted_address',
-              'geometry',
-              'name',
-            ],
-            // Bias results to Tampa Bay area including St. Petersburg
-            bounds: {
-              north: 28.2, // North Tampa / Wesley Chapel area
-              south: 27.4, // South St. Pete / Tierra Verde area
-              east: -82.1, // East Tampa / Brandon area
-              west: -82.9, // West St. Pete / Belcher area
-            },
-          }
-        );
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+          types: ['address'],
+          componentRestrictions: {
+            country: 'us',
+          },
+          fields: ['address_components', 'formatted_address', 'geometry', 'name'],
+          // Bias results to Tampa Bay area including St. Petersburg
+          bounds: {
+            north: 28.2, // North Tampa / Wesley Chapel area
+            south: 27.4, // South St. Pete / Tierra Verde area
+            east: -82.1, // East Tampa / Brandon area
+            west: -82.9, // West St. Pete / Belcher area
+          },
+        });
 
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
@@ -262,10 +244,7 @@ export default function GooglePlacesAutocomplete({
 
         autocompleteRef.current = autocomplete;
       } catch (error) {
-        console.error(
-          'Failed to initialize Google Places autocomplete:',
-          error
-        );
+        console.error('Failed to initialize Google Places autocomplete:', error);
         setHasApiKey(false);
       }
     };
@@ -274,9 +253,7 @@ export default function GooglePlacesAutocomplete({
 
     return () => {
       if (autocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(
-          autocompleteRef.current
-        );
+        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
       }
     };
   }, [onPlaceSelect, hasApiKey]);

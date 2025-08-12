@@ -23,18 +23,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Request body received:', JSON.stringify(body, null, 2));
 
-    const {
-      firstName,
-      email,
-      type = 'welcome',
-      quoteDetails,
-      subject,
-      fullFormData,
-    } = body;
+    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData } = body;
 
     // Determine if emails should be skipped based on environment variable
-    const skipEmailInDevelopment =
-      process.env.SKIP_EMAIL_IN_DEVELOPMENT === 'true';
+    const skipEmailInDevelopment = process.env.SKIP_EMAIL_IN_DEVELOPMENT === 'true';
     const isDevelopment = process.env.NODE_ENV === 'development';
     const skipEmail = isDevelopment && skipEmailInDevelopment;
 
@@ -49,10 +41,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!firstName || !email) {
       console.log('Validation failed: missing required fields');
-      return Response.json(
-        { error: 'firstName and email are required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'firstName and email are required' }, { status: 400 });
     }
 
     // STEP 1: SAVE TO DATABASE FIRST
@@ -69,8 +58,7 @@ export async function POST(request: NextRequest) {
         return Response.json(
           {
             error: 'Quote creation failed',
-            details:
-              'Unable to save quote to database. Please try again or contact us directly.',
+            details: 'Unable to save quote to database. Please try again or contact us directly.',
             dbSaved: false,
             dbSaveError: dbResult.error,
             message: 'Database connection issue - quote could not be saved',
@@ -95,9 +83,7 @@ export async function POST(request: NextRequest) {
     if (fullFormData && !skipEmail) {
       console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');
 
-      const quoteId = dbResult.quoteId
-        ? generateQuoteId(dbResult.quoteId)
-        : 'PENDING-DB-SAVE';
+      const quoteId = dbResult.quoteId ? generateQuoteId(dbResult.quoteId) : 'PENDING-DB-SAVE';
 
       companyEmailResult = await sendCompanyNotificationEmail({
         customerDetails: fullFormData,

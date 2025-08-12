@@ -58,9 +58,7 @@ const navData = {
   ],
 };
 
-export function AdminAppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AdminAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -83,10 +81,7 @@ export function AdminAppSidebar({
   }, []);
 
   const userData = {
-    name:
-      user?.user_metadata?.full_name ||
-      user?.email?.split('@')[0] ||
-      'Admin User',
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin User',
     email: user?.email || 'admin@arkdumpster.com',
     avatar: user?.user_metadata?.avatar_url || '',
   };
@@ -95,10 +90,7 @@ export function AdminAppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <a href="/admin" className="flex items-center space-x-2">
                 <Image
                   src="/ark-logo.svg"

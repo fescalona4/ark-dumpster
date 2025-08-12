@@ -9,11 +9,7 @@ interface LoaderParams {
   quality?: number;
 }
 
-export default function imageLoader({
-  src,
-  width,
-  quality,
-}: LoaderParams): string {
+export default function imageLoader({ src, width, quality }: LoaderParams): string {
   // For Supabase images, try to use their transformation API
   if (src.includes('supabase.co')) {
     const url = new URL(src);

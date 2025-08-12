@@ -3,13 +3,8 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   // Security: Only allow proxy testing in development environment
   if (process.env.NODE_ENV !== 'development') {
-    console.warn(
-      '🚫 Test proxy route accessed in production - blocking request'
-    );
-    return NextResponse.json(
-      { error: 'Test proxy not available in production' },
-      { status: 403 }
-    );
+    console.warn('🚫 Test proxy route accessed in production - blocking request');
+    return NextResponse.json({ error: 'Test proxy not available in production' }, { status: 403 });
   }
 
   try {
@@ -34,11 +29,7 @@ export async function GET() {
     });
 
     const result = await response.text();
-    console.log(
-      '✅ Proxy test result:',
-      response.status,
-      result.substring(0, 200)
-    );
+    console.log('✅ Proxy test result:', response.status, result.substring(0, 200));
 
     return NextResponse.json({
       success: true,

@@ -50,17 +50,14 @@ const Contacts = () => {
     message: '',
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
 
     let formattedValue = value;
 
     // Format first name and last name to camel case (first letter capitalized)
     if (id === 'firstName' || id === 'lastName') {
-      formattedValue =
-        value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+      formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
     // Format state to uppercase and limit to 2 characters
@@ -305,8 +302,8 @@ const Contacts = () => {
                 </Badge>
                 <h1 className="text-5xl mb-4 pt-2 flex">Get in touch</h1>
                 <h3 className="text-xl mb-8 font-light">
-                  Need a dumpster rental? We&apos;re here to help with your
-                  project. Contact us for a free quote today.
+                  Need a dumpster rental? We&apos;re here to help with your project. Contact us for
+                  a free quote today.
                 </h3>
               </div>
 
@@ -339,16 +336,10 @@ const Contacts = () => {
               <hr className="my-4 md:my-8 border-border" />
               <h3 className="text-2xl font-semibold md:mb-4">Follow us</h3>
               <div className="flex items-center gap-4">
-                <Link
-                  href="https://instagram.com/arkdumpsterrentals"
-                  target="_blank"
-                >
+                <Link href="https://instagram.com/arkdumpsterrentals" target="_blank">
                   <Instagram className="h-6 w-6 dark:text-muted-foreground" />
                 </Link>
-                <Link
-                  href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr"
-                  target="_blank"
-                >
+                <Link href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr" target="_blank">
                   <Facebook className="h-6 w-6 dark:text-muted-foreground" />
                 </Link>
               </div>
@@ -469,9 +460,7 @@ const Contacts = () => {
                       {/* <Label htmlFor="dropoffDate">Drop-off Date *</Label> */}
                       <DropoffCalendar
                         value={formData.dropoffDate}
-                        onChange={date =>
-                          handleSelectChange('dropoffDate', date)
-                        }
+                        onChange={date => handleSelectChange('dropoffDate', date)}
                       />
                     </div>
 
@@ -479,9 +468,7 @@ const Contacts = () => {
                       <Label htmlFor="timeNeeded">Time Needed</Label>
                       <Select
                         value={formData.timeNeeded}
-                        onValueChange={value =>
-                          handleSelectChange('timeNeeded', value)
-                        }
+                        onValueChange={value => handleSelectChange('timeNeeded', value)}
                         required
                       >
                         <SelectTrigger className="mt-1.5 w-full">
@@ -503,9 +490,7 @@ const Contacts = () => {
                       <Label htmlFor="dumpsterSize">Dumpster Size</Label>
                       <Select
                         value={formData.dumpsterSize}
-                        onValueChange={value =>
-                          handleSelectChange('dumpsterSize', value)
-                        }
+                        onValueChange={value => handleSelectChange('dumpsterSize', value)}
                         required
                       >
                         <SelectTrigger className="mt-1.5 w-full">
@@ -514,9 +499,7 @@ const Contacts = () => {
                         <SelectContent>
                           <SelectGroup>
                             {/* <SelectLabel>Select size</SelectLabel> */}
-                            <SelectItem value="15">
-                              15 Yard Dump Trailer
-                            </SelectItem>
+                            <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
                             <SelectItem value="20">20 Yard Dumpster</SelectItem>
                           </SelectGroup>
                         </SelectContent>

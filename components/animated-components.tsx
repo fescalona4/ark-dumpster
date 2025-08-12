@@ -1,11 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 
-export const FadeInAnimation = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const FadeInAnimation = ({ children }: { children: React.ReactNode }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -18,11 +14,7 @@ export const FadeInAnimation = ({
   );
 };
 
-export const MoveSidewayAnimation = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const MoveSidewayAnimation = ({ children }: { children: React.ReactNode }) => {
   return (
     <motion.ul
       animate={{

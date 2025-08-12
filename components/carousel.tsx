@@ -38,10 +38,7 @@ function getFallbackImages(): CarouselImage[] {
     ];
   } catch (error) {
     // If getImageUrl also fails, use local fallback images
-    console.warn(
-      'Falling back to local images due to URL generation error:',
-      error
-    );
+    console.warn('Falling back to local images due to URL generation error:', error);
     return [
       { name: 'fallback1.jpg', url: '/next.svg' },
       { name: 'fallback2.jpg', url: '/vercel.svg' },
@@ -91,10 +88,7 @@ export default async function Carousel({ className }: CarouselProps) {
         >
           <MoveSidewayAnimation>
             {images.map((image, index) => (
-              <li
-                key={`${image.name}-${index}`}
-                style={{ width: '400px', height: '300px' }}
-              >
+              <li key={`${image.name}-${index}`} style={{ width: '400px', height: '300px' }}>
                 <div
                   className="framer-1cosb6b-container"
                   data-framer-name="Ticker Image"
@@ -110,11 +104,7 @@ export default async function Carousel({ className }: CarouselProps) {
                       opacity: 1,
                     }}
                   >
-                    <div
-                      className="framer-16a69do"
-                      data-framer-name="Image"
-                      style={{ opacity: 1 }}
-                    >
+                    <div className="framer-16a69do" data-framer-name="Image" style={{ opacity: 1 }}>
                       <Image
                         src={image.url}
                         alt={`Carousel Image ${index + 1}`}

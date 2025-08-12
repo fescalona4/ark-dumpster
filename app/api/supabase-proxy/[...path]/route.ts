@@ -4,10 +4,7 @@ export async function GET(request: NextRequest) {
   // Security: Only allow proxy in development environment
   if (process.env.NODE_ENV !== 'development') {
     console.warn('🚫 Proxy route accessed in production - blocking request');
-    return NextResponse.json(
-      { error: 'Proxy not available in production' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Proxy not available in production' }, { status: 403 });
   }
 
   try {
@@ -62,8 +59,7 @@ export async function GET(request: NextRequest) {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers':
-              'Content-Type, Authorization, apikey, Prefer',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, Prefer',
           },
         });
       } catch (error) {
@@ -92,8 +88,7 @@ export async function GET(request: NextRequest) {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers':
-            'Content-Type, Authorization, apikey, Prefer',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, Prefer',
         },
       });
     }
@@ -103,10 +98,7 @@ export async function GET(request: NextRequest) {
       {
         error: 'Failed to proxy request to Supabase',
         details: error instanceof Error ? error.message : 'Unknown error',
-        proxy:
-          process.env.HTTPS_PROXY ||
-          process.env.HTTP_PROXY ||
-          'No proxy configured',
+        proxy: process.env.HTTPS_PROXY || process.env.HTTP_PROXY || 'No proxy configured',
         stack: error instanceof Error ? error.stack : 'No stack trace',
         errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       },
@@ -119,10 +111,7 @@ export async function POST(request: NextRequest) {
   // Security: Only allow proxy in development environment
   if (process.env.NODE_ENV !== 'development') {
     console.warn('🚫 Proxy route accessed in production - blocking request');
-    return NextResponse.json(
-      { error: 'Proxy not available in production' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: 'Proxy not available in production' }, { status: 403 });
   }
 
   try {
@@ -166,8 +155,7 @@ export async function POST(request: NextRequest) {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers':
-              'Content-Type, Authorization, apikey, Prefer',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, Prefer',
           },
         });
       } catch (error) {
@@ -194,8 +182,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-          'Access-Control-Allow-Headers':
-            'Content-Type, Authorization, apikey, Prefer',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, Prefer',
         },
       });
     }

@@ -16,14 +16,8 @@ console.log('🔍 Testing Supabase Connection...\n');
 
 // Check environment variables
 console.log('Environment Variables:');
-console.log(
-  '- NEXT_PUBLIC_SUPABASE_URL:',
-  supabaseUrl ? '✅ Set' : '❌ Missing'
-);
-console.log(
-  '- NEXT_PUBLIC_SUPABASE_ANON_KEY:',
-  supabaseAnonKey ? '✅ Set' : '❌ Missing'
-);
+console.log('- NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+console.log('- NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
 console.log(
   '- SUPABASE_SERVICE_ROLE_KEY:',
   process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Missing'
@@ -31,9 +25,7 @@ console.log(
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.log('\n❌ Missing required environment variables!');
-  console.log(
-    'Please check your .env.local file and ensure all Supabase variables are set.'
-  );
+  console.log('Please check your .env.local file and ensure all Supabase variables are set.');
   process.exit(1);
 }
 

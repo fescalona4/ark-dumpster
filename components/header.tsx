@@ -91,9 +91,7 @@ export default function Header() {
                 width={42}
                 height={42}
               />
-              <span className="font-semibold text-3xl text-white max-md:hidden">
-                ARK
-              </span>
+              <span className="font-semibold text-3xl text-white max-md:hidden">ARK</span>
             </Link>
           </div>
 
@@ -134,12 +132,7 @@ export default function Header() {
                 className="text-white hover:text-white/80 transition-colors p-2"
                 aria-label="Toggle menu"
               >
-                <svg
-                  className="w-8 h-8"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMenuOpen ? (
                     <path
                       strokeLinecap="round"

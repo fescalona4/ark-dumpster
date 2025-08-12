@@ -70,8 +70,7 @@ export function EmailTemplate({
                 textAlign: 'center',
               }}
             >
-              A new customer has submitted a quote request and needs your
-              attention.
+              A new customer has submitted a quote request and needs your attention.
             </p>
 
             {/* Customer Info */}
@@ -84,28 +83,19 @@ export function EmailTemplate({
                 marginBottom: '20px',
               }}
             >
-              <h3 style={{ color: '#0369a1', marginBottom: '12px' }}>
-                Customer Information
-              </h3>
+              <h3 style={{ color: '#0369a1', marginBottom: '12px' }}>Customer Information</h3>
               <div>
-                <strong>Name:</strong> {customerDetails.firstName}{' '}
-                {customerDetails.lastName}
+                <strong>Name:</strong> {customerDetails.firstName} {customerDetails.lastName}
               </div>
               <div>
                 <strong>Phone:</strong>{' '}
-                <a
-                  href={`tel:${customerDetails.phone}`}
-                  style={{ color: '#0369a1' }}
-                >
+                <a href={`tel:${customerDetails.phone}`} style={{ color: '#0369a1' }}>
                   {customerDetails.phone}
                 </a>
               </div>
               <div>
                 <strong>Email:</strong>{' '}
-                <a
-                  href={`mailto:${customerDetails.email}`}
-                  style={{ color: '#0369a1' }}
-                >
+                <a href={`mailto:${customerDetails.email}`} style={{ color: '#0369a1' }}>
                   {customerDetails.email}
                 </a>
               </div>
@@ -125,9 +115,7 @@ export function EmailTemplate({
                   marginBottom: '20px',
                 }}
               >
-                <h3 style={{ color: '#166534', marginBottom: '12px' }}>
-                  Service Details
-                </h3>
+                <h3 style={{ color: '#166534', marginBottom: '12px' }}>Service Details</h3>
                 {quoteDetails.service && (
                   <div>
                     <strong>Service:</strong> {quoteDetails.service}
@@ -161,9 +149,7 @@ export function EmailTemplate({
                 textAlign: 'center',
               }}
             >
-              <h3 style={{ color: '#dc2626', marginBottom: '12px' }}>
-                Action Required
-              </h3>
+              <h3 style={{ color: '#dc2626', marginBottom: '12px' }}>Action Required</h3>
               <p style={{ color: '#dc2626', marginBottom: '16px' }}>
                 Contact this customer within 24 hours to provide a quote.
               </p>
@@ -227,8 +213,7 @@ export function EmailTemplate({
                 textAlign: 'center',
               }}
             >
-              Hi {firstName}, here&apos;s your personalized quote from ARK
-              Dumpster:
+              Hi {firstName}, here&apos;s your personalized quote from ARK Dumpster:
             </p>
             <div
               style={{
@@ -241,33 +226,27 @@ export function EmailTemplate({
             >
               {quoteDetails?.service && (
                 <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#1f2937' }}>Service:</strong>{' '}
-                  {quoteDetails.service}
+                  <strong style={{ color: '#1f2937' }}>Service:</strong> {quoteDetails.service}
                 </div>
               )}
               {quoteDetails?.location && (
                 <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#1f2937' }}>Location:</strong>{' '}
-                  {quoteDetails.location}
+                  <strong style={{ color: '#1f2937' }}>Location:</strong> {quoteDetails.location}
                 </div>
               )}
               {quoteDetails?.date && (
                 <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#1f2937' }}>Date:</strong>{' '}
-                  {quoteDetails.date}
+                  <strong style={{ color: '#1f2937' }}>Date:</strong> {quoteDetails.date}
                 </div>
               )}
               {quoteDetails?.duration && (
                 <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#1f2937' }}>Duration:</strong>{' '}
-                  {quoteDetails.duration}
+                  <strong style={{ color: '#1f2937' }}>Duration:</strong> {quoteDetails.duration}
                 </div>
               )}
               {quoteDetails?.message && (
                 <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#1f2937' }}>
-                    Additional Details:
-                  </strong>{' '}
+                  <strong style={{ color: '#1f2937' }}>Additional Details:</strong>{' '}
                   {quoteDetails.message}
                 </div>
               )}
@@ -310,8 +289,8 @@ export function EmailTemplate({
                 textAlign: 'center',
               }}
             >
-              Hi {firstName}, your dumpster rental has been confirmed.
-              We&apos;ll be in touch soon with delivery details.
+              Hi {firstName}, your dumpster rental has been confirmed. We&apos;ll be in touch soon
+              with delivery details.
             </p>
           </>
         );
@@ -338,8 +317,8 @@ export function EmailTemplate({
                 textAlign: 'center',
               }}
             >
-              Hi {firstName}, thank you for choosing ARK Dumpster for your waste
-              management needs. We&apos;re excited to serve you!
+              Hi {firstName}, thank you for choosing ARK Dumpster for your waste management needs.
+              We&apos;re excited to serve you!
             </p>
           </>
         );
@@ -359,8 +338,7 @@ export function EmailTemplate({
       {/* Header with gradient background */}
       <div
         style={{
-          background:
-            'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)',
+          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)',
           padding: '32px 24px',
           borderRadius: '12px 12px 0 0',
           textAlign: 'center',
@@ -466,10 +444,7 @@ export function EmailTemplate({
             }}
           >
             📞{' '}
-            <a
-              href="tel:7275641794"
-              style={{ color: '#059669', textDecoration: 'none' }}
-            >
+            <a href="tel:7275641794" style={{ color: '#059669', textDecoration: 'none' }}>
               (727) 564-1794
             </a>{' '}
             | 📧{' '}

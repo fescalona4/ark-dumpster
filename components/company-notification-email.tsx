@@ -51,8 +51,7 @@ export function CompanyNotificationEmail({
       {/* Header with urgent styling */}
       <div
         style={{
-          background:
-            'linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #7f1d1d 100%)',
+          background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 50%, #7f1d1d 100%)',
           padding: '24px',
           borderRadius: '12px 12px 0 0',
           textAlign: 'center',
@@ -354,8 +353,8 @@ export function CompanyNotificationEmail({
               fontSize: '16px',
             }}
           >
-            This customer is waiting for a response. Please contact them within
-            24 hours to provide a quote.
+            This customer is waiting for a response. Please contact them within 24 hours to provide
+            a quote.
           </p>
 
           <div
@@ -427,8 +426,7 @@ export function CompanyNotificationEmail({
               fontSize: '14px',
             }}
           >
-            View this quote and manage customer responses in your admin
-            dashboard.
+            View this quote and manage customer responses in your admin dashboard.
           </p>
           <a
             href="https://arkdumpsterrentals.com/admin/quotes"
@@ -463,8 +461,7 @@ export function CompanyNotificationEmail({
           ARK Dumpster Rentals - Internal Notification System
         </p>
         <p style={{ margin: '0', color: '#9ca3af' }}>
-          This is an automated notification. Please respond to the customer
-          promptly.
+          This is an automated notification. Please respond to the customer promptly.
         </p>
       </div>
     </div>

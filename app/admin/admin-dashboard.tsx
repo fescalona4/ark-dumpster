@@ -60,9 +60,7 @@ export default function AdminDashboard() {
 
       // Check if Supabase is properly configured
       if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-        throw new Error(
-          'Supabase is not configured. Please check your environment variables.'
-        );
+        throw new Error('Supabase is not configured. Please check your environment variables.');
       }
 
       const { data, error } = await supabase

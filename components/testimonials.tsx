@@ -88,8 +88,8 @@ const Testimonials = () => (
               Hear from our clients
             </h1>
             <h3 className="text-xl font-light">
-              Hear from our happy clients about their experience working with
-              ARK Dumpster and the quality of our service.
+              Hear from our happy clients about their experience working with ARK Dumpster and the
+              quality of our service.
             </h3>
           </div>
         </div>
@@ -110,10 +110,7 @@ const Testimonials = () => (
 
 const TestimonialList = () =>
   testimonials.map(testimonial => (
-    <div
-      key={testimonial.id}
-      className="flex flex-col outline outline-border px-6 py-8"
-    >
+    <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8">
       <div className="flex gap-2">
         <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
         <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
@@ -121,9 +118,7 @@ const TestimonialList = () =>
         <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
         <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
       </div>
-      <p className="my-6 text-[17px] max-w-md">
-        &quot;{testimonial.testimonial}&quot;
-      </p>
+      <p className="my-6 text-[17px] max-w-md">&quot;{testimonial.testimonial}&quot;</p>
       <div className="mt-auto flex gap-3">
         <Avatar>
           <AvatarFallback className="text-xl font-medium bg-primary text-primary-foreground">

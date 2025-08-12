@@ -81,18 +81,12 @@ export default function SignInForm() {
             />
           </div>
           <CardTitle>Admin Dashboard</CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Please sign in to access the admin panel.
-          </p>
+          <p className="text-muted-foreground text-sm">Please sign in to access the admin panel.</p>
         </div>
       </CardHeader>
       <CardContent>
         <form className="space-y-5" onSubmit={handleSignIn}>
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded">{error}</div>}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor={`${id}-email`}>Email</Label>
@@ -122,10 +116,7 @@ export default function SignInForm() {
           <div className="flex justify-between gap-2">
             <div className="flex items-center gap-2">
               <Checkbox id={`${id}-remember`} />
-              <Label
-                htmlFor={`${id}-remember`}
-                className="text-muted-foreground font-normal"
-              >
+              <Label htmlFor={`${id}-remember`} className="text-muted-foreground font-normal">
                 Remember me
               </Label>
             </div>

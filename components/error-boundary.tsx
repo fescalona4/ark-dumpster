@@ -19,10 +19,7 @@ interface ErrorBoundaryProps {
   }>;
 }
 
-class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -56,25 +53,14 @@ class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       const FallbackComponent = this.props.fallback || DefaultErrorFallback;
-      return (
-        <FallbackComponent
-          error={this.state.error}
-          resetError={this.resetError}
-        />
-      );
+      return <FallbackComponent error={this.state.error} resetError={this.resetError} />;
     }
 
     return this.props.children;
   }
 }
 
-function DefaultErrorFallback({
-  error,
-  resetError,
-}: {
-  error?: Error;
-  resetError: () => void;
-}) {
+function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
@@ -88,8 +74,7 @@ function DefaultErrorFallback({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            We apologize for the inconvenience. An unexpected error has
-            occurred.
+            We apologize for the inconvenience. An unexpected error has occurred.
           </p>
 
           {isDevelopment && error && (
@@ -105,12 +90,7 @@ function DefaultErrorFallback({
           )}
 
           <div className="flex gap-2 pt-2">
-            <Button
-              onClick={resetError}
-              variant="default"
-              size="sm"
-              className="flex-1"
-            >
+            <Button onClick={resetError} variant="default" size="sm" className="flex-1">
               <RefreshCw className="w-4 h-4 mr-2" />
               Try Again
             </Button>
@@ -131,11 +111,7 @@ function DefaultErrorFallback({
 }
 
 // Specific error boundary for admin sections
-export function AdminErrorBoundary({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AdminErrorBoundary({ children }: { children: React.ReactNode }) {
   return (
     <ErrorBoundary
       fallback={({ resetError }) => (
@@ -149,8 +125,8 @@ export function AdminErrorBoundary({
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                An error occurred in the admin panel. Please try refreshing or
-                contact support if the issue persists.
+                An error occurred in the admin panel. Please try refreshing or contact support if
+                the issue persists.
               </p>
               <Button onClick={resetError} size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />

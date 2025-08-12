@@ -20,10 +20,7 @@ export function getImageUrl(imagePath: string): string {
  * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
  * @returns Promise with signed URL
  */
-export async function getSignedImageUrl(
-  imagePath: string,
-  expiresIn: number = 3600
-) {
+export async function getSignedImageUrl(imagePath: string, expiresIn: number = 3600) {
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
     .createSignedUrl(imagePath, expiresIn);
@@ -42,12 +39,10 @@ export async function getSignedImageUrl(
  * @returns Promise with list of files
  */
 export async function listImages(folder: string = '') {
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .list(folder, {
-      limit: 100,
-      offset: 0,
-    });
+  const { data, error } = await supabase.storage.from(BUCKET_NAME).list(folder, {
+    limit: 100,
+    offset: 0,
+  });
 
   if (error) {
     console.error('Error listing images:', error);
@@ -63,9 +58,7 @@ export async function listImages(folder: string = '') {
  * @returns Promise with image blob
  */
 export async function downloadImage(imagePath: string) {
-  const { data, error } = await supabase.storage
-    .from(BUCKET_NAME)
-    .download(imagePath);
+  const { data, error } = await supabase.storage.from(BUCKET_NAME).download(imagePath);
 
   if (error) {
     console.error('Error downloading image:', error);

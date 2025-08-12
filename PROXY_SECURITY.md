@@ -19,10 +19,7 @@ All proxy routes include explicit environment checks:
 // Security: Only allow proxy in development environment
 if (process.env.NODE_ENV !== 'development') {
   console.warn('🚫 Proxy route accessed in production - blocking request');
-  return NextResponse.json(
-    { error: 'Proxy not available in production' },
-    { status: 403 }
-  );
+  return NextResponse.json({ error: 'Proxy not available in production' }, { status: 403 });
 }
 ```
 
