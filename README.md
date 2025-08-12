@@ -6,35 +6,54 @@ A modern, full-stack web application for dumpster rental services built with Nex
 
 ### 🌐 Customer Experience
 - **Modern Landing Page** - Professional homepage with service information
-- **Quote Request System** - Interactive form with calendar date picker
-- **Contact Integration** - Email notifications via Resend API
+- **Interactive Quote System** - Smart form with Google Places autocomplete
+- **Calendar Integration** - Advanced date picker with availability
+- **Email Notifications** - Automated confirmations via Resend API
 - **Responsive Design** - Mobile-first approach with dark/light mode
 - **Service Pages** - Detailed information about dumpster rental services
+- **Professional Email Templates** - React-based email designs
 
 ### 🔧 Admin Dashboard
-- **Professional Interface** - Modern dashboard with shadcn/ui components
-- **Quote Management** - View, edit, update, and track all customer quotes
-- **Data Table** - Interactive table with sorting, filtering, and pagination
-- **Analytics Cards** - Real-time stats (total quotes, pending, completed, etc.)
-- **Charts & Graphs** - Visual analytics for business insights
-- **Alert Dialogs** - Confirmation dialogs for delete operations
-- **Dark Mode Support** - Theme toggle integrated in sidebar
+- **Modern Interface** - Clean dashboard with shadcn/ui components and unified header
+- **Comprehensive Quote Management** - Create, view, edit, update, and track all customer quotes
+- **Advanced Data Table** - Interactive table with drag-and-drop sorting, filtering, and pagination
+- **Real-time Analytics** - Live stats cards (total quotes, pending, completed, revenue)
+- **Interactive Charts** - Visual analytics with Recharts for business insights
+- **Smart Dialogs** - Confirmation dialogs for all destructive operations
+- **Theme System** - Dark/light mode with next-themes integration
+- **User Management** - Supabase auth integration with user profiles
 
 ### 🗄️ Database & Backend
 - **Supabase Integration** - PostgreSQL database with Row Level Security
-- **Structured Data** - Comprehensive quotes table with status tracking
-- **Email System** - Automated notifications via Resend
-- **Type Safety** - Full TypeScript coverage with database types
+- **Structured Data Model** - Comprehensive quotes table with status and priority tracking
+- **Dual Email System** - Customer notifications + company alerts via Resend
+- **Environment-based Controls** - Development email skip functionality
+- **Corporate Proxy Support** - Undici proxy agent for enterprise environments
+- **Type Safety** - Full TypeScript coverage with generated database types
+
+### 🛠️ Developer Experience
+- **Clean Architecture** - Well-organized component structure and API routes
+- **ESLint Configuration** - Production-ready linting with custom rules
+- **Zero Unused Dependencies** - Optimized package.json (41 packages)
+- **Type Safety** - Comprehensive TypeScript implementation
+- **Build Optimization** - Next.js 15 with Turbopack for fast development
 
 ## 🚀 Tech Stack
 
-- **Framework**: Next.js 15.4.5 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui
-- **Database**: Supabase (PostgreSQL)
-- **Email**: Resend API
+- **Framework**: Next.js 15.4.5 (App Router with Turbopack)
+- **Language**: TypeScript 5.x with strict configuration
+- **Styling**: Tailwind CSS 4.x
+- **UI Components**: shadcn/ui (Radix UI primitives)
+- **Database**: Supabase (PostgreSQL with RLS)
+- **Email**: Resend API with React Email templates
+- **Charts**: Recharts for analytics visualization
 - **Icons**: Lucide React, Tabler Icons
+- **Animation**: Framer Motion for smooth interactions
+- **Forms**: React Hook Form with validation
+- **Data Tables**: TanStack Table with drag-and-drop
+- **Date Picker**: React Day Picker
+- **Authentication**: Supabase Auth
+- **Proxy Support**: Undici for corporate environments
 - **Fonts**: Manrope (Google Fonts)
 
 ## 📁 Project Structure
@@ -42,25 +61,49 @@ A modern, full-stack web application for dumpster rental services built with Nex
 ```
 ark-dumpster/
 ├── app/                    # Next.js App Router
-│   ├── admin/             # Admin dashboard pages
-│   │   ├── layout.tsx     # Admin-specific layout with sidebar
-│   │   ├── page.tsx       # Dashboard with stats and data table
-│   │   └── quotes/        # Detailed quote management
-│   ├── contact/           # Contact/quote form
+│   ├── admin/             # Admin dashboard
+│   │   ├── layout.tsx     # Admin layout with sidebar + unified header
+│   │   ├── page.tsx       # Dashboard with analytics and data table
+│   │   ├── quotes/        # Comprehensive quote management
+│   │   └── create/        # Admin quote creation form
+│   ├── contact/           # Customer contact/quote form
 │   ├── services/          # Service information pages
-│   └── api/send/          # Email API endpoint
+│   ├── about/             # About us page
+│   ├── email-preview/     # Email template preview (dev tool)
+│   └── api/               # API routes
+│       ├── send/          # Email sending endpoint
+│       ├── config/        # Environment configuration
+│       ├── proxy/         # General proxy utility
+│       ├── test-proxy/    # Proxy testing (dev only)
+│       └── supabase-proxy/ # Corporate proxy support
 ├── components/            # Reusable UI components
-│   ├── ui/               # shadcn/ui base components
+│   ├── ui/               # shadcn/ui base components (30+ components)
 │   ├── admin-*           # Admin-specific components
-│   ├── email-template.tsx # Email template
-│   └── dropoffCalendar.tsx # Date picker
-├── lib/                  # Utility functions
-│   ├── supabase.ts       # Database client & types
-│   └── supabase-server.ts # Server-side client
-└── supabase/             # Database migrations
-    ├── 002_create_quotes_table.sql
-    ├── 003_drop_contacts_table.sql
-    └── insert_dummy_quotes.sql
+│   ├── site-header.tsx   # Unified admin header with dynamic titles
+│   ├── email-template.tsx # Customer email template
+│   ├── company-notification-email.tsx # Internal notifications
+│   ├── google-places-autocomplete.tsx # Address autocomplete
+│   ├── data-table.tsx    # Advanced table with drag-and-drop
+│   ├── chart-area-interactive.tsx # Analytics charts
+│   └── dropoffCalendar.tsx # Date picker component
+├── lib/                  # Utility functions and services
+│   ├── supabase.ts       # Database client with proxy support
+│   ├── supabase-server.ts # Server-side client
+│   ├── database-service.ts # Database operations
+│   ├── email-service.ts  # Email service with dual notifications
+│   ├── image-loader.ts   # Image optimization
+│   └── utils.ts          # Utility functions
+├── hooks/                # Custom React hooks
+│   ├── use-mobile.ts     # Mobile detection
+│   └── use-toast.tsx     # Toast notifications
+├── docs/                 # Documentation
+│   ├── PROXY_SECURITY.md # Proxy configuration guide
+│   └── google-places-setup.md # Google Places API setup
+├── supabase/             # Database migrations and scripts
+│   ├── 002_create_quotes_table.sql
+│   ├── insert_dummy_quotes.sql
+│   └── README.md
+└── test-supabase.js      # Database connection test script
 ```
 
 ## 🛠️ Installation & Setup
