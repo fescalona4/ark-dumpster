@@ -21,7 +21,7 @@ export const MoveSidewayAnimation = ({ children }: { children: React.ReactNode }
         x: [0, -1080],
       }}
       transition={{
-        duration: 120, // 120 seconds for full cycle
+        duration: 30, // 120 seconds for full cycle
         repeat: Infinity,
         ease: 'linear',
       }}

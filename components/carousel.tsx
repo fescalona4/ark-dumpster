@@ -1,4 +1,4 @@
-import { getImageUrl } from '@/lib/supabase-storage';
+import { getImageUrl, listImages } from '@/lib/supabase-storage';
 import Image from 'next/image';
 import { FadeInAnimation, MoveSidewayAnimation } from './animated-components';
 
@@ -8,13 +8,42 @@ interface CarouselImage {
 }
 
 async function getCarouselImages(): Promise<CarouselImage[]> {
-  // Return fallback images immediately for server-side rendering
-  // This avoids network issues during build/SSR
   try {
-    // Only attempt to fetch if we're in a development environment
-    // or if specifically configured for server-side storage access
-    console.log('Using fallback images for server component...');
-    return getFallbackImages();
+    console.log('Fetching images dynamically from dump folder for carousel...');
+
+    // Fetch images from the dump folder
+    const { data: files, error } = await listImages('dump');
+
+    if (error) {
+      console.warn('Error fetching carousel images:', error);
+      return getFallbackImages();
+    }
+
+    if (files && files.length > 0) {
+      // Filter for image files and create URLs
+      const imageFiles = files.filter(file =>
+        file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)
+      );
+
+      if (imageFiles.length === 0) {
+        console.warn('No image files found in dump folder');
+        return getFallbackImages();
+      }
+
+      console.log(`Found ${imageFiles.length} images in dump folder for carousel`);
+
+      // Create carousel images with duplicates for seamless scrolling
+      const baseImages = imageFiles.map(file => ({
+        name: file.name,
+        url: getImageUrl(`dump/${file.name}`)
+      }));
+
+      // Duplicate images for seamless infinite scroll
+      return [...baseImages, ...baseImages];
+    } else {
+      console.warn('No files found in carousel folder');
+      return getFallbackImages();
+    }
   } catch (err) {
     console.error('Error in getCarouselImages:', err);
     return getFallbackImages();
@@ -22,8 +51,8 @@ async function getCarouselImages(): Promise<CarouselImage[]> {
 }
 
 function getFallbackImages(): CarouselImage[] {
-  // Use static/known image URLs that don't require server-side Supabase calls
-  // These can be actual Supabase URLs if you know the specific image names
+  // Fallback to hardcoded images if dynamic fetching fails
+  console.log('Using fallback images for carousel...');
   try {
     return [
       { name: 'dump1.jpg', url: getImageUrl('carousel/dump1.jpg') },
@@ -38,13 +67,8 @@ function getFallbackImages(): CarouselImage[] {
     ];
   } catch (error) {
     // If getImageUrl also fails, use local fallback images
-    console.warn('Falling back to local images due to URL generation error:', error);
-    return [
-      { name: 'fallback1.jpg', url: '/next.svg' },
-      { name: 'fallback2.jpg', url: '/vercel.svg' },
-      { name: 'fallback1.jpg', url: '/next.svg' },
-      { name: 'fallback2.jpg', url: '/vercel.svg' },
-    ];
+    console.warn('Falling back to empty carousel due to URL generation error:', error);
+    return [];
   }
 }
 
@@ -120,7 +144,7 @@ export default async function Carousel({ className }: CarouselProps) {
                           objectPosition: 'center',
                           objectFit: 'cover',
                         }}
-                        // unoptimized
+                      // unoptimized
                       />
                     </div>
                   </div>
