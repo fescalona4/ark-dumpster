@@ -211,29 +211,11 @@ function CreateQuoteContent() {
 
   return (
     <div className="p-2 md:p-6">
-      {/* Header with back button */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/quotes" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Quotes
-            </Link>
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Create New Quote</h1>
-            <p className="text-muted-foreground">
-              Fill out the form below to create a new dumpster rental quote request
-            </p>
-          </div>
-          <Badge variant="outline" className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Quote
-          </Badge>
-        </div>
+        <Badge variant="outline" className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Quote
+        </Badge>
       </div>
 
       {/* Contact form */}

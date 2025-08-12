@@ -249,11 +249,7 @@ function QuotesPageContent() {
   return (
     <div className="p-2 md:p-6">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Quotes Management</h1>
-        <p className="text-muted-foreground">
-          Manage dumpster rental quote requests and pricing
-        </p>
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex items-center gap-4">
           <Badge variant="outline" className="gap-2">
             <Package className="h-4 w-4" />
             {quotes.length} Total Quotes

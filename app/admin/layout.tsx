@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AdminAppSidebar } from "@/components/admin-app-sidebar";
+import { SiteHeader } from "@/components/site-header";
 import {
   SidebarInset,
   SidebarProvider,
@@ -26,6 +27,7 @@ export default function AdminLayout({
     >
       <AdminAppSidebar variant="inset" />
       <SidebarInset>
+        <SiteHeader />
         {children}
       </SidebarInset>
     </SidebarProvider>
