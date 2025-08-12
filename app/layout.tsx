@@ -12,6 +12,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'ARK Dumpster Rentals',
   description: 'Your go-to solution for dumpster rentals and waste management.',
+  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
 };
 
 export default function RootLayout({

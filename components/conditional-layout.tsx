@@ -9,10 +9,12 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   const isAdminPage = pathname?.startsWith('/admin');
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       {!isAdminPage && <Header />}
-      {children}
+      <div className="flex-1">
+        {children}
+      </div>
       {!isAdminPage && <Footer />}
-    </>
+    </div>
   );
 }

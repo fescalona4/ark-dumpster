@@ -25,8 +25,8 @@ const footerLinks = [
 
 const Footer = () => {
   return (
-    <div className="flex flex-col mx-2 md:mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
-      <footer>
+    <div className="flex flex-col mx-2 md:mx-4 rounded-t-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70 mb-0">
+      <footer className="mb-0">
         <div className="">
           <div className="py-12 flex flex-col justify-between ml-6 sm:ml-16 sm:mr-12">
             {/* Logo and Quick Links Header */}

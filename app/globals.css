@@ -162,8 +162,22 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    min-height: 100svh; /* Support for new viewport units */
   }
   html {
     scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+  
+  /* Fix for mobile viewport issues */
+  @supports (padding: max(0px)) {
+    body {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
   }
 }
