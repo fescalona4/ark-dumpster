@@ -1,6 +1,7 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Manrope } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import ConditionalLayout from '@/components/conditional-layout';
 
@@ -12,7 +13,12 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'ARK Dumpster Rentals',
   description: 'Your go-to solution for dumpster rentals and waste management.',
-  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -30,6 +36,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConditionalLayout>{children}</ConditionalLayout>
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>
