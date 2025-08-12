@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus } from 'lucide-react';
+import { RiAddLine } from '@remixicon/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -231,7 +231,7 @@ function CreateQuoteContent() {
     <div className="p-2 md:p-6">
       <div className="mb-8">
         <Badge variant="outline" className="gap-2">
-          <Plus className="h-4 w-4" />
+          <RiAddLine className="h-4 w-4" />
           New Quote
         </Badge>
       </div>

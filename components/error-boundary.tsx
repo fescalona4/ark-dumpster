@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { RiErrorWarningFill, RiRefreshLine, RiHomeFill } from '@remixicon/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -68,7 +68,7 @@ function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            <RiErrorWarningFill className="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
           <CardTitle className="text-xl">Something went wrong</CardTitle>
         </CardHeader>
@@ -91,7 +91,7 @@ function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError
 
           <div className="flex gap-2 pt-2">
             <Button onClick={resetError} variant="default" size="sm" className="flex-1">
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RiRefreshLine className="w-4 h-4 mr-2" />
               Try Again
             </Button>
             <Button
@@ -100,7 +100,7 @@ function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError
               size="sm"
               className="flex-1"
             >
-              <Home className="w-4 h-4 mr-2" />
+              <RiHomeFill className="w-4 h-4 mr-2" />
               Go Home
             </Button>
           </div>
@@ -119,7 +119,7 @@ export function AdminErrorBoundary({ children }: { children: React.ReactNode }) 
           <Card className="border-red-200 dark:border-red-800">
             <CardHeader>
               <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
+                <RiErrorWarningFill className="w-5 h-5" />
                 Admin Panel Error
               </CardTitle>
             </CardHeader>
@@ -129,7 +129,7 @@ export function AdminErrorBoundary({ children }: { children: React.ReactNode }) 
                 the issue persists.
               </p>
               <Button onClick={resetError} size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RiRefreshLine className="w-4 h-4 mr-2" />
                 Retry
               </Button>
             </CardContent>

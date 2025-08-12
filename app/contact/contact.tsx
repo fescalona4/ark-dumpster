@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Instagram, Facebook } from 'lucide-react';
+import { RiInstagramLine, RiFacebookLine, RiTiktokLine } from '@remixicon/react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -296,36 +296,36 @@ const Contacts = () => {
               <div>
                 <Badge
                   variant="outline"
-                  className="gap-1.5 text-sm px-2 py-0.5 text-primary-foreground dark:text-foreground"
+                  className="gap-1.5 text-sm md:text-xs px-2 py-0.5 text-primary-foreground dark:text-foreground"
                 >
                   Contact Us
                 </Badge>
-                <h1 className="text-5xl mb-4 pt-2 flex">Get in touch</h1>
-                <h3 className="text-xl mb-8 font-light">
+                <h1 className="text-5xl md:text-4xl mb-4 pt-2 flex">Get in touch</h1>
+                <h3 className="text-xl md:text-lg mb-8 font-light">
                   Need a dumpster rental? We&apos;re here to help with your project. Contact us for
                   a free quote today.
                 </h3>
               </div>
 
-              <div className="flex max-md:flex-col justify-between">
-                <h3 className="font-semibold text-lg">Phone:</h3>
-                <Link className="font-light text-lg" href="tel:7275641794  ">
+              <div className="flex max-md:flex-col justify-between text-lg md:text-md">
+                <h3 className="font-semibold">Phone:</h3>
+                <Link className="font-light" href="tel:7275641794  ">
                   (727) 564-1794
                 </Link>
               </div>
-              <div className="flex max-md:flex-col justify-between">
-                <h3 className="font-semibold text-lg">Email:</h3>
+              <div className="flex max-md:flex-col justify-between text-lg md:text-md">
+                <h3 className="font-semibold">Email:</h3>
                 <Link
-                  className="font-light text-lg truncate ml-1"
+                  className="font-light truncate ml-1"
                   href="mailto:arkdumpsterrentals@gmail.com"
                 >
                   arkdumpsterrentals@gmail.com
                 </Link>
               </div>
-              <div className="flex max-md:flex-col justify-between">
-                <h3 className="font-semibold text-lg">Located:</h3>
+              <div className="flex max-md:flex-col justify-between text-lg md:text-md">
+                <h3 className="font-semibold">Located:</h3>
                 <Link
-                  className="font-light text-lg"
+                  className="font-light"
                   href="https://maps.app.goo.gl/7q2pPdKkbd7138ZY6"
                   target="_blank"
                 >
@@ -335,12 +335,15 @@ const Contacts = () => {
 
               <hr className="my-4 md:my-8 border-border" />
               <h3 className="text-2xl font-semibold md:mb-4">Follow us</h3>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Link href="https://instagram.com/arkdumpsterrentals" target="_blank">
-                  <Instagram className="h-6 w-6 dark:text-muted-foreground" />
+                  <RiInstagramLine className="h-6 w-6 dark:text-muted-foreground" />
                 </Link>
                 <Link href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr" target="_blank">
-                  <Facebook className="h-6 w-6 dark:text-muted-foreground" />
+                  <RiFacebookLine className="h-6 w-6 dark:text-muted-foreground" />
+                </Link>
+                <Link href="https://www.tiktok.com/@arkdumpsterrentals" target="_blank">
+                  <RiTiktokLine className="h-6 w-6 dark:text-muted-foreground" />
                 </Link>
               </div>
             </div>

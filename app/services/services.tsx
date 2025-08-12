@@ -1,6 +1,6 @@
 'use client';
 
-import { PlusIcon, Trash, TreeDeciduous, Container } from 'lucide-react';
+import { RiAddLine, RiDeleteBinLine, RiPlantLine, RiArchiveLine } from '@remixicon/react';
 import { Accordion as AccordionPrimitive } from 'radix-ui';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -10,21 +10,21 @@ import { Accordion, AccordionContent, AccordionItem } from '@/components/ui/acco
 const items = [
   {
     id: '1',
-    icon: Container,
+    icon: RiArchiveLine,
     title: 'Dumpster Rental',
     content:
       'We offer flexible dumpster rental options to suit your project needs. Our dumpsters come in various sizes, making it easy to find the perfect fit for your residential or commercial project. With prompt delivery and pickup, we ensure a hassle-free experience.',
   },
   {
     id: '2',
-    icon: TreeDeciduous,
+    icon: RiPlantLine,
     title: 'Tree Services',
     content:
       'We provide expert tree services, including trimming, pruning, and removal. Our team is equipped to handle trees of all sizes, ensuring safety and efficiency. Whether you need routine maintenance or emergency tree removal, we have the expertise to manage your needs.',
   },
   {
     id: '3',
-    icon: Trash,
+    icon: RiDeleteBinLine,
     title: 'Junk Removal',
     content:
       'We offer comprehensive junk removal services for residential and commercial properties. Our team handles everything from furniture and appliances to yard waste and construction debris, ensuring your space is clutter-free and ready for use.',
@@ -69,7 +69,7 @@ export default function ServiceSection() {
                       <item.icon size={26} className="shrink-0 opacity-60" aria-hidden="true" />
                       <span className="text-xl">{item.title}</span>
                     </span>
-                    <PlusIcon
+                    <RiAddLine
                       size={26}
                       className="pointer-events-none shrink-0 opacity-60 transition-transform duration-200"
                       aria-hidden="true"

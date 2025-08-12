@@ -26,18 +26,18 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
-  Trash2,
-  Edit,
-  Save,
-  X,
-  Calendar,
-  MapPin,
-  Phone,
-  Mail,
-  Package,
-  Clock,
-  DollarSign,
-} from 'lucide-react';
+  RiDeleteBin2Line,
+  RiEditLine,
+  RiSaveLine,
+  RiCloseLine,
+  RiCalendarLine,
+  RiMapPinLine,
+  RiPhoneLine,
+  RiMailLine,
+  RiBox1Line,
+  RiTimeLine,
+  RiMoneyDollarCircleLine,
+} from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/auth-guard';
 
@@ -171,8 +171,8 @@ function QuotesPageContent() {
         updated_at: new Date().toISOString(),
         ...(editForm.quoted_price &&
           editForm.quoted_price > 0 && {
-            quoted_at: new Date().toISOString(),
-          }),
+          quoted_at: new Date().toISOString(),
+        }),
       };
 
       const { data, error } = await supabase
@@ -272,7 +272,7 @@ function QuotesPageContent() {
       <div className="mb-8">
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="gap-2">
-            <Package className="h-4 w-4" />
+            <RiBox1Line className="h-4 w-4" />
             {quotes.length} Total Quotes
           </Badge>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -298,7 +298,7 @@ function QuotesPageContent() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <RiBox1Line className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No quotes found</h3>
               <p className="text-muted-foreground">
                 {statusFilter === 'all'
@@ -325,7 +325,7 @@ function QuotesPageContent() {
                       <div className="mt-6 text-sm text-muted-foreground space-y-3">
                         {quote.phone ? (
                           <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-green-600" />
+                            <RiPhoneLine className="h-4 w-4 text-green-600" />
                             <a
                               href={`tel:${quote.phone}`}
                               className="text-green-600 font-semibold hover:text-green-700 hover:underline transition-colors duration-200 px-3 py-2 rounded"
@@ -335,22 +335,22 @@ function QuotesPageContent() {
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 text-gray-500">
-                            <Phone className="h-4 w-4" />
+                            <RiPhoneLine className="h-4 w-4" />
                             <span>No phone number</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
+                          <RiMailLine className="h-4 w-4" />
                           <span className="px-1">{quote.email}</span>
                         </div>
                         <div className="flex gap-6 pt-2">
                           <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
+                            <RiCalendarLine className="h-4 w-4" />
                             <span>{format(new Date(quote.created_at), 'MMM dd, yyyy')}</span>
                           </div>
                           {quote.dropoff_date && (
                             <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
+                              <RiTimeLine className="h-4 w-4" />
                               <span>Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}</span>
                             </div>
                           )}
@@ -361,16 +361,16 @@ function QuotesPageContent() {
                       {editingQuote === quote.id ? (
                         <>
                           <Button size="sm" onClick={saveQuote}>
-                            <Save className="h-4 w-4" />
+                            <RiSaveLine className="h-4 w-4" />
                           </Button>
                           <Button variant="outline" size="sm" onClick={cancelEditing}>
-                            <X className="h-4 w-4" />
+                            <RiCloseLine className="h-4 w-4" />
                           </Button>
                         </>
                       ) : (
                         <>
                           <Button variant="outline" size="sm" onClick={() => startEditing(quote)}>
-                            <Edit className="h-4 w-4" />
+                            <RiEditLine className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -379,7 +379,7 @@ function QuotesPageContent() {
                                 size="sm"
                                 className="text-red-500 hover:text-red-700"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <RiDeleteBin2Line className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -414,13 +414,13 @@ function QuotesPageContent() {
                       <div className="space-y-2 text-sm">
                         {quote.dumpster_size && (
                           <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4" />
+                            <RiBox1Line className="h-4 w-4" />
                             <span>Size: {quote.dumpster_size}</span>
                           </div>
                         )}
                         {(quote.address || quote.address2 || quote.city || quote.state) && (
                           <div className="flex items-start gap-2">
-                            <MapPin className="h-4 w-4 mt-0.5" />
+                            <RiMapPinLine className="h-4 w-4 mt-0.5" />
                             <div>
                               {quote.address && <div>{quote.address}</div>}
                               {quote.address2 && <div>{quote.address2}</div>}
@@ -435,7 +435,7 @@ function QuotesPageContent() {
                         )}
                         {quote.time_needed && (
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
+                            <RiTimeLine className="h-4 w-4" />
                             <span>Duration: {quote.time_needed}</span>
                           </div>
                         )}
@@ -548,7 +548,7 @@ function QuotesPageContent() {
                         <div className="space-y-3">
                           {quote.quoted_price && (
                             <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
+                              <RiMoneyDollarCircleLine className="h-4 w-4" />
                               <span className="font-semibold">
                                 ${quote.quoted_price.toFixed(2)}
                               </span>

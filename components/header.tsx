@@ -98,28 +98,28 @@ export default function Header() {
           {/* Right side container for nav and CTA */}
           <div className="space-x-8 lg:space-x-14 md:ml-16">
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8 lg:space-x-16">
+            <nav className="hidden md:flex space-x-8 lg:space-x-16 text-sm">
               <Link
                 href="/"
-                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors"
               >
                 Home
               </Link>
               <Link
                 href="/#about"
-                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors"
               >
                 About
               </Link>
               <Link
                 href="/#services"
-                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors"
               >
                 Services
               </Link>
               <Link
                 href="/#contact"
-                className="text-white hover:text-white/80 transition-colors font-medium text-lg"
+                className="text-white hover:text-white/80 transition-colors"
               >
                 Contact
               </Link>

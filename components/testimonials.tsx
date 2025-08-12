@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import Marquee from '@/components/ui/marquee';
-import { StarIcon } from 'lucide-react';
+import { RiStarFill } from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 
@@ -80,14 +80,14 @@ const Testimonials = () => (
           <div className="flex-1 mt-2 items-center text-center max-w-2xl">
             <Badge
               variant="outline"
-              className="gap-1.5 text-sm px-2 py-0.5 border-black dark:border-border"
+              className="gap-1.5 text-sm md:text-xs px-2 py-0.5 border-black dark:border-border"
             >
               Testimonials
             </Badge>
-            <h1 className="text-5xl text-foreground mb-4 pt-2 flex items-center justify-center">
+            <h1 className="text-5xl md:text-4xl text-foreground mb-4 pt-2 flex items-center justify-center">
               Hear from our clients
             </h1>
-            <h3 className="text-xl font-light">
+            <h3 className="text-xl md:text-lg font-light">
               Hear from our happy clients about their experience working with ARK Dumpster and the
               quality of our service.
             </h3>
@@ -112,11 +112,11 @@ const TestimonialList = () =>
   testimonials.map(testimonial => (
     <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8">
       <div className="flex gap-2">
-        <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
-        <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
-        <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
-        <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
-        <StarIcon className="w-4 h-4 fill-white stroke-orange-400" />
+        <RiStarFill className="w-4 h-4 fill-orange-400" />
+        <RiStarFill className="w-4 h-4 fill-orange-400" />
+        <RiStarFill className="w-4 h-4 fill-orange-400" />
+        <RiStarFill className="w-4 h-4 fill-orange-400" />
+        <RiStarFill className="w-4 h-4 fill-orange-400" />
       </div>
       <p className="my-6 text-[17px] max-w-md">&quot;{testimonial.testimonial}&quot;</p>
       <div className="mt-auto flex gap-3">

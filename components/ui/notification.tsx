@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { RiCheckboxCircleFill, RiCloseCircleFill, RiErrorWarningFill, RiInformationFill, RiCloseLine } from '@remixicon/react';
 
 interface NotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';
@@ -16,10 +16,10 @@ interface NotificationProps {
 
 export function Notification({ type, title, description, onClose, action }: NotificationProps) {
   const icons = {
-    success: CheckCircle,
-    error: XCircle,
-    warning: AlertTriangle,
-    info: Info,
+    success: RiCheckboxCircleFill,
+    error: RiCloseCircleFill,
+    warning: RiErrorWarningFill,
+    info: RiInformationFill,
   };
 
   const styles = {
@@ -84,7 +84,7 @@ export function Notification({ type, title, description, onClose, action }: Noti
 
         {onClose && (
           <button onClick={onClose} className={`p-1 rounded-md transition-colors ${style.button}`}>
-            <X className="h-4 w-4" />
+            <RiCloseLine className="h-4 w-4" />
           </button>
         )}
       </div>

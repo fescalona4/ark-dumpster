@@ -1,5 +1,5 @@
 import { Separator } from '@/components/ui/separator';
-import { Instagram, Facebook } from 'lucide-react';
+import { RiTiktokLine, RiFacebookLine, RiInstagramLine } from '@remixicon/react';
 import Link from 'next/link';
 import Image from 'next/image';
 import DarkToggle from '@/components/dark-toggle';
@@ -51,7 +51,7 @@ const Footer = () => {
                 <li key={title}>
                   <Link
                     href={href}
-                    className="text-gray-300 hover:text-white dark:hover:text-foreground font-medium"
+                    className="text-gray-300 hover:text-white dark:hover:text-foreground md:text-sm"
                   >
                     {title}
                   </Link>
@@ -62,7 +62,7 @@ const Footer = () => {
           <Separator />
           <div className="py-8 md:ml-8 flex flex-col-reverse sm:flex-row items-center justify-between gap-x-2 gap-y-5 px-6 xl:px-0">
             {/* Copyright */}
-            <span className="text-gray-300 dark:text-muted-foreground">
+            <span className="text-gray-300 dark:text-muted-foreground text-xs">
               &copy; {new Date().getFullYear()}{' '}
               <Link href="/" target="_blank">
                 ARK Dumpsters
@@ -70,12 +70,15 @@ const Footer = () => {
               . All rights reserved.
             </span>
 
-            <div className="flex items-center gap-5 sm:pr-17 text-gray-300 dark:text-muted-foreground">
+            <div className="flex items-center gap-2 sm:pr-17 text-gray-300 dark:text-muted-foreground">
               <Link href="https://instagram.com/arkdumpsterrentals" target="_blank">
-                <Instagram className="h-5 w-5" />
+                <RiInstagramLine className="h-5 w-5" />
               </Link>
               <Link href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr" target="_blank">
-                <Facebook className="h-5 w-5" />
+                <RiFacebookLine className="h-5 w-5" />
+              </Link>
+              <Link href="https://www.tiktok.com/@arkdumpsterrentals" target="_blank" className='mr-3'>
+                <RiTiktokLine className="h-5 w-5" />
               </Link>
               <DarkToggle />
             </div>

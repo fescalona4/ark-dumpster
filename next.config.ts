@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@tabler/icons-react'],
+    optimizePackageImports: ['@remixicon/react', '@radix-ui/react-icons', '@tabler/icons-react'],
   },
   eslint: {
     // Warning: This allows production builds to successfully complete even if

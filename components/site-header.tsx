@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { RiArrowLeftLine } from '@remixicon/react';
 
 interface SiteHeaderProps {
   title?: string;
@@ -37,7 +37,7 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
       return (
         <Button variant="outline" asChild size="sm">
           <Link href="/admin/quotes">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <RiArrowLeftLine className="h-4 w-4 mr-2" />
             Back to Quotes
           </Link>
         </Button>

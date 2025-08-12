@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDownIcon } from 'lucide-react';
+import { RiArrowDownSLine } from '@remixicon/react';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -51,7 +51,7 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
             className="justify-between font-normal text-foreground bg-white h-11 shadow-none"
           >
             {date ? date.toLocaleDateString() : 'Date needed'}
-            <ChevronDownIcon />
+            <RiArrowDownSLine />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
