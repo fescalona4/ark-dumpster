@@ -89,7 +89,7 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
 
         {/* Services Layout with Dynamic Image and Accordion */}
         <div className="max-w-screen-xl mx-6 md:mx-16 mt-16">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-8 items-start">
             {/* Left Side - Dynamic Image */}
             <div className="space-y-4">
               <AnimatePresence mode="wait">
@@ -101,7 +101,7 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
                   className="relative h-96 rounded-lg overflow-hidden shadow-lg"
                 >
-                  {currentImageUrl ? (
+                  {currentImageUrl && (
                     <>
                       <Image
                         src={currentImageUrl}
@@ -135,13 +135,13 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                           </button>
 
                           {/* Image Indicators */}
-                          <div className="absolute top-4 right-4 flex gap-1">
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                             {currentImages.map((_, index) => (
                               <button
                                 key={index}
                                 onClick={() => setCurrentImageIndex(index)}
-                                className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex
-                                  ? 'bg-white'
+                                className={`w-3 h-3 rounded-full transition-all ${index === currentImageIndex
+                                  ? 'bg-white shadow-lg'
                                   : 'bg-white/50 hover:bg-white/70'
                                   }`}
                                 aria-label={`View image ${index + 1}`}
@@ -151,29 +151,8 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                         </>
                       )}
 
-                      <div className="absolute bottom-6 left-6 text-white">
-                        <div className="flex items-center gap-3 mb-2">
-                          {React.createElement(iconMap[currentItem.icon as keyof typeof iconMap], { size: 28, className: "text-white" })}
-                          <h3 className="text-2xl font-bold">{currentItem.title}</h3>
-                        </div>
-                        <p className="text-sm text-gray-200 max-w-md leading-relaxed">
-                          {currentItem.content.slice(0, 100)}...
-                        </p>
-                        {currentImages.length > 1 && (
-                          <div className="mt-3 text-xs text-gray-300">
-                            {currentImageIndex + 1} of {currentImages.length} images
-                          </div>
-                        )}
-                      </div>
+
                     </>
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                      <div className="text-center">
-                        {React.createElement(iconMap[currentItem.icon as keyof typeof iconMap], { size: 48, className: "mx-auto mb-4 text-gray-400" })}
-                        <div className="text-gray-500 dark:text-gray-400">{currentItem.title}</div>
-                        <div className="text-sm text-gray-400 mt-2">No image available</div>
-                      </div>
-                    </div>
                   )}
                 </motion.div>
               </AnimatePresence>
