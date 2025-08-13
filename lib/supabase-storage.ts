@@ -15,13 +15,12 @@ const serverSupabase = typeof window === 'undefined' ? createServerSupabaseClien
 export function getImageUrl(imagePath: string): string {
   const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(imagePath);
 
-  // Check if proxies are enabled and we're in development
+  // Check if proxies are enabled
   const useProxy = process.env.USE_PROXY === 'true';
-  const isDevelopment = process.env.NODE_ENV === 'development';
   const isClient = typeof window !== 'undefined';
 
-  // In development, use image proxy only if USE_PROXY is enabled
-  if (isDevelopment && isClient && useProxy) {
+  // Use image proxy only if USE_PROXY is enabled
+  if (useProxy && isClient) {
     return `/api/image-proxy?url=${encodeURIComponent(data.publicUrl)}`;
   }
 
@@ -61,10 +60,9 @@ export async function listImages(folder: string = '') {
 
     // Check if proxies are enabled
     const useProxy = process.env.USE_PROXY === 'true';
-    const isDevelopment = process.env.NODE_ENV === 'development';
 
-    // If proxy is disabled or not in development, use direct Supabase client
-    if (!useProxy || !isDevelopment) {
+    // If proxy is disabled, use direct Supabase client
+    if (!useProxy) {
       console.log('🚫 Proxy disabled, using direct Supabase client');
 
       // Use server client with service role for admin operations
