@@ -78,11 +78,11 @@ export default function ServiceSection() {
 
             if (files && files.length > 0) {
               // Filter for image files and create URLs
-              const imageFiles = files.filter(file =>
+              const imageFiles = files.filter((file: any) =>
                 file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)
               );
 
-              newServiceImages[folder] = imageFiles.map(file =>
+              newServiceImages[folder] = imageFiles.map((file: any) =>
                 getImageUrl(`${folder}/${file.name}`)
               );
 

@@ -21,7 +21,7 @@ async function getCarouselImages(): Promise<CarouselImage[]> {
 
     if (files && files.length > 0) {
       // Filter for image files and create URLs
-      const imageFiles = files.filter(file =>
+      const imageFiles = files.filter((file: any) =>
         file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)
       );
 
@@ -33,7 +33,7 @@ async function getCarouselImages(): Promise<CarouselImage[]> {
       console.log(`Found ${imageFiles.length} images in carousel folder`);
 
       // Create carousel images with duplicates for seamless scrolling
-      const baseImages = imageFiles.map(file => ({
+      const baseImages = imageFiles.map((file: any) => ({
         name: file.name,
         url: getImageUrl(`carousel/${file.name}`)
       }));

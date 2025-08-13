@@ -15,8 +15,13 @@ const serverSupabase = typeof window === 'undefined' ? createServerSupabaseClien
 export function getImageUrl(imagePath: string): string {
   const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(imagePath);
 
-  // In development, use image proxy to bypass corporate firewall for Next.js image optimization
-  if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+  // Check if proxies are enabled and we're in development
+  const useProxy = process.env.USE_PROXY === 'true';
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isClient = typeof window !== 'undefined';
+
+  // In development, use image proxy only if USE_PROXY is enabled
+  if (isDevelopment && isClient && useProxy) {
     return `/api/image-proxy?url=${encodeURIComponent(data.publicUrl)}`;
   }
 
@@ -54,11 +59,29 @@ export async function listImages(folder: string = '') {
   try {
     console.log(`📁 Listing images from folder: ${folder}`);
 
-    // Use our custom proxy endpoint with service role key
-    const baseUrl = process.env.NODE_ENV === 'development'
-      ? 'http://localhost:3000'  // Back to port 3000
-      : `https://${process.env.VERCEL_URL}` || 'http://localhost:3000';
+    // Check if proxies are enabled
+    const useProxy = process.env.USE_PROXY === 'true';
+    const isDevelopment = process.env.NODE_ENV === 'development';
 
+    // If proxy is disabled or not in development, use direct Supabase client
+    if (!useProxy || !isDevelopment) {
+      console.log('🚫 Proxy disabled, using direct Supabase client');
+
+      // Use server client with service role for admin operations
+      const client = serverSupabase || supabase;
+      const { data, error } = await client.storage.from(BUCKET_NAME).list(folder);
+
+      if (error) {
+        console.error('Error listing images directly:', error);
+        return { data: [], error };
+      }
+
+      console.log(`✅ Successfully listed ${data.length} files from folder "${folder}" directly`);
+      return { data, error: null };
+    }
+
+    // Use proxy endpoint when enabled
+    const baseUrl = 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/storage-list?folder=${encodeURIComponent(folder)}`);
 
     if (!response.ok) {
@@ -72,7 +95,7 @@ export async function listImages(folder: string = '') {
 
     return { data, error: null };
   } catch (error: any) {
-    console.error('Error in listImages proxy call:', error);
+    console.error('Error in listImages call:', error);
     return { data: [], error };
   }
 }/**

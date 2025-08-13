@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
           'Accept': 'application/json'
-        }
+        } as Record<string, string>
       },
       {
         name: 'Storage API with POST body',
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
           'Content-Type': 'application/json'
-        },
+        } as Record<string, string>,
         body: JSON.stringify({
           limit: 100,
           offset: 0,
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey
-        }
+        } as Record<string, string>
       }
     ];
 

@@ -27,27 +27,27 @@ export async function GET() {
       }
 
       console.log(`✅ Found ${files.length} files in ${folder}:`);
-      files.forEach((file, index) => {
+      files.forEach((file: any, index: number) => {
         console.log(`  ${index + 1}. ${file.name} (created: ${file.created_at})`);
       });
 
       // Filter for image files
-      const imageFiles = files.filter(file =>
+      const imageFiles = files.filter((file: any) =>
         file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i)
       );
 
       console.log(`🖼️  Image files: ${imageFiles.length}`);
       if (imageFiles.length > 0) {
-        imageFiles.forEach((file, index) => {
+        imageFiles.forEach((file: any, index: number) => {
           console.log(`     ${index + 1}. ${file.name}`);
         });
       }
 
       results[folder] = {
         totalFiles: files.length,
-        imageFiles: imageFiles.map(f => f.name),
+        imageFiles: imageFiles.map((f: any) => f.name),
         imageCount: imageFiles.length,
-        allFiles: files.map(f => ({ name: f.name, created_at: f.created_at }))
+        allFiles: files.map((f: any) => ({ name: f.name, created_at: f.created_at }))
       };
 
     } catch (err: any) {
