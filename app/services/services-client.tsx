@@ -89,9 +89,9 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
 
         {/* Services Layout with Dynamic Image and Accordion */}
         <div className="max-w-screen-xl mx-6 md:mx-16 mt-16">
-          <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-8 items-start">
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
             {/* Left Side - Dynamic Image */}
-            <div className="space-y-4">
+            <div className="space-y-4 max-lg:mt-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeItem}
@@ -101,7 +101,7 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
                   className="relative h-96 rounded-lg overflow-hidden shadow-lg"
                 >
-                  {currentImageUrl && (
+                  {currentImageUrl ? (
                     <>
                       <Image
                         src={currentImageUrl}
@@ -121,14 +121,14 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                         <>
                           <button
                             onClick={prevImage}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/70 hover:bg-black/70 transition-colors"
                             aria-label="Previous image"
                           >
                             <RiArrowLeftSLine size={20} />
                           </button>
                           <button
                             onClick={nextImage}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white/70 hover:bg-black/70 transition-colors"
                             aria-label="Next image"
                           >
                             <RiArrowRightSLine size={20} />
@@ -140,9 +140,9 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                               <button
                                 key={index}
                                 onClick={() => setCurrentImageIndex(index)}
-                                className={`w-3 h-3 rounded-full transition-all ${index === currentImageIndex
-                                  ? 'bg-white shadow-lg'
-                                  : 'bg-white/50 hover:bg-white/70'
+                                className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex
+                                  ? 'bg-white/90 shadow-md'
+                                  : 'bg-white/40 hover:bg-white/70'
                                   }`}
                                 aria-label={`View image ${index + 1}`}
                               />
@@ -150,9 +150,15 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                           </div>
                         </>
                       )}
-
-
                     </>
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                      <div className="text-center">
+                        {React.createElement(iconMap[currentItem.icon as keyof typeof iconMap], { size: 48, className: "mx-auto mb-4 text-gray-400" })}
+                        <div className="text-gray-500 dark:text-gray-400">{currentItem.title}</div>
+                        <div className="text-sm text-gray-400 mt-2">No image available</div>
+                      </div>
+                    </div>
                   )}
                 </motion.div>
               </AnimatePresence>
