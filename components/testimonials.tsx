@@ -5,8 +5,18 @@ import Marquee from '@/components/ui/marquee';
 import { RiStarFill } from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import FlowingRibbonBackground from '@/components/flowing-ribbon-bg';
 
-const testimonials = [
+type Testimonial = {
+  id: number;
+  name: string;
+  designation: string;
+  company?: string;
+  testimonial: string;
+  avatar: string;
+};
+
+const testimonials: Testimonial[] = [
   {
     id: 1,
     name: 'Elegant Marble & Granite Design Corp',
@@ -74,8 +84,11 @@ const Testimonials = () => (
     viewport={{ once: true, amount: 0.3 }}
     transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
   >
-    <div className="min-h-screen flex justify-center items-center py-12">
-      <div className="h-full w-full">
+    <div className="relative min-h-screen flex justify-center items-center py-12 overflow-hidden">
+      {/* Flowing Ribbon Background */}
+      <FlowingRibbonBackground className="mt-100" />
+
+      <div className="relative z-10 h-full w-full">
         <div className="mx-auto px-10 mt-28 mb-16 flex justify-center">
           <div className="flex-1 mt-2 items-center text-center max-w-2xl">
             <Badge
@@ -97,10 +110,10 @@ const Testimonials = () => (
           <div className="z-10 absolute left-0 inset-y-0 w-[15%] bg-gradient-to-r from-background to-transparent" />
           <div className="z-10 absolute right-0 inset-y-0 w-[15%] bg-gradient-to-l from-background to-transparent" />
           <Marquee pauseOnHover className="[--duration:180s]">
-            <TestimonialList />
+            <TestimonialList testimonials={testimonials} />
           </Marquee>
           <Marquee pauseOnHover reverse className="mt-0 [--duration:180s]">
-            <TestimonialList />
+            <TestimonialList testimonials={[...testimonials].reverse()} />
           </Marquee>
         </div>
       </div>
@@ -108,9 +121,9 @@ const Testimonials = () => (
   </motion.div>
 );
 
-const TestimonialList = () =>
-  testimonials.map(testimonial => (
-    <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8">
+const TestimonialList = ({ testimonials }: { testimonials: Testimonial[] }) =>
+  testimonials.map((testimonial: Testimonial) => (
+    <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8 backdrop-blur-sm">
       <div className="flex gap-2">
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />
