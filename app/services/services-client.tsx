@@ -66,7 +66,7 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
       id="services"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
     >
       <div className="flex flex-col items-center">
@@ -74,14 +74,14 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
           <div className="flex-1 mt-2 items-center text-center max-w-2xl">
             <Badge
               variant="outline"
-              className="gap-1.5 text-sm px-2 py-0.5 border-black dark:border-border"
+              className="gap-1.5 text-sm md:text-xs px-2 py-0.5 border-black dark:border-border"
             >
               Services
             </Badge>
-            <h1 className="text-5xl text-foreground mb-4 pt-2 flex items-center justify-center">
+            <h1 className="text-5xl md:text-4xl text-foreground mb-4 pt-2 flex items-center justify-center">
               What we do
             </h1>
-            <h3 className="text-xl font-light">
+            <h3 className="text-xl md:text-lg font-light">
               Find out which one of our services fits your project needs
             </h3>
           </div>
@@ -188,7 +188,7 @@ export default function ServicesClient({ items, serviceImages }: ServicesClientP
                         />
                       </AccordionPrimitive.Trigger>
                     </AccordionPrimitive.Header>
-                    <AccordionContent className="text-muted-foreground px-10 pb-2 text-lg">
+                    <AccordionContent className="text-muted-foreground px-10 pb-2 text-lg font-light">
                       {item.content}
                     </AccordionContent>
                   </AccordionItem>

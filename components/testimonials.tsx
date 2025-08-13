@@ -81,10 +81,10 @@ const Testimonials = () => (
   <motion.div
     initial={{ opacity: 0, y: 50 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.3 }}
+    viewport={{ once: true, amount: 0.2 }}
     transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
   >
-    <div className="relative min-h-screen flex justify-center items-center py-12 overflow-hidden">
+    <div className="relative min-h-screen flex justify-center items-center mt-6 mb-12 overflow-hidden">
       {/* Flowing Ribbon Background */}
       <FlowingRibbonBackground className="mt-100" />
 
@@ -124,14 +124,14 @@ const Testimonials = () => (
 const TestimonialList = ({ testimonials }: { testimonials: Testimonial[] }) =>
   testimonials.map((testimonial: Testimonial) => (
     <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8 backdrop-blur-sm">
-      <div className="flex gap-2">
+      <div className="flex gap-1.5">
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />
       </div>
-      <p className="my-6 text-[17px] max-w-md">&quot;{testimonial.testimonial}&quot;</p>
+      <p className="my-6 text-[15px] max-w-md">&quot;{testimonial.testimonial}&quot;</p>
       <div className="mt-auto flex gap-3">
         <Avatar>
           <AvatarFallback className="text-xl font-medium bg-primary text-primary-foreground">
@@ -139,8 +139,8 @@ const TestimonialList = ({ testimonials }: { testimonials: Testimonial[] }) =>
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-lg font-semibold">{testimonial.name}</p>
-          <p className="text-sm text-gray-500">{testimonial.designation}</p>
+          <p className="text-md font-semibold">{testimonial.name}</p>
+          <p className="text-xs text-gray-500 font-light">{testimonial.designation}</p>
         </div>
       </div>
     </div>

@@ -286,7 +286,7 @@ const Contacts = () => {
       id="contact"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.5, ease: 'easeOut', delay: 0 }}
     >
       <div className="flex items-center justify-center pb-16 md:px-16 mb-2 md:mb-4 mx-2 md:mx-4 rounded-lg bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">

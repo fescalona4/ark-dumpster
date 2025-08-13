@@ -8,7 +8,7 @@ export default function Stats() {
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
     >
       <div className="flex items-center justify-center">
@@ -43,7 +43,7 @@ export default function Stats() {
 
           <div className="mt-16 sm:mt-24 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-10 gap-y-16 justify-center">
             <div>
-              <span className="text-5xl md:text-7xl font-light">
+              <span className="text-5xl md:text-6xl font-light">
                 <NumberTicker
                   value={8}
                   delay={0}
@@ -51,58 +51,58 @@ export default function Stats() {
                 />
               </span>
               <p className="mt-6 font-semibold text-xl">Years experience</p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground font-light">
                 From home renovations to large construction sites, we&apos;ve handled it all with
                 professional service.
               </p>
             </div>
             <div>
-              <span className="text-5xl md:text-7xl font-light">
+              <span className="text-5xl md:text-6xl font-light">
                 <NumberTicker
                   value={200}
-                  delay={1}
+                  delay={0}
                   className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                 />
                 +
               </span>
               <p className="mt-6 font-semibold text-xl">Projects completed</p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground font-light">
                 From home renovations to large construction sites, we&apos;ve handled it all with
                 professional service.
               </p>
             </div>
             <div>
-              <span className="text-5xl md:text-7xl font-light">
+              <span className="text-5xl md:text-6xl font-light">
                 <NumberTicker
                   value={24}
-                  delay={1}
+                  delay={0}
                   className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                 />
                 /
                 <NumberTicker
                   value={7}
-                  delay={1}
+                  delay={0}
                   className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                 />
               </span>
               <p className="mt-6 font-semibold text-xl">Customer support</p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground font-light">
                 Our dedicated team is available around the clock to assist with your waste
                 management needs.
               </p>
             </div>
             <div>
-              <span className="text-5xl md:text-7xl font-light">
+              <span className="text-5xl md:text-6xl font-light">
                 <NumberTicker
                   value={100}
-                  delay={1}
+                  delay={0}
                   className="whitespace-pre-wrap tracking-tighter text-black dark:text-white"
                 />
                 %
               </span>
 
               <p className="mt-6 font-semibold text-xl">Client satisfaction</p>
-              <p className="mt-2 text-muted-foreground">
+              <p className="mt-2 text-muted-foreground font-light">
                 All of our clients are satisfied with our work and service
               </p>
             </div>

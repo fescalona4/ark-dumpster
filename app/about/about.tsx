@@ -10,7 +10,7 @@ export default function AboutSection() {
       id="about"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
+      viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <div className="flex items-center justify-center px-6 md:px-20 mt-24 md:mt-8 mb-24">
