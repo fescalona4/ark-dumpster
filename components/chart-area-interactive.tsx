@@ -55,7 +55,7 @@ const chartConfig = {
 
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
-  const [timeRange, setTimeRange] = React.useState('30d');
+  const [timeRange, setTimeRange] = React.useState('7d');
   const [chartData, setChartData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -140,7 +140,7 @@ export function ChartAreaInteractive() {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Website Visitors by Device</CardTitle>
+        <CardTitle>Visitors</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">Total visits from different device types</span>
           <span className="@[540px]/card:hidden">Device breakdown</span>
@@ -153,8 +153,8 @@ export function ChartAreaInteractive() {
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
           >
-            <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
             <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+            <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
           </ToggleGroup>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger
@@ -165,11 +165,11 @@ export function ChartAreaInteractive() {
               <SelectValue placeholder="Last 30 days" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
-              <SelectItem value="30d" className="rounded-lg">
-                Last 30 days
-              </SelectItem>
               <SelectItem value="7d" className="rounded-lg">
                 Last 7 days
+              </SelectItem>
+              <SelectItem value="30d" className="rounded-lg">
+                Last 30 days
               </SelectItem>
             </SelectContent>
           </Select>

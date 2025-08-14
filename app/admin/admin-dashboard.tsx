@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminSectionCards } from '@/components/admin-section-cards';
 import { QuotesDataTable } from '@/components/quotes-data-table';
