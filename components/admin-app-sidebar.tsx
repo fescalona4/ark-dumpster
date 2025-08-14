@@ -9,7 +9,7 @@ import {
   IconFileText,
   IconSettings,
   IconHome,
-  IconCirclePlusFilled,
+  IconPlus,
   IconTruck,
   IconChartBar,
 } from '@tabler/icons-react';
@@ -53,7 +53,7 @@ const navData = {
     {
       title: 'Create Quote',
       url: '/admin/create',
-      icon: IconCirclePlusFilled,
+      icon: IconPlus,
     },
   ],
   navSecondary: [

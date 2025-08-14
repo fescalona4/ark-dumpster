@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminSectionCards } from '@/components/admin-section-cards';
-import { DataTable } from '@/components/data-table';
+import { QuotesDataTable } from '@/components/quotes-data-table';
+import { OrdersDataTable } from '@/components/orders-data-table';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { Order } from '@/types/order';
 import { QUOTE_STATUSES, ORDER_STATUSES } from '@/lib/constants';
@@ -169,6 +170,12 @@ export default function AdminDashboard() {
     reviewer: order.order_number || order.email,
   }));
 
+  console.log('Orders data:', orders.length);
+  console.log('Order statuses in data:', [...new Set(orders.map(o => o.status))]);
+  console.log('Order statuses from constants:', orderStatuses);
+  console.log('Sample order objects:', orders.slice(0, 2).map(o => ({ id: o.id, status: o.status, first_name: o.first_name })));
+  console.log('Transformed orders table data:', ordersTableData.length, ordersTableData.slice(0, 2));
+
   if (loading) {
     return (
       <div className="flex flex-1 flex-col">
@@ -201,13 +208,13 @@ export default function AdminDashboard() {
           {/* Quotes Table */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold px-4 lg:px-6">Recent Quotes</h2>
-            <DataTable data={quotesTableData} statuses={quoteStatuses} />
+            <QuotesDataTable data={quotesTableData} statuses={quoteStatuses} />
           </div>
 
           {/* Orders Table */}
           <div className="space-y-2">
             <h2 className="text-lg font-semibold px-4 lg:px-6">Recent Orders</h2>
-            <DataTable data={ordersTableData} statuses={orderStatuses} />
+            <OrdersDataTable data={ordersTableData} statuses={orderStatuses} />
           </div>
 
           <div className="px-4 lg:px-6">
