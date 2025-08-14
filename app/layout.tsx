@@ -4,6 +4,7 @@ import { Manrope } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import ConditionalLayout from '@/components/conditional-layout';
+import AnalyticsProvider from '@/components/analytics-provider';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -35,7 +36,9 @@ export default function RootLayout({
           enableSystem={true}
           disableTransitionOnChange
         >
-          <ConditionalLayout>{children}</ConditionalLayout>
+          <AnalyticsProvider>
+            <ConditionalLayout>{children}</ConditionalLayout>
+          </AnalyticsProvider>
           <SpeedInsights />
         </ThemeProvider>
       </body>

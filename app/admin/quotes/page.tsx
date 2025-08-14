@@ -39,6 +39,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/quote-edit-dialog';
 import {
   RiDeleteBin2Line,
@@ -73,6 +81,7 @@ interface Quote {
   zip_code: string | null;
   dumpster_size: string | null;
   dropoff_date: string | null;
+  dropoff_time: string | null;
   time_needed: string | null;
   message: string | null;
   status: 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
@@ -117,6 +126,9 @@ function QuotesPageContent() {
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
   // const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null); // TODO: Implement delete functionality
+
+  // Date-time picker dialog state
+  const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
 
   // Drivers configuration - easy to expand in the future
   const drivers = [
@@ -226,6 +238,8 @@ function QuotesPageContent() {
         quote_notes: editForm.quote_notes,
         assigned_to: editForm.assigned_to,
         priority: editForm.priority,
+        dropoff_date: editForm.dropoff_date,
+        dropoff_time: editForm.dropoff_time,
         updated_at: new Date().toISOString(),
         ...(editForm.quoted_price &&
           editForm.quoted_price > 0 && {
@@ -273,6 +287,104 @@ function QuotesPageContent() {
     } catch (err) {
       console.error('Unexpected error:', err);
       alert('Failed to delete quote');
+    }
+  };
+
+  /**
+   * Converts a quote to an order
+   * Creates a new order record and updates the quote status to 'accepted'
+   * Generates an order number and copies all relevant quote data
+   */
+  const createOrder = async (quoteId: string) => {
+    try {
+      const quote = quotes.find(q => q.id === quoteId);
+      if (!quote) {
+        alert('Quote not found');
+        return;
+      }
+
+      // Get current edit form data if any
+      const currentEditData = editForms[quoteId];
+      const currentDropoffTime = currentEditData?.dropoff_time || quote.dropoff_time;
+      const currentDropoffDate = currentEditData?.dropoff_date || quote.dropoff_date;
+
+      // Validate required fields for order creation
+      if (!currentDropoffTime) {
+        alert('Dropoff time is required to create an order. Please set a dropoff time first.');
+        return;
+      }
+
+      if (!currentDropoffDate) {
+        alert('Dropoff date is required to create an order. Please set a dropoff date first.');
+        return;
+      }
+
+      // Generate order number
+      const { data: orderNumData, error: orderNumError } = await supabase
+        .rpc('generate_order_number');
+
+      if (orderNumError) {
+        console.error('Error generating order number:', orderNumError);
+        alert('Failed to generate order number');
+        return;
+      }
+
+      // Create order from quote data (use current edit data if available)
+      const orderData = {
+        quote_id: quote.id,
+        first_name: currentEditData?.first_name || quote.first_name,
+        last_name: currentEditData?.last_name || quote.last_name,
+        email: currentEditData?.email || quote.email,
+        phone: currentEditData?.phone || quote.phone,
+        address: currentEditData?.address || quote.address,
+        address2: currentEditData?.address2 || quote.address2,
+        city: currentEditData?.city || quote.city,
+        state: currentEditData?.state || quote.state,
+        zip_code: currentEditData?.zip_code || quote.zip_code,
+        dumpster_size: currentEditData?.dumpster_size || quote.dumpster_size,
+        dropoff_date: currentDropoffDate,
+        dropoff_time: currentDropoffTime,
+        time_needed: currentEditData?.time_needed || quote.time_needed,
+        message: currentEditData?.message || quote.message,
+        order_number: orderNumData,
+        status: 'scheduled' as const,
+        priority: currentEditData?.priority || quote.priority,
+        quoted_price: currentEditData?.quoted_price || quote.quoted_price,
+        assigned_to: currentEditData?.assigned_to || quote.assigned_to || 'Ariel',
+        internal_notes: currentEditData?.quote_notes || quote.quote_notes,
+      };
+
+      // Insert order
+      const { data: orderResult, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('Error creating order:', orderError);
+        alert('Failed to create order');
+        return;
+      }
+
+      // Update quote status to accepted
+      const { error: quoteUpdateError } = await supabase
+        .from('quotes')
+        .update({ status: 'accepted' })
+        .eq('id', quoteId);
+
+      if (quoteUpdateError) {
+        console.error('Error updating quote status:', quoteUpdateError);
+        // Still show success since order was created
+      }
+
+      // Refresh quotes to show updated status
+      await fetchQuotes();
+
+      alert(`Order ${orderResult.order_number} created successfully!`);
+    } catch (err) {
+      console.error('Unexpected error creating order:', err);
+      alert('Failed to create order');
     }
   };
 
@@ -639,6 +751,119 @@ function QuotesPageContent() {
                             </Select>
                           </div>
                         </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium">
+                              Dropoff Date
+                              <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
+                            </label>
+                            <Dialog open={dateTimeDialogOpen === quote.id} onOpenChange={(open) => setDateTimeDialogOpen(open ? quote.id : null)}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                    ? "text-muted-foreground border-red-300 hover:border-red-400"
+                                    : ""
+                                    }`}
+                                >
+                                  <RiCalendarLine className="mr-2 h-4 w-4" />
+                                  {(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                    ? format(new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || ''), 'MMM dd, yyyy')
+                                    : "Pick a date"
+                                  }
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-fit">
+                                <DialogHeader>
+                                  <DialogTitle>Select Dropoff Date & Time</DialogTitle>
+                                </DialogHeader>
+                                <DateTimePicker
+                                  date={
+                                    (editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                      ? new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || '')
+                                      : undefined
+                                  }
+                                  time={editForms[quote.id]?.dropoff_time || quote.dropoff_time || ''}
+                                  onDateChange={(date) => {
+                                    const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+                                    setEditForms(prev => ({
+                                      ...prev,
+                                      [quote.id]: {
+                                        ...prev[quote.id],
+                                        dropoff_date: dateString,
+                                      }
+                                    }));
+                                  }}
+                                  onTimeChange={(time) => {
+                                    setEditForms(prev => ({
+                                      ...prev,
+                                      [quote.id]: {
+                                        ...prev[quote.id],
+                                        dropoff_time: time,
+                                      }
+                                    }));
+                                  }}
+                                />
+                                <div className="flex justify-center pt-4 border-t">
+                                  <Button
+                                    onClick={() => setDateTimeDialogOpen(null)}
+                                    className="min-w-[200px]"
+                                  >
+                                    {(() => {
+                                      const currentDate = editForms[quote.id]?.dropoff_date || quote.dropoff_date;
+                                      const currentTime = editForms[quote.id]?.dropoff_time || quote.dropoff_time;
+
+                                      if (currentDate && currentTime) {
+                                        // Convert 24-hour time to 12-hour AM/PM format
+                                        const [hours, minutes] = currentTime.split(':');
+                                        const hour12 = parseInt(hours) % 12 || 12;
+                                        const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                        const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} at ${formattedTime}`;
+                                      } else if (currentDate) {
+                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} - Select time`;
+                                      } else if (currentTime) {
+                                        const [hours, minutes] = currentTime.split(':');
+                                        const hour12 = parseInt(hours) % 12 || 12;
+                                        const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                        const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                        return `Select date - ${formattedTime}`;
+                                      } else {
+                                        return 'Close';
+                                      }
+                                    })()}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">
+                              Dropoff Time
+                              <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
+                            </label>
+                            <Button
+                              variant="outline"
+                              className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                                ? "text-muted-foreground border-red-300 hover:border-red-400"
+                                : ""
+                                }`}
+                              onClick={() => setDateTimeDialogOpen(quote.id)}
+                            >
+                              <RiTimeLine className="mr-2 h-4 w-4" />
+                              {(() => {
+                                const currentTime = editForms[quote.id]?.dropoff_time || quote.dropoff_time;
+                                if (currentTime) {
+                                  const [hours, minutes] = currentTime.split(':');
+                                  const hour12 = parseInt(hours) % 12 || 12;
+                                  const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                  return `${hour12}:${minutes} ${ampm}`;
+                                }
+                                return "Pick a time";
+                              })()}
+                            </Button>
+                          </div>
+                        </div>
                         <div>
                           <label className="text-sm font-medium">Quote Notes</label>
                           <Textarea
@@ -670,10 +895,17 @@ function QuotesPageContent() {
                           <Button
                             variant="default"
                             className="w-full"
-                            onClick={() => {
-                              // TODO: Implement create order functionality
-                              console.log('Create order for quote:', quote.id);
-                            }}
+                            onClick={() => createOrder(quote.id)}
+                            disabled={
+                              !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                              !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                            }
+                            title={
+                              !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                                !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                ? "Dropoff date and time are required to create an order"
+                                : "Create order from this quote"
+                            }
                           >
                             Create Order
                           </Button>

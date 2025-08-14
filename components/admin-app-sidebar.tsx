@@ -10,6 +10,8 @@ import {
   IconSettings,
   IconHome,
   IconCirclePlusFilled,
+  IconTruck,
+  IconChartBar,
 } from '@tabler/icons-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -37,6 +39,16 @@ const navData = {
       title: 'Quotes',
       url: '/admin/quotes',
       icon: IconFileText,
+    },
+    {
+      title: 'Orders',
+      url: '/admin/orders',
+      icon: IconTruck,
+    },
+    {
+      title: 'Analytics',
+      url: '/admin/analytics',
+      icon: IconChartBar,
     },
     {
       title: 'Create Quote',
