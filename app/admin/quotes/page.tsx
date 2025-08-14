@@ -1,3 +1,16 @@
+/**
+ * Admin Quotes Management Page
+ * 
+ * This page provides a comprehensive interface for managing dumpster rental quotes.
+ * Features include:
+ * - View all quotes in a card-based layout
+ * - Filter quotes by status, priority, and search terms
+ * - Edit customer information and service details via popup dialog
+ * - Inline editing of quote management fields (status, priority, pricing, etc.)
+ * - Delete quotes with confirmation
+ * - Real-time updates and data synchronization
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -25,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { QuoteEditDialog } from '@/components/quote-edit-dialog';
 import {
   RiDeleteBin2Line,
   RiEditLine,
@@ -41,6 +56,10 @@ import {
 import { format } from 'date-fns';
 import AuthGuard from '@/components/auth-guard';
 
+/**
+ * Quote interface defining the structure of a quote object
+ * Includes customer information, service details, and administrative fields
+ */
 interface Quote {
   id: string;
   first_name: string;
@@ -66,6 +85,10 @@ interface Quote {
   priority: 'low' | 'normal' | 'high' | 'urgent';
 }
 
+/**
+ * Main admin quotes page component
+ * Wraps the content in AuthGuard for authentication
+ */
 export default function QuotesAdminPage() {
   return (
     <AuthGuard>
@@ -74,14 +97,32 @@ export default function QuotesAdminPage() {
   );
 }
 
+/**
+ * Main content component for the quotes admin page
+ * Handles all state management, data fetching, and UI rendering
+ * Features include filtering, editing, deleting, and managing quotes
+ */
 function QuotesPageContent() {
+  // Core data state
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingQuote, setEditingQuote] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Quote>>({});
+
+  // Edit state management - tracks pending edits for each quote by ID
+  const [editForms, setEditForms] = useState<{ [key: string]: Partial<Quote> }>({});
+
+  // Filter state for quote display
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  // Dialog state for popup customer/service info editing
+  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
   // const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null); // TODO: Implement delete functionality
+
+  // Drivers configuration - easy to expand in the future
+  const drivers = [
+    { value: 'Ariel', label: 'Ariel' },
+    { value: 'Other Driver', label: 'Other Driver' },
+  ];
 
   // Format phone number for display
   const formatPhoneNumber = (phone: number | null) => {
@@ -104,6 +145,11 @@ function QuotesPageContent() {
     return phoneStr;
   };
 
+  /**
+   * Fetches quotes from the database with optional filtering
+   * Applies status filter if not 'all'
+   * Orders by creation date (newest first)
+   */
   const fetchQuotes = useCallback(async () => {
     try {
       setLoading(true);
@@ -148,18 +194,30 @@ function QuotesPageContent() {
     fetchQuotes();
   }, [fetchQuotes]);
 
-  const startEditing = (quote: Quote) => {
-    setEditingQuote(quote.id);
-    setEditForm(quote);
-  };
+  // Initialize form data for each quote
+  useEffect(() => {
+    const newEditForms: { [key: string]: Partial<Quote> } = {};
+    quotes.forEach(quote => {
+      if (!editForms[quote.id]) {
+        newEditForms[quote.id] = {
+          ...quote,
+          assigned_to: quote.assigned_to || 'Ariel'
+        };
+      }
+    });
+    if (Object.keys(newEditForms).length > 0) {
+      setEditForms(prev => ({ ...prev, ...newEditForms }));
+    }
+  }, [quotes]);
 
-  const cancelEditing = () => {
-    setEditingQuote(null);
-    setEditForm({});
-  };
-
-  const saveQuote = async () => {
-    if (!editingQuote || !editForm) return;
+  /**
+   * Saves quote changes to the database
+   * Takes pending edits from editForms state and updates the quote
+   * Refreshes quotes list after successful save
+   */
+  const saveQuote = async (quoteId: string) => {
+    const editForm = editForms[quoteId];
+    if (!editForm) return;
 
     try {
       const updateData = {
@@ -178,21 +236,29 @@ function QuotesPageContent() {
       const { data, error } = await supabase
         .from('quotes')
         .update(updateData)
-        .eq('id', editingQuote)
+        .eq('id', quoteId)
         .select();
 
       if (error) {
         console.error('Error updating quote:', error);
       } else {
-        setQuotes(quotes.map(q => (q.id === editingQuote ? data[0] : q)));
-        setEditingQuote(null);
-        setEditForm({});
+        setQuotes(quotes.map(q => (q.id === quoteId ? data[0] : q)));
+        // Update the edit form with the new data
+        setEditForms(prev => ({
+          ...prev,
+          [quoteId]: { ...data[0], assigned_to: data[0].assigned_to || 'Ariel' }
+        }));
       }
     } catch (err) {
       console.error('Unexpected error:', err);
     }
   };
 
+  /**
+   * Deletes a quote from the database
+   * Shows confirmation dialog before deletion
+   * Refreshes quotes list after successful deletion
+   */
   const deleteQuote = async (id: string) => {
     try {
       const { error } = await supabase.from('quotes').delete().eq('id', id);
@@ -210,6 +276,10 @@ function QuotesPageContent() {
     }
   };
 
+  /**
+   * Returns Tailwind CSS classes for status badge styling
+   * Maps quote status to appropriate color scheme
+   */
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
@@ -227,6 +297,10 @@ function QuotesPageContent() {
     }
   };
 
+  /**
+   * Returns Tailwind CSS classes for priority badge styling
+   * Maps quote priority to appropriate color scheme
+   */
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent':
@@ -269,6 +343,7 @@ function QuotesPageContent() {
 
   return (
     <div className="p-2 md:p-6">
+      {/* Header section with stats and filters */}
       <div className="mb-8">
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="gap-2">
@@ -294,6 +369,7 @@ function QuotesPageContent() {
         </div>
       </div>
 
+      {/* Main content area - empty state or quotes grid */}
       {quotes.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
@@ -310,18 +386,32 @@ function QuotesPageContent() {
         </Card>
       ) : (
         <div className="grid gap-8">
+          {/* Quotes list - filter out any incomplete/invalid quotes */}
           {quotes
             .filter(quote => quote && quote.id && quote.first_name)
             .map(quote => (
               <Card key={quote.id} className="relative">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
+                    {/* Quote header - quote number, customer name, then status/priority */}
                     <div>
-                      <CardTitle className="text-xl flex items-center gap-2 mb-6">
+                      {/* Quote number at top */}
+                      <div className="text-sm font-medium text-muted-foreground mb-2">
+                        Quote #{quote.id.slice(-4).toUpperCase()}
+                      </div>
+
+                      {/* Customer name */}
+                      <CardTitle className="text-xl mb-3">
                         {quote.first_name} {quote.last_name || ''}
-                        <Badge className={getPriorityColor(quote.priority)}>{quote.priority}</Badge>
-                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
                       </CardTitle>
+
+                      {/* Status and priority badges */}
+                      <div className="flex items-center gap-2 mb-6">
+                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
+                        <Badge className={getPriorityColor(quote.priority)}>{quote.priority}</Badge>
+                      </div>
+
+                      {/* Customer contact information */}
                       <div className="mt-6 text-sm text-muted-foreground space-y-3">
                         {quote.phone ? (
                           <div className="flex items-center gap-2">
@@ -357,58 +447,52 @@ function QuotesPageContent() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Action buttons - edit and delete */}
                     <div className="flex gap-2">
-                      {editingQuote === quote.id ? (
-                        <>
-                          <Button size="sm" onClick={saveQuote}>
-                            <RiSaveLine className="h-4 w-4" />
+                      <QuoteEditDialog
+                        quote={quote}
+                        editForms={editForms}
+                        setEditForms={setEditForms}
+                        onSave={saveQuote}
+                        isOpen={editDialogOpen === quote.id}
+                        onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
+                      />
+                      <AlertDialog>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this quote from {quote.first_name}{' '}
+                              {quote.last_name}? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteQuote(quote.id)}
+                              className="bg-red-500 hover:bg-red-600"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <RiDeleteBin2Line className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="sm" onClick={cancelEditing}>
-                            <RiCloseLine className="h-4 w-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button variant="outline" size="sm" onClick={() => startEditing(quote)}>
-                            <RiEditLine className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                <RiDeleteBin2Line className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Quote</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this quote from {quote.first_name}{' '}
-                                  {quote.last_name}? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteQuote(quote.id)}
-                                  className="bg-red-500 hover:bg-red-600"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
+                        </AlertDialogTrigger>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* Service Details */}
+                    {/* Service Details - read-only information */}
                     <div>
                       <h4 className="font-semibold mb-3">Service Details</h4>
                       <div className="space-y-2 text-sm">
@@ -448,23 +532,26 @@ function QuotesPageContent() {
                       )}
                     </div>
 
-                    {/* Quote Management */}
+                    {/* Quote Management - editable admin fields */}
                     <div>
                       <h4 className="font-semibold mb-3">Quote Management</h4>
-                      {editingQuote === quote.id ? (
-                        <div className="space-y-4">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium">Status</label>
                             <Select
-                              value={editForm.status}
+                              value={editForms[quote.id]?.status || quote.status}
                               onValueChange={value =>
-                                setEditForm({
-                                  ...editForm,
-                                  status: value as Quote['status'],
-                                })
+                                setEditForms(prev => ({
+                                  ...prev,
+                                  [quote.id]: {
+                                    ...prev[quote.id],
+                                    status: value as Quote['status'],
+                                  }
+                                }))
                               }
                             >
-                              <SelectTrigger className="mt-1">
+                              <SelectTrigger className="mt-1 w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -479,15 +566,18 @@ function QuotesPageContent() {
                           <div>
                             <label className="text-sm font-medium">Priority</label>
                             <Select
-                              value={editForm.priority}
+                              value={editForms[quote.id]?.priority || quote.priority}
                               onValueChange={value =>
-                                setEditForm({
-                                  ...editForm,
-                                  priority: value as Quote['priority'],
-                                })
+                                setEditForms(prev => ({
+                                  ...prev,
+                                  [quote.id]: {
+                                    ...prev[quote.id],
+                                    priority: value as Quote['priority'],
+                                  }
+                                }))
                               }
                             >
-                              <SelectTrigger className="mt-1">
+                              <SelectTrigger className="mt-1 w-full">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -498,80 +588,97 @@ function QuotesPageContent() {
                               </SelectContent>
                             </Select>
                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="text-sm font-medium">Quoted Price ($)</label>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={editForm.quoted_price || ''}
-                              onChange={e =>
-                                setEditForm({
-                                  ...editForm,
-                                  quoted_price: parseFloat(e.target.value) || null,
-                                })
-                              }
-                              className="mt-1"
-                              placeholder="0.00"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Quote Notes</label>
-                            <Textarea
-                              value={editForm.quote_notes || ''}
-                              onChange={e =>
-                                setEditForm({
-                                  ...editForm,
-                                  quote_notes: e.target.value,
-                                })
-                              }
-                              className="mt-1"
-                              placeholder="Internal notes about this quote..."
-                              rows={3}
-                            />
+                            <div className="relative mt-1">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                              <Input
+                                type="number"
+                                step="20.00"
+                                value={editForms[quote.id]?.quoted_price || quote.quoted_price || ''}
+                                onChange={e =>
+                                  setEditForms(prev => ({
+                                    ...prev,
+                                    [quote.id]: {
+                                      ...prev[quote.id],
+                                      quoted_price: parseFloat(e.target.value) || null,
+                                    }
+                                  }))
+                                }
+                                className="pl-7"
+                                placeholder="0.00"
+                              />
+                            </div>
                           </div>
                           <div>
                             <label className="text-sm font-medium">Assigned To</label>
-                            <Input
-                              value={editForm.assigned_to || ''}
-                              onChange={e =>
-                                setEditForm({
-                                  ...editForm,
-                                  assigned_to: e.target.value,
-                                })
+                            <Select
+                              value={editForms[quote.id]?.assigned_to || quote.assigned_to || 'Ariel'}
+                              onValueChange={value =>
+                                setEditForms(prev => ({
+                                  ...prev,
+                                  [quote.id]: {
+                                    ...prev[quote.id],
+                                    assigned_to: value,
+                                  }
+                                }))
                               }
-                              className="mt-1"
-                              placeholder="Team member name"
-                            />
+                            >
+                              <SelectTrigger className="mt-1 w-full">
+                                <SelectValue placeholder="Select team member" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {drivers.map((driver) => (
+                                  <SelectItem key={driver.value} value={driver.value}>
+                                    {driver.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {quote.quoted_price && (
-                            <div className="flex items-center gap-2">
-                              <RiMoneyDollarCircleLine className="h-4 w-4" />
-                              <span className="font-semibold">
-                                ${quote.quoted_price.toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                          {quote.assigned_to && (
-                            <div className="text-sm">
-                              <span className="font-medium">Assigned to:</span> {quote.assigned_to}
-                            </div>
-                          )}
-                          {quote.quote_notes && (
-                            <div>
-                              <h5 className="font-medium mb-1">Notes</h5>
-                              <p className="text-sm bg-muted/50 p-2 rounded">{quote.quote_notes}</p>
-                            </div>
-                          )}
-                          {quote.quoted_at && (
-                            <div className="text-sm text-muted-foreground">
-                              Quoted: {format(new Date(quote.quoted_at), 'MMM dd, yyyy h:mm a')}
-                            </div>
-                          )}
+                        <div>
+                          <label className="text-sm font-medium">Quote Notes</label>
+                          <Textarea
+                            value={editForms[quote.id]?.quote_notes || quote.quote_notes || ''}
+                            onChange={e =>
+                              setEditForms(prev => ({
+                                ...prev,
+                                [quote.id]: {
+                                  ...prev[quote.id],
+                                  quote_notes: e.target.value,
+                                }
+                              }))
+                            }
+                            className="mt-1"
+                            placeholder="Internal notes about this quote..."
+                            rows={3}
+                          />
                         </div>
-                      )}
+
+                        {/* Action buttons for quote management */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <Button
+                            variant="secondary"
+                            className="w-full"
+                            onClick={() => saveQuote(quote.id)}
+                          >
+                            Save Quote
+                          </Button>
+                          <Button
+                            variant="default"
+                            className="w-full"
+                            onClick={() => {
+                              // TODO: Implement create order functionality
+                              console.log('Create order for quote:', quote.id);
+                            }}
+                          >
+                            Create Order
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
