@@ -63,15 +63,37 @@ function generateSessionId(): string {
   return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Get or create session ID from localStorage
+// Get or create session ID from localStorage with expiration
 function getSessionId(): string {
   if (typeof window === 'undefined') return '';
 
-  let sessionId = localStorage.getItem('analytics_session_id');
-  if (!sessionId) {
-    sessionId = generateSessionId();
-    localStorage.setItem('analytics_session_id', sessionId);
+  const sessionIdKey = 'analytics_session_id';
+  const sessionTimeKey = 'analytics_session_time';
+  const sessionDuration = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+  let sessionId = localStorage.getItem(sessionIdKey);
+  let sessionTime = localStorage.getItem(sessionTimeKey);
+
+  const now = Date.now();
+
+  // Check if session exists and is still valid
+  if (sessionId && sessionTime && (now - parseInt(sessionTime)) < sessionDuration) {
+    // Update session time to extend the session
+    localStorage.setItem(sessionTimeKey, now.toString());
+    return sessionId;
   }
+
+  // Create new session if none exists or if expired
+  sessionId = generateSessionId();
+  localStorage.setItem(sessionIdKey, sessionId);
+  localStorage.setItem(sessionTimeKey, now.toString());
+
+  // Clean up any old visit tracking data when starting a new session
+  const oldVisitKeys = Object.keys(localStorage).filter(key =>
+    key.startsWith('last_visit_') && !key.includes(sessionId)
+  );
+  oldVisitKeys.forEach(key => localStorage.removeItem(key));
+
   return sessionId;
 }
 
@@ -105,6 +127,33 @@ export async function trackPageVisit(pagePath: string) {
   try {
     if (typeof window === 'undefined') return; // Don't track server-side renders
 
+    const sessionId = getSessionId();
+
+    // Check if we've already tracked this page in this session recently
+    const lastVisitKey = `last_visit_${sessionId}_${pagePath}`;
+    const lastVisitTime = localStorage.getItem(lastVisitKey);
+    const now = Date.now();
+
+    // If we visited this exact page in the last 30 seconds, don't track it again
+    // This prevents refresh spamming while still allowing legitimate re-visits
+    if (lastVisitTime && (now - parseInt(lastVisitTime)) < 30000) {
+      return;
+    }
+
+    // Update the last visit time for this page
+    localStorage.setItem(lastVisitKey, now.toString());
+
+    // Clean up old visit tracking entries (older than 1 hour)
+    const sessionKeys = Object.keys(localStorage).filter(key =>
+      key.startsWith(`last_visit_${sessionId}_`)
+    );
+    sessionKeys.forEach(key => {
+      const timestamp = localStorage.getItem(key);
+      if (timestamp && (now - parseInt(timestamp)) > 3600000) { // 1 hour
+        localStorage.removeItem(key);
+      }
+    });
+
     // Get geolocation data
     const geoData = await getGeolocation();
 
@@ -113,7 +162,7 @@ export async function trackPageVisit(pagePath: string) {
       user_agent: navigator.userAgent,
       ip_address: geoData.ip || null,
       referrer: document.referrer || null,
-      session_id: getSessionId(),
+      session_id: sessionId,
       device_type: getDeviceType(),
       browser: getBrowser(),
       country: geoData.country || null,
@@ -277,5 +326,79 @@ export async function getCityStats(days: number = 30) {
   } catch (err) {
     console.error('Failed to fetch city stats:', err);
     return {};
+  }
+}
+
+// Get unique session statistics
+export async function getUniqueSessionStats(days: number = 30) {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('website_visits')
+      .select('session_id, created_at')
+      .gte('created_at', startDate.toISOString());
+
+    if (error) {
+      console.error('Error fetching session stats:', error);
+      return { uniqueSessions: 0, dailyUniqueSessions: {} };
+    }
+
+    // Count unique sessions
+    const uniqueSessions = new Set(data?.map(visit => visit.session_id) || []).size;
+
+    // Group unique sessions by date
+    const sessionsByDate: Record<string, Set<string>> = {};
+    data?.forEach(visit => {
+      const date = new Date(visit.created_at).toDateString();
+      if (!sessionsByDate[date]) {
+        sessionsByDate[date] = new Set();
+      }
+      sessionsByDate[date].add(visit.session_id);
+    });
+
+    // Convert sets to counts
+    const dailyUniqueSessions: Record<string, number> = {};
+    Object.keys(sessionsByDate).forEach(date => {
+      dailyUniqueSessions[date] = sessionsByDate[date].size;
+    });
+
+    return { uniqueSessions, dailyUniqueSessions };
+  } catch (err) {
+    console.error('Failed to fetch unique session stats:', err);
+    return { uniqueSessions: 0, dailyUniqueSessions: {} };
+  }
+}
+
+// Get bounce rate statistics (sessions with only one page view)
+export async function getBounceRate(days: number = 30) {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const { data, error } = await supabase
+      .from('website_visits')
+      .select('session_id')
+      .gte('created_at', startDate.toISOString());
+
+    if (error) {
+      console.error('Error fetching bounce rate data:', error);
+      return 0;
+    }
+
+    // Count page views per session
+    const sessionPageViews: Record<string, number> = {};
+    data?.forEach(visit => {
+      sessionPageViews[visit.session_id] = (sessionPageViews[visit.session_id] || 0) + 1;
+    });
+
+    const totalSessions = Object.keys(sessionPageViews).length;
+    const bouncedSessions = Object.values(sessionPageViews).filter(count => count === 1).length;
+
+    return totalSessions > 0 ? (bouncedSessions / totalSessions) * 100 : 0;
+  } catch (err) {
+    console.error('Failed to calculate bounce rate:', err);
+    return 0;
   }
 }

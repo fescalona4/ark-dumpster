@@ -12,6 +12,7 @@ import {
   IconPlus,
   IconTruck,
   IconChartBar,
+  IconReceipt,
 } from '@tabler/icons-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -44,6 +45,11 @@ const navData = {
       title: 'Orders',
       url: '/admin/orders',
       icon: IconTruck,
+    },
+    {
+      title: 'Invoices',
+      url: '/admin/invoices',
+      icon: IconReceipt,
     },
     {
       title: 'Analytics',

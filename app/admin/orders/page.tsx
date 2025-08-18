@@ -45,9 +45,12 @@ import {
   RiBox1Line,
   RiTimeLine,
   RiMoneyDollarCircleLine,
+  RiFileTextLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/auth-guard';
+import Link from 'next/link';
+import InvoiceDialog from '@/components/invoice-dialog';
 import { Order } from '@/types/order';
 
 /**
@@ -364,13 +367,19 @@ function OrdersPageContent() {
                         Created: {format(new Date(order.created_at), 'MMM dd, yyyy at h:mm a')}
                       </div>
                     </div>
+
+                    {/* Invoice button */}
+                    <div className="mt-4">
+                      <InvoiceDialog order={order} />
+                    </div>
                   </div>
                 </div>
 
                 {/* Driver Action Buttons */}
                 <div className="mt-6 pt-4 border-t">
-                  <h5 className="font-medium text-sm mb-3">Driver Actions</h5>
+                  <h5 className="font-medium text-sm mb-3">Actions</h5>
                   <div className="flex flex-wrap gap-2">
+                    {/* Status-specific buttons */}
                     {order.status === 'scheduled' && (
                       <>
                         <AlertDialog>
