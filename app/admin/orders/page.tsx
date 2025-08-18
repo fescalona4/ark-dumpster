@@ -232,15 +232,7 @@ function OrdersPageContent() {
     <div className="p-2 md:p-6">
       {/* Header section with stats and filters */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <h1 className="text-2xl font-bold">Orders Management</h1>
-          <Badge variant="outline" className="gap-2">
-            <RiTruckLine className="h-4 w-4" />
-            {orders.length} Total Orders
-          </Badge>
-        </div>
-
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by status" />
@@ -257,6 +249,13 @@ function OrdersPageContent() {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Button onClick={fetchOrders} variant="outline">
+            Refresh
+          </Button>
+          <Badge variant="outline" className="gap-2 ml-auto">
+            <RiTruckLine className="h-4 w-4" />
+            {orders.length} Total Orders
+          </Badge>
         </div>
       </div>
 

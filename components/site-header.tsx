@@ -22,6 +22,7 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
     if (pathname === '/admin') return 'Dashboard';
     if (pathname === '/admin/quotes') return 'Quotes';
     if (pathname === '/admin/create') return 'Create Quote';
+    if (pathname === '/admin/analytics') return 'Website Analytics';
 
     // Extract page name from pathname
     const segments = pathname.split('/').filter(Boolean);
@@ -33,26 +34,15 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
   const getDefaultActions = () => {
     if (actions) return actions;
 
-    if (pathname === '/admin/create') {
-      return (
-        <Button variant="outline" asChild size="sm">
-          <Link href="/admin/quotes">
-            <RiArrowLeftLine className="h-4 w-4 mr-2" />
-            Back to Quotes
-          </Link>
-        </Button>
-      );
-    }
-
     return null;
   };
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 rounded-t-xl">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mx-2 data-[orientation=vertical]:h-4" />
-        <h1 className="text-base font-medium">{getPageTitle()}</h1>
+        <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
         <div className="ml-auto flex items-center gap-2">{getDefaultActions()}</div>
       </div>
     </header>

@@ -458,10 +458,6 @@ function QuotesPageContent() {
       {/* Header section with stats and filters */}
       <div className="mb-8">
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="gap-2">
-            <RiBox1Line className="h-4 w-4" />
-            {quotes.length} Total Quotes
-          </Badge>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Filter by status" />
@@ -475,9 +471,13 @@ function QuotesPageContent() {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={fetchQuotes} variant="outline" size="sm">
+          <Button onClick={fetchQuotes} variant="outline">
             Refresh
           </Button>
+          <Badge variant="outline" className="gap-2 ml-auto">
+            <RiBox1Line className="h-4 w-4" />
+            {quotes.length} Total Quotes
+          </Badge>
         </div>
       </div>
 

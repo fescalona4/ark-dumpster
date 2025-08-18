@@ -229,11 +229,15 @@ function CreateQuoteContent() {
 
   return (
     <div className="p-2 md:p-6">
+      {/* Header section */}
       <div className="mb-8">
-        <Badge variant="outline" className="gap-2">
-          <RiAddLine className="h-4 w-4" />
-          New Quote
-        </Badge>
+        <div className="flex items-center justify-between">
+          <div></div>
+          <Badge variant="outline" className="gap-2">
+            <RiAddLine className="h-4 w-4" />
+            New Quote
+          </Badge>
+        </div>
       </div>
 
       {/* Contact form */}
@@ -425,7 +429,10 @@ function CreateQuoteContent() {
             )}
 
             <div className="flex gap-4 mt-6">
-              <Button type="submit" disabled={isSubmitting} className="flex-1" size="lg">
+              <Button type="button" variant="outline" asChild size="lg">
+                <Link href="/admin/quotes">Cancel</Link>
+              </Button>
+              <Button type="submit" disabled={isSubmitting} className="" size="lg">
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -435,9 +442,7 @@ function CreateQuoteContent() {
                   'Create Quote'
                 )}
               </Button>
-              <Button type="button" variant="outline" asChild size="lg">
-                <Link href="/admin/quotes">Cancel</Link>
-              </Button>
+
             </div>
           </form>
         </CardContent>

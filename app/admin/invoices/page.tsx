@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +52,7 @@ export default function InvoicesAdminPage() {
 
 function InvoicesPageContent() {
   // Core data state
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,51 +90,56 @@ function InvoicesPageContent() {
         .select('*')
         .in('status', ['delivered', 'completed', 'picked_up']); // Only orders that should have invoices
 
-      // Apply sorting
-      if (sortBy === 'created_at_desc') {
-        query = query.order('created_at', { ascending: false });
-      } else if (sortBy === 'created_at_asc') {
-        query = query.order('created_at', { ascending: true });
-      } else if (sortBy === 'total_desc') {
-        query = query.order('final_price', { ascending: false });
-      } else if (sortBy === 'total_asc') {
-        query = query.order('final_price', { ascending: true });
-      }
-
       const { data, error } = await query;
 
       if (error) {
         throw error;
       }
 
-      let filteredData = data || [];
-
-      // Apply search filter
-      if (searchTerm) {
-        filteredData = filteredData.filter(order =>
-          order.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          generateInvoiceNumber(order.id).toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      }
-
-      // Apply status filter
-      if (statusFilter !== 'all') {
-        filteredData = filteredData.filter(order => order.status === statusFilter);
-      }
-
-      setOrders(filteredData);
+      setAllOrders(data || []);
     } catch (err) {
       console.error('Error fetching invoices:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch invoices');
     } finally {
       setLoading(false);
     }
-  }, [searchTerm, statusFilter, sortBy]);
+  }, []);
 
-  // Fetch invoices on component mount and when filters change
+  // Memoized filtered and sorted orders
+  const orders = useMemo(() => {
+    let filteredData = [...allOrders];
+
+    // Apply search filter
+    if (searchTerm) {
+      filteredData = filteredData.filter(order =>
+        order.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        generateInvoiceNumber(order.id).toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filteredData = filteredData.filter(order => order.status === statusFilter);
+    }
+
+    // Apply sorting
+    if (sortBy === 'created_at_desc') {
+      filteredData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (sortBy === 'created_at_asc') {
+      filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    } else if (sortBy === 'total_desc') {
+      filteredData.sort((a, b) => (b.final_price || b.quoted_price || 0) - (a.final_price || a.quoted_price || 0));
+    } else if (sortBy === 'total_asc') {
+      filteredData.sort((a, b) => (a.final_price || a.quoted_price || 0) - (b.final_price || b.quoted_price || 0));
+    }
+
+    return filteredData;
+  }, [allOrders, searchTerm, statusFilter, sortBy]);
+
+  // Fetch invoices on component mount only
   useEffect(() => {
     fetchInvoices();
   }, [fetchInvoices]);
@@ -184,65 +189,37 @@ function InvoicesPageContent() {
   }
 
   return (
-    <div className="flex-1 space-y-6 p-8 pt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Invoices</h1>
-          <p className="text-muted-foreground">
-            Manage and view invoices for completed orders
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-sm">
-            {orders.length} invoice{orders.length !== 1 ? 's' : ''}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Filters and Search */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 items-center gap-4">
-          {/* Search */}
-          <div className="relative max-w-sm">
+    <div className="p-2 md:p-6">
+      {/* Header section with stats and filters */}
+      <div className="mb-8">
+        <div className="flex items-center gap-4">
+          <div className="relative">
             <RiSearchLine className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search invoices..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-48"
             />
           </div>
-
-          {/* Status Filter */}
-          <div className="min-w-[120px]">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="picked_up">Picked Up</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Sort */}
-          <div className="min-w-[140px]">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="created_at_desc">Newest First</SelectItem>
-                <SelectItem value="created_at_asc">Oldest First</SelectItem>
-                <SelectItem value="total_desc">Highest Amount</SelectItem>
-                <SelectItem value="total_asc">Lowest Amount</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at_desc">Newest First</SelectItem>
+              <SelectItem value="created_at_asc">Oldest First</SelectItem>
+              <SelectItem value="total_desc">Highest Amount</SelectItem>
+              <SelectItem value="total_asc">Lowest Amount</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={fetchInvoices} variant="outline">
+            Refresh
+          </Button>
+          <Badge variant="outline" className="gap-2 ml-auto">
+            <RiReceiptLine className="h-4 w-4" />
+            {orders.length} Total Invoices
+          </Badge>
         </div>
       </div>
 
