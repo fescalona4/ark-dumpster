@@ -3,10 +3,10 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const orderId = params.orderId;
+    const { orderId } = await params;
     const supabase = createServerSupabaseClient();
 
     // Fetch the order from the database
@@ -65,17 +65,17 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const orderId = params.orderId;
+    const { orderId } = await params;
     const body = await request.json();
 
     // You can use this endpoint to save invoice-specific data
     // For example, custom invoice numbers, notes, etc.
 
     // For now, we'll just return the generated invoice
-    const getResponse = await GET(request, { params });
+    const getResponse = await GET(request, { params: Promise.resolve({ orderId }) });
     return getResponse;
   } catch (error) {
     console.error('Error creating invoice:', error);
