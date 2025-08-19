@@ -48,9 +48,9 @@ import {
   RiFileTextLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
-import AuthGuard from '@/components/auth-guard';
+import AuthGuard from '@/components/providers/auth-guard';
 import Link from 'next/link';
-import InvoiceDialog from '@/components/invoice-dialog';
+import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { Order } from '@/types/order';
 
 /**

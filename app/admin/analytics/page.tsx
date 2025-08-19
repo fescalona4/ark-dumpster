@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/select';
 import { format } from 'date-fns';
 import { RiBarChartLine } from '@remixicon/react';
-import AuthGuard from '@/components/auth-guard';
-import { ChartAreaInteractive } from '@/components/chart-area-interactive';
-import { AnalyticsSectionCards } from '@/components/analytics-section-cards';
+import AuthGuard from '@/components/providers/auth-guard';
+import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
+import { AnalyticsSectionCards } from '@/components/analytics/analytics-section-cards';
 import { getAnalytics, getPageViews, getDailyVisits, getCountryStats, getCityStats } from '@/lib/analytics';
 
 interface Visit {

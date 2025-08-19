@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Order } from '@/types/order';
-import Invoice from '@/components/invoice';
+import Invoice from '@/components/invoices/invoice';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import AuthGuard from '@/components/auth-guard';
+import AuthGuard from '@/components/providers/auth-guard';
 import { RiPrinterLine, RiDownloadLine, RiArrowLeftLine } from '@remixicon/react';
 import Link from 'next/link';
 

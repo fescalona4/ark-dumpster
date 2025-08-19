@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import { Manrope } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
-import ConditionalLayout from '@/components/conditional-layout';
-import AnalyticsProvider from '@/components/analytics-provider';
+import ConditionalLayout from '@/components/layout/conditional-layout';
+import AnalyticsProvider from '@/components/analytics/analytics-provider';
 
 const manrope = Manrope({
   variable: '--font-manrope',

@@ -2,8 +2,8 @@
 
 import { Order } from '@/types/order';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { RiFileTextLine, RiMoneyDollarCircleLine, RiCalendarLine } from '@remixicon/react';
 
 interface InvoiceSummaryProps {

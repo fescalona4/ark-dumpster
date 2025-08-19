@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AdminSectionCards } from '@/components/admin-section-cards';
-import { QuotesDataTable } from '@/components/quotes-data-table';
-import { OrdersDataTable } from '@/components/orders-data-table';
-import { ChartAreaInteractive } from '@/components/chart-area-interactive';
+import { AdminSectionCards } from '@/components/admin/admin-section-cards';
+import { QuotesDataTable } from '@/components/data-tables/quotes-data-table';
+import { OrdersDataTable } from '@/components/data-tables/orders-data-table';
+import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
 import { Order } from '@/types/order';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { QUOTE_STATUSES, ORDER_STATUSES, DUMPSTER_STATUSES } from '@/lib/constants';

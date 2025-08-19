@@ -18,10 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DropoffCalendar } from '../../components/dropoffCalendar';
+import { DropoffCalendar } from '@/components/forms/dropoffCalendar';
 import { useState } from 'react';
 import { Notification } from '@/components/ui/notification';
-import GooglePlacesAutocomplete from '@/components/google-places-autocomplete';
+import GooglePlacesAutocomplete from '@/components/forms/google-places-autocomplete';
 
 const Contacts = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);

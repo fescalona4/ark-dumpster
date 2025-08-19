@@ -16,10 +16,10 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 
-import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
-import { NavUser } from '@/components/nav-user';
-import DarkToggle from '@/components/dark-toggle';
+import { NavMain } from '@/components/navigation/nav-main';
+import { NavSecondary } from '@/components/navigation/nav-secondary';
+import { NavUser } from '@/components/navigation/nav-user';
+import DarkToggle from '@/components/shared/dark-toggle';
 import {
   Sidebar,
   SidebarContent,

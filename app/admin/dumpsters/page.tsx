@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { DumpstersDataTable } from '@/components/dumpsters-data-table';
-import DumpstersMap from '@/components/dumpsters-map';
+import { DumpstersDataTable } from '@/components/data-tables/dumpsters-data-table';
+import DumpstersMap from '@/components/maps/dumpsters-map';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { DUMPSTER_STATUSES } from '@/lib/constants';
 

@@ -1,5 +1,5 @@
-import { EmailTemplate } from '@/components/email-template';
-import { CompanyNotificationEmail } from '@/components/company-notification-email';
+import { EmailTemplate } from '@/components/email/email-template';
+import { CompanyNotificationEmail } from '@/components/email/company-notification-email';
 import Link from 'next/link';
 
 export default function EmailPreview() {

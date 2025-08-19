@@ -5,7 +5,7 @@ import Marquee from '@/components/ui/marquee';
 import { RiStarFill } from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import FlowingRibbonBackground from '@/components/flowing-ribbon-bg';
+import FlowingRibbonBackground from '@/components/layout/flowing-ribbon-bg';
 
 type Testimonial = {
   id: number;

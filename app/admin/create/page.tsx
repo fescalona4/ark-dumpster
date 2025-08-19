@@ -18,10 +18,10 @@ import {
   SelectGroup,
   SelectLabel,
 } from '@/components/ui/select';
-import { DropoffCalendar } from '@/components/dropoffCalendar';
+import { DropoffCalendar } from '@/components/forms/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
-import AuthGuard from '@/components/auth-guard';
-import GooglePlacesAutocomplete from '@/components/google-places-autocomplete';
+import AuthGuard from '@/components/providers/auth-guard';
+import GooglePlacesAutocomplete from '@/components/forms/google-places-autocomplete';
 
 export default function CreateQuotePage() {
   return (

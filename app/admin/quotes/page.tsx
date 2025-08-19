@@ -47,7 +47,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { QuoteEditDialog } from '@/components/quote-edit-dialog';
+import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
 import {
   RiDeleteBin2Line,
   RiEditLine,
@@ -62,7 +62,7 @@ import {
   RiMoneyDollarCircleLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
-import AuthGuard from '@/components/auth-guard';
+import AuthGuard from '@/components/providers/auth-guard';
 
 /**
  * Quote interface defining the structure of a quote object

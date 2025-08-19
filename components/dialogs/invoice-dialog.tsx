@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import { Order } from '@/types/order';
-import Invoice from './invoice';
-import { Button } from './ui/button';
+import Invoice from '@/components/invoices/invoice';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog';
+} from '@/components/ui/dialog';
 import { RiFileTextLine, RiPrinterLine, RiExternalLinkLine } from '@remixicon/react';
 import Link from 'next/link';
 

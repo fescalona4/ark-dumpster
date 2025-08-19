@@ -1,5 +1,5 @@
-import { EmailTemplate } from '@/components/email-template';
-import { CompanyNotificationEmail } from '@/components/company-notification-email';
+import { EmailTemplate } from '@/components/email/email-template';
+import { CompanyNotificationEmail } from '@/components/email/company-notification-email';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { QuoteFormData } from './database-service';

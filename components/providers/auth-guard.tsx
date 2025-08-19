@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import SignInForm from '@/components/sign-in-form';
+import SignInForm from '@/components/forms/sign-in-form';
 
 interface AuthGuardProps {
   children: React.ReactNode;

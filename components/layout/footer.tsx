@@ -2,7 +2,7 @@ import { Separator } from '@/components/ui/separator';
 import { RiTiktokLine, RiFacebookLine, RiInstagramLine } from '@remixicon/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import DarkToggle from '@/components/dark-toggle';
+import DarkToggle from '@/components/shared/dark-toggle';
 
 const footerLinks = [
   {
