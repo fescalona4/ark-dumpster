@@ -1,5 +1,5 @@
 /**
- * Status constants for quotes and orders
+ * Status constants for quotes, orders, and dumpsters
  * These constants ensure consistency across the application
  */
 
@@ -9,6 +9,10 @@ export const QUOTE_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'com
 // Order status values  
 export const ORDER_STATUSES = ['pending', 'scheduled', 'on_way', 'in_progress', 'delivered', 'on_way_pickup', 'picked_up', 'completed', 'cancelled'] as const;
 
+// Dumpster status values
+export const DUMPSTER_STATUSES = ['available', 'assigned', 'in_transit', 'maintenance', 'out_of_service'] as const;
+
 // TypeScript types derived from the constants
 export type QuoteStatus = typeof QUOTE_STATUSES[number];
 export type OrderStatus = typeof ORDER_STATUSES[number];
+export type DumpsterStatus = typeof DUMPSTER_STATUSES[number];

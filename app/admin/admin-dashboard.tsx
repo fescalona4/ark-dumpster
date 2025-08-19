@@ -7,7 +7,8 @@ import { QuotesDataTable } from '@/components/quotes-data-table';
 import { OrdersDataTable } from '@/components/orders-data-table';
 import { ChartAreaInteractive } from '@/components/chart-area-interactive';
 import { Order } from '@/types/order';
-import { QUOTE_STATUSES, ORDER_STATUSES } from '@/lib/constants';
+import { Dumpster, DumpsterStats } from '@/types/dumpster';
+import { QUOTE_STATUSES, ORDER_STATUSES, DUMPSTER_STATUSES } from '@/lib/constants';
 
 interface Quote {
   id: string;
@@ -52,6 +53,7 @@ interface OrderStats {
 export default function AdminDashboard() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [quoteStats, setQuoteStats] = useState<QuoteStats>({
     total: 0,
     pending: 0,
@@ -66,16 +68,26 @@ export default function AdminDashboard() {
     in_progress: 0,
     completed: 0,
   });
+  const [dumpsterStats, setDumpsterStats] = useState<DumpsterStats>({
+    total: 0,
+    available: 0,
+    assigned: 0,
+    in_transit: 0,
+    maintenance: 0,
+    out_of_service: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Define status arrays
   const quoteStatuses = QUOTE_STATUSES;
   const orderStatuses = ORDER_STATUSES;
+  const dumpsterStatuses = DUMPSTER_STATUSES;
 
   useEffect(() => {
     fetchQuotes();
     fetchOrders();
+    fetchDumpsters();
   }, []);
 
   const fetchQuotes = async () => {
@@ -146,6 +158,35 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchDumpsters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('dumpsters')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching dumpsters:', error);
+      } else {
+        const dumpstersData = data || [];
+        setDumpsters(dumpstersData);
+
+        // Calculate dumpster stats
+        const stats = {
+          total: dumpstersData.length,
+          available: dumpstersData.filter(d => d.status === 'available').length,
+          assigned: dumpstersData.filter(d => d.status === 'assigned').length,
+          in_transit: dumpstersData.filter(d => d.status === 'in_transit').length,
+          maintenance: dumpstersData.filter(d => d.status === 'maintenance').length,
+          out_of_service: dumpstersData.filter(d => d.status === 'out_of_service').length,
+        };
+        setDumpsterStats(stats);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching dumpsters:', err);
+    }
+  };
+
   // Transform quotes data for the data table
   const quotesTableData = quotes.map((quote, index) => ({
     id: index + 1, // Use numeric index for DataTable compatibility
@@ -204,6 +245,43 @@ export default function AdminDashboard() {
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
           <AdminSectionCards stats={quoteStats} />
+
+          {/* Dumpster Summary */}
+          <div className="px-4 lg:px-6">
+            <div className="bg-card rounded-lg border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Dumpster Fleet Status</h3>
+                <a
+                  href="/admin/dumpsters"
+                  className="text-sm text-primary hover:underline"
+                >
+                  View all →
+                </a>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{dumpsterStats.total}</div>
+                  <div className="text-sm text-muted-foreground">Total</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{dumpsterStats.available}</div>
+                  <div className="text-sm text-muted-foreground">Available</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{dumpsterStats.assigned}</div>
+                  <div className="text-sm text-muted-foreground">Assigned</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{dumpsterStats.in_transit}</div>
+                  <div className="text-sm text-muted-foreground">In Transit</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">{dumpsterStats.maintenance + dumpsterStats.out_of_service}</div>
+                  <div className="text-sm text-muted-foreground">Need Attention</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Quotes Table */}
           <div className="space-y-2">
