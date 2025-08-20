@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm i -g @anthropic-ai/claude-code)",
+      "Bash(sudo npm i -g @anthropic-ai/claude-code)",
+      "Bash(claude mcp add:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:github.com)",
+      "Bash(true)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(NEXT_FONT_GOOGLE_MOCKED=true npm run build)",
+      "Bash(env)",
+      "Bash(cat:*)",
+      "Bash(unset:*)",
+      "Bash(npm config:*)",
+      "Bash(find:*)",
+      "Bash(rm:*)",
+      "Bash(git commit:*)",
+      "Bash(pkill:*)",
+      "Bash(grep:*)",
+      "Bash(supabase:*)",
+      "Bash(npm install:*)",
+      "Bash(npx supabase:*)",
+      "Bash(brew list:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
