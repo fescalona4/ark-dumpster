@@ -16,7 +16,6 @@ import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -43,15 +42,15 @@ import {
   RiPhoneLine,
   RiMailLine,
   RiBox1Line,
-  RiTimeLine,
   RiMoneyDollarCircleLine,
-  RiFileTextLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
-import Link from 'next/link';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
+import { useRouter } from 'next/navigation';
 import { Order } from '@/types/order';
+import { Dumpster } from '@/types/dumpster';
+import { DRIVERS } from '@/lib/drivers';
 
 /**
  * Main admin orders page component
@@ -70,13 +69,36 @@ export default function OrdersAdminPage() {
  * Handles all state management, data fetching, and UI rendering
  */
 function OrdersPageContent() {
+  const router = useRouter();
+  
   // Core data state
   const [orders, setOrders] = useState<Order[]>([]);
+  const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  /**
+   * Fetches dumpsters from the database
+   */
+  const fetchDumpsters = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('dumpsters')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setDumpsters(data || []);
+    } catch (err) {
+      console.error('Error fetching dumpsters:', err);
+    }
+  }, []);
 
   /**
    * Fetches orders from the database with optional filtering
@@ -108,10 +130,11 @@ function OrdersPageContent() {
     }
   }, [statusFilter]);
 
-  // Fetch orders on component mount and when filters change
+  // Fetch orders and dumpsters on component mount and when filters change
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    fetchDumpsters();
+  }, [fetchOrders, fetchDumpsters]);
 
   /**
    * Returns Tailwind CSS classes for status badge styling
@@ -206,6 +229,141 @@ function OrdersPageContent() {
     }
   };
 
+  /**
+   * Assigns a driver to an order
+   */
+  const assignDriverToOrder = async (orderId: string, driverName: string | null) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ assigned_to: driverName })
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error assigning driver:', error);
+        alert('Failed to assign driver to order');
+        return;
+      }
+
+      // Update local state
+      setOrders(orders.map(order =>
+        order.id === orderId
+          ? { ...order, assigned_to: driverName }
+          : order
+      ));
+
+    } catch (err) {
+      console.error('Unexpected error assigning driver:', err);
+      alert('Failed to assign driver');
+    }
+  };
+
+  /**
+   * Assigns a dumpster to an order
+   */
+  const assignDumpsterToOrder = async (orderId: string, dumpsterId: string | null) => {
+    try {
+      // Find the dumpster details
+      const dumpster = dumpsterId ? dumpsters.find(d => d.id === dumpsterId) : null;
+      
+      // If we're assigning a dumpster, update both the order and the dumpster
+      if (dumpsterId && dumpster) {
+        // Update the order with the dumpster assignment
+        const { error: orderError } = await supabase
+          .from('orders')
+          .update({ 
+            dumpster_id: dumpsterId 
+          })
+          .eq('id', orderId);
+
+        if (orderError) {
+          console.error('Error updating order:', orderError);
+          alert('Failed to assign dumpster to order');
+          return;
+        }
+
+        // Update the dumpster to mark it as assigned
+        const { error: dumpsterError } = await supabase
+          .from('dumpsters')
+          .update({ 
+            status: 'assigned',
+            current_order_id: orderId,
+            last_assigned_at: new Date().toISOString()
+          })
+          .eq('id', dumpsterId);
+
+        if (dumpsterError) {
+          console.error('Error updating dumpster:', dumpsterError);
+          alert('Failed to update dumpster status');
+          return;
+        }
+
+        // Update local state
+        setOrders(orders.map(order =>
+          order.id === orderId
+            ? { ...order, dumpster_id: dumpsterId }
+            : order
+        ));
+
+        setDumpsters(dumpsters.map(d =>
+          d.id === dumpsterId
+            ? { ...d, status: 'assigned', current_order_id: orderId, last_assigned_at: new Date().toISOString() }
+            : d
+        ));
+
+      } else if (!dumpsterId) {
+        // If we're unassigning (dumpsterId is null), clear the assignment
+        const currentDumpster = dumpsters.find(d => d.current_order_id === orderId);
+
+        // Clear order assignment
+        const { error: orderError } = await supabase
+          .from('orders')
+          .update({ dumpster_id: null })
+          .eq('id', orderId);
+
+        if (orderError) {
+          console.error('Error updating order:', orderError);
+          alert('Failed to unassign dumpster from order');
+          return;
+        }
+
+        // If there was a dumpster assigned, make it available again
+        if (currentDumpster) {
+          const { error: dumpsterError } = await supabase
+            .from('dumpsters')
+            .update({ 
+              status: 'available',
+              current_order_id: null
+            })
+            .eq('id', currentDumpster.id);
+
+          if (dumpsterError) {
+            console.error('Error updating dumpster:', dumpsterError);
+            alert('Failed to update dumpster status');
+            return;
+          }
+
+          setDumpsters(dumpsters.map(d =>
+            d.id === currentDumpster.id
+              ? { ...d, status: 'available' as const, current_order_id: undefined }
+              : d
+          ));
+        }
+
+        // Update local state
+        setOrders(orders.map(order =>
+          order.id === orderId
+            ? { ...order, dumpster_id: null }
+            : order
+        ));
+      }
+
+    } catch (err) {
+      console.error('Unexpected error assigning dumpster:', err);
+      alert('Failed to assign dumpster');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -291,7 +449,12 @@ function OrdersPageContent() {
                   <div>
                     {/* Order number */}
                     <div className="text-sm font-medium text-muted-foreground mb-2">
-                      Order {order.order_number}
+                      <button
+                        onClick={() => router.push(`/admin/orders/${order.id}`)}
+                        className="hover:text-blue-600 hover:underline transition-colors"
+                      >
+                        Order {order.order_number}
+                      </button>
                     </div>
 
                     {/* Customer name */}
@@ -358,12 +521,95 @@ function OrdersPageContent() {
                           <span>Price: ${order.quoted_price}</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
-                        <RiTruckLine className="h-4 w-4" />
-                        <span>Assigned: {order.assigned_to || 'Unassigned'}</span>
+                      
+                      {/* Driver Assignment */}
+                      <div className="space-y-2">
+                        <Label htmlFor={`driver-${order.id}`} className="text-xs font-medium">
+                          Assigned Driver
+                        </Label>
+                        <Select
+                          value={order.assigned_to || "unassigned"}
+                          onValueChange={(value) => {
+                            const driverName = value === "unassigned" ? null : value;
+                            assignDriverToOrder(order.id, driverName);
+                          }}
+                        >
+                          <SelectTrigger id={`driver-${order.id}`} className="w-full">
+                            <SelectValue>
+                              <div className="flex items-center gap-2">
+                                <RiTruckLine className="h-3 w-3" />
+                                <span className="text-sm">{order.assigned_to || 'Select a driver'}</span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">
+                              <span className="text-muted-foreground">Unassigned</span>
+                            </SelectItem>
+                            {DRIVERS.map((driver) => (
+                              <SelectItem key={driver.value} value={driver.value}>
+                                {driver.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
+
+                      {/* Dumpster Assignment */}
+                      <div className="space-y-2">
+                        <Label htmlFor={`dumpster-${order.id}`} className="text-xs font-medium">
+                          Assigned Dumpster
+                        </Label>
+                        <Select
+                          value={order.dumpster_id || 
+                                 dumpsters.find(d => d.current_order_id === order.id)?.id || 
+                                 "unassigned"}
+                          onValueChange={(value) => {
+                            const dumpsterId = value === "unassigned" ? null : value;
+                            assignDumpsterToOrder(order.id, dumpsterId);
+                          }}
+                        >
+                          <SelectTrigger id={`dumpster-${order.id}`} className="w-full">
+                            <SelectValue>
+                              <div className="flex items-center gap-2">
+                                <RiBox1Line className="h-3 w-3" />
+                                <span className="text-sm">
+                                  {order.dumpster_id 
+                                    ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
+                                    : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
+                                </span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">
+                              <span className="text-muted-foreground">Unassigned</span>
+                            </SelectItem>
+                            {dumpsters
+                              .filter(d => d.name !== 'ARK-HOME' && (d.status === 'available' || d.current_order_id === order.id))
+                              .map(dumpster => (
+                                <SelectItem key={dumpster.id} value={dumpster.id}>
+                                  <div className="flex items-center justify-between w-full">
+                                    <span>{dumpster.name}</span>
+                                    {dumpster.size && (
+                                      <span className="text-xs text-muted-foreground ml-2">
+                                        {dumpster.size} yard
+                                      </span>
+                                    )}
+                                    {dumpster.current_order_id === order.id && (
+                                      <Badge variant="secondary" className="ml-2 text-xs">
+                                        Current
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="text-xs text-muted-foreground">
-                        Created: {format(new Date(order.created_at), 'MMM dd, yyyy at h:mm a')}
+                        Created: {format(new Date(order.created_at), "MMM dd, yyyy 'at' h:mm a")}
                       </div>
                     </div>
 
@@ -378,6 +624,15 @@ function OrdersPageContent() {
                 <div className="mt-6 pt-4 border-t">
                   <h5 className="font-medium text-sm mb-3">Actions</h5>
                   <div className="flex flex-wrap gap-2">
+                    {/* View Details Button - Always visible */}
+                    <Button
+                      onClick={() => router.push(`/admin/orders/${order.id}`)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      View Details →
+                    </Button>
+                    
                     {/* Status-specific buttons */}
                     {order.status === 'scheduled' && (
                       <>

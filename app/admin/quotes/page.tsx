@@ -14,6 +14,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +49,7 @@ import {
 } from '@/components/ui/dialog';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
+import { OrderConfirmationDialog } from '@/components/dialogs/order-confirmation-dialog';
 import {
   RiDeleteBin2Line,
   RiEditLine,
@@ -63,6 +65,7 @@ import {
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
+import { Order } from '@/types/order';
 
 /**
  * Quote interface defining the structure of a quote object
@@ -112,6 +115,8 @@ export default function QuotesAdminPage() {
  * Features include filtering, editing, deleting, and managing quotes
  */
 function QuotesPageContent() {
+  const router = useRouter();
+  
   // Core data state
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,6 +131,10 @@ function QuotesPageContent() {
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
   // const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null); // TODO: Implement delete functionality
+
+  // Order confirmation dialog state
+  const [orderConfirmationOpen, setOrderConfirmationOpen] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
   // Date-time picker dialog state
   const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
@@ -381,7 +390,9 @@ function QuotesPageContent() {
       // Refresh quotes to show updated status
       await fetchQuotes();
 
-      alert(`Order ${orderResult.order_number} created successfully!`);
+      // Show confirmation dialog with created order
+      setCreatedOrder(orderResult);
+      setOrderConfirmationOpen(true);
     } catch (err) {
       console.error('Unexpected error creating order:', err);
       alert('Failed to create order');
@@ -773,7 +784,7 @@ function QuotesPageContent() {
                                   }
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent className="max-w-fit">
+                              <DialogContent className="!max-w-[500px] !w-[500px]">
                                 <DialogHeader>
                                   <DialogTitle>Select Dropoff Date & Time</DialogTitle>
                                 </DialogHeader>
@@ -918,6 +929,22 @@ function QuotesPageContent() {
             ))}
         </div>
       )}
+
+      {/* Order Confirmation Dialog */}
+      <OrderConfirmationDialog
+        order={createdOrder}
+        open={orderConfirmationOpen}
+        onOpenChange={setOrderConfirmationOpen}
+        onViewOrder={() => {
+          setOrderConfirmationOpen(false);
+          // Navigate to the specific order
+          if (createdOrder?.id) {
+            router.push(`/admin/orders/${createdOrder.id}`);
+          } else {
+            router.push('/admin/orders');
+          }
+        }}
+      />
     </div>
   );
 }

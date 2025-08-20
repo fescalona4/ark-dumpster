@@ -15,6 +15,17 @@ export interface Dumpster {
   updated_at: string;
   last_assigned_at?: string;
   last_maintenance_at?: string;
+  orders?: {
+    id: string;
+    order_number: string;
+    first_name: string;
+    last_name: string | null;
+  } | {
+    id: string;
+    order_number: string;
+    first_name: string;
+    last_name: string | null;
+  }[];
 }
 
 export interface DumpsterStats {

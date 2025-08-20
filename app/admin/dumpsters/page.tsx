@@ -6,6 +6,7 @@ import { DumpstersDataTable } from '@/components/data-tables/dumpsters-data-tabl
 import DumpstersMap from '@/components/maps/dumpsters-map';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { DUMPSTER_STATUSES } from '@/lib/constants';
+import { calculateDistance, parseGpsCoordinates, ARK_HOME_COORDINATES } from '@/lib/utils';
 
 export default function DumpstersPage() {
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
@@ -19,7 +20,6 @@ export default function DumpstersPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // Define status arrays
   const dumpsterStatuses = DUMPSTER_STATUSES;
 
@@ -38,7 +38,15 @@ export default function DumpstersPage() {
 
       const { data, error } = await supabase
         .from('dumpsters')
-        .select('*')
+        .select(`
+          *,
+          orders!current_order_id (
+            id,
+            order_number,
+            first_name,
+            last_name
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -49,14 +57,15 @@ export default function DumpstersPage() {
         console.log('Fetched dumpsters:', dumpstersData.length, dumpstersData.slice(0, 2));
         setDumpsters(dumpstersData);
 
-        // Calculate stats
+        // Calculate stats (excluding ARK-HOME)
+        const dumpstersForStats = dumpstersData.filter(d => d.name !== 'ARK-HOME');
         const stats = {
-          total: dumpstersData.length,
-          available: dumpstersData.filter(d => d.status === 'available').length,
-          assigned: dumpstersData.filter(d => d.status === 'assigned').length,
-          in_transit: dumpstersData.filter(d => d.status === 'in_transit').length,
-          maintenance: dumpstersData.filter(d => d.status === 'maintenance').length,
-          out_of_service: dumpstersData.filter(d => d.status === 'out_of_service').length,
+          total: dumpstersForStats.length,
+          available: dumpstersForStats.filter(d => d.status === 'available').length,
+          assigned: dumpstersForStats.filter(d => d.status === 'assigned').length,
+          in_transit: dumpstersForStats.filter(d => d.status === 'in_transit').length,
+          maintenance: dumpstersForStats.filter(d => d.status === 'maintenance').length,
+          out_of_service: dumpstersForStats.filter(d => d.status === 'out_of_service').length,
         };
         setDumpsterStats(stats);
       }
@@ -68,16 +77,151 @@ export default function DumpstersPage() {
     }
   };
 
-  // Transform dumpsters data for the data table
-  const dumpstersTableData = dumpsters.map((dumpster, index) => ({
-    id: index + 1, // Use numeric index for DataTable compatibility
-    header: dumpster.name,
-    type: dumpster.size || 'Not specified',
-    status: dumpster.status, // Keep original status for filtering
-    target: dumpster.address || dumpster.last_known_location || 'Location unknown',
-    limit: dumpster.condition,
-    reviewer: dumpster.assigned_to || dumpster.order_number || 'Unassigned',
-  }));
+  const handleAddDumpster = async (formData: {
+    name: string;
+    size: string;
+    condition: 'excellent' | 'good' | 'fair' | 'needs_repair';
+    notes: string;
+  }) => {
+    try {
+      const newDumpster = {
+        name: formData.name,
+        size: formData.size || null,
+        condition: formData.condition,
+        notes: formData.notes || null,
+        status: 'available' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from('dumpsters')
+        .insert([newDumpster])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding dumpster:', error);
+        setError('Failed to add dumpster: ' + error.message);
+      } else {
+        console.log('Dumpster added successfully:', data);
+        // Refresh the dumpsters list
+        await fetchDumpsters();
+      }
+    } catch (err) {
+      console.error('Unexpected error adding dumpster:', err);
+      setError('Failed to add dumpster');
+    }
+  };
+
+  const handleEditDumpster = async (formData: {
+    id: number;
+    name: string;
+    size: string;
+    condition: 'excellent' | 'good' | 'fair' | 'needs_repair';
+    notes: string;
+  }) => {
+    try {
+      // Find the original dumpster by matching the table ID to the filtered dumpster array
+      const filteredDumpsters = dumpsters.filter(d => d.name !== 'ARK-HOME');
+      const originalDumpster = filteredDumpsters[formData.id - 1]; // Table ID is index + 1 in filtered array
+      if (!originalDumpster) {
+        setError('Dumpster not found');
+        return;
+      }
+
+      const updatedDumpster = {
+        name: formData.name,
+        size: formData.size || null,
+        condition: formData.condition,
+        notes: formData.notes || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('dumpsters')
+        .update(updatedDumpster)
+        .eq('id', originalDumpster.id);
+
+      if (error) {
+        console.error('Error updating dumpster:', error);
+        setError('Failed to update dumpster: ' + error.message);
+      } else {
+        console.log('Dumpster updated successfully');
+        // Refresh the dumpsters list
+        await fetchDumpsters();
+      }
+    } catch (err) {
+      console.error('Unexpected error updating dumpster:', err);
+      setError('Failed to update dumpster');
+    }
+  };
+
+  const handleDeleteDumpster = async (tableId: number) => {
+    try {
+      // Find the original dumpster by matching the table ID to the filtered dumpster array
+      const filteredDumpsters = dumpsters.filter(d => d.name !== 'ARK-HOME');
+      const originalDumpster = filteredDumpsters[tableId - 1]; // Table ID is index + 1 in filtered array
+      if (!originalDumpster) {
+        setError('Dumpster not found');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('dumpsters')
+        .delete()
+        .eq('id', originalDumpster.id);
+
+      if (error) {
+        console.error('Error deleting dumpster:', error);
+        setError('Failed to delete dumpster: ' + error.message);
+      } else {
+        console.log('Dumpster deleted successfully');
+        // Refresh the dumpsters list
+        await fetchDumpsters();
+      }
+    } catch (err) {
+      console.error('Unexpected error deleting dumpster:', err);
+      setError('Failed to delete dumpster');
+    }
+  };
+
+  // Transform dumpsters data for the data table (excluding ARK-HOME)
+  const dumpstersTableData = dumpsters
+    .filter(dumpster => dumpster.name !== 'ARK-HOME')
+    .map((dumpster, index) => {
+      // Calculate distance from ARK-HOME
+      let distance: number | null = null;
+      if (dumpster.gps_coordinates) {
+        const coords = parseGpsCoordinates(dumpster.gps_coordinates);
+        if (coords) {
+          distance = calculateDistance(ARK_HOME_COORDINATES, coords);
+        }
+      }
+
+      // Get assignment info from the related order
+      let assignmentInfo = 'Unassigned';
+      if (dumpster.current_order_id && dumpster.orders) {
+        const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
+        if (order) {
+          const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
+          assignmentInfo = `Order #${order.order_number} - ${customerName}`;
+        }
+      }
+
+      return {
+        id: index + 1, // Use numeric index for DataTable compatibility
+        header: dumpster.name,
+        type: dumpster.size || 'Not specified',
+        status: dumpster.status, // Keep original status for filtering
+        target: dumpster.address || dumpster.last_known_location || 'Location unknown',
+        limit: dumpster.condition,
+        reviewer: assignmentInfo,
+        distance: distance ? `${distance} mi` : 'Unknown',
+        sortableDistance: distance || 999, // For sorting purposes
+      };
+    })
+    .sort((a, b) => a.sortableDistance - b.sortableDistance); // Sort by distance
 
   console.log('Transformed dumpsters table data:', dumpstersTableData.length, dumpstersTableData.slice(0, 2));
 
@@ -106,49 +250,53 @@ export default function DumpstersPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+      <div className="@container/main flex flex-1 flex-col gap-6">
+        <div className="flex flex-col gap-6 py-6">
           {/* Header */}
-          <div className="px-4 lg:px-6">
-            <h1 className="text-2xl font-semibold">Dumpster Management</h1>
+          <div className="px-6">
+            <div className="mb-2">
+              <h1 className="text-2xl font-semibold">Dumpster Management</h1>
+            </div>
             <p className="text-muted-foreground">
               Track and manage your dumpster inventory, assignments, and status.
             </p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 px-4 lg:px-6">
-            <div className="bg-card rounded-lg border p-4">
-              <div className="text-2xl font-bold">{dumpsterStats.total}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6">
+            <div className="bg-card rounded-lg border p-6">
+              <div className="text-2xl font-bold mb-1">{dumpsterStats.total}</div>
               <div className="text-sm text-muted-foreground">Total Dumpsters</div>
             </div>
-            <div className="bg-card rounded-lg border p-4">
-              <div className="text-2xl font-bold text-green-600">{dumpsterStats.available}</div>
+            <div className="bg-card rounded-lg border p-6">
+              <div className="text-2xl font-bold text-green-600 mb-1">{dumpsterStats.available}</div>
               <div className="text-sm text-muted-foreground">Available</div>
             </div>
-            <div className="bg-card rounded-lg border p-4">
-              <div className="text-2xl font-bold text-blue-600">{dumpsterStats.assigned}</div>
+            <div className="bg-card rounded-lg border p-6">
+              <div className="text-2xl font-bold text-blue-600 mb-1">{dumpsterStats.assigned}</div>
               <div className="text-sm text-muted-foreground">Assigned</div>
             </div>
-            <div className="bg-card rounded-lg border p-4">
-              <div className="text-2xl font-bold text-orange-600">{dumpsterStats.in_transit}</div>
+            <div className="bg-card rounded-lg border p-6">
+              <div className="text-2xl font-bold text-orange-600 mb-1">{dumpsterStats.in_transit}</div>
               <div className="text-sm text-muted-foreground">In Transit</div>
-            </div>
-            <div className="bg-card rounded-lg border p-4">
-              <div className="text-2xl font-bold text-red-600">{dumpsterStats.maintenance + dumpsterStats.out_of_service}</div>
-              <div className="text-sm text-muted-foreground">Need Attention</div>
             </div>
           </div>
 
           {/* Dumpsters Table */}
-          <div className="space-y-6">
-            <div className="px-4 lg:px-6">
-              <h2 className="text-lg font-semibold">Dumpster Inventory</h2>
-              <DumpstersDataTable data={dumpstersTableData} statuses={dumpsterStatuses} />
+          <div className="space-y-8">
+            <div className="px-6">
+              <h2 className="text-lg font-semibold mb-6">Dumpster Inventory</h2>
+              <DumpstersDataTable 
+                data={dumpstersTableData} 
+                statuses={dumpsterStatuses} 
+                onAdd={handleAddDumpster}
+                onEdit={handleEditDumpster}
+                onDelete={handleDeleteDumpster}
+              />
             </div>
 
             {/* Dumpsters Map */}
-            <div className="px-4 lg:px-6">
+            <div className="px-6">
               <h2 className="text-lg font-semibold mb-4">Dumpster Locations</h2>
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">

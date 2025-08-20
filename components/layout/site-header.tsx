@@ -21,8 +21,21 @@ export function SiteHeader({ title, actions }: SiteHeaderProps) {
 
     if (pathname === '/admin') return 'Dashboard';
     if (pathname === '/admin/quotes') return 'Quotes';
+    if (pathname === '/admin/orders') return 'Orders';
+    if (pathname === '/admin/dumpsters') return 'Dumpsters';
     if (pathname === '/admin/create') return 'Create Quote';
     if (pathname === '/admin/analytics') return 'Website Analytics';
+
+    // Check if this is an order detail page
+    const orderMatch = pathname.match(/^\/admin\/orders\/([^\/]+)$/);
+    if (orderMatch) {
+      return 'Order Details';
+    }
+
+    // Check if this is an invoice page
+    if (pathname.includes('/invoice')) {
+      return 'Invoice';
+    }
 
     // Extract page name from pathname
     const segments = pathname.split('/').filter(Boolean);

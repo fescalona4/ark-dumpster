@@ -15,7 +15,14 @@
     "typescriptreact": "javascript"
   },
   "typescript.updateImportsOnFileMove.enabled": "always",
-  "editor.rulers": [80, 120],
+  "editor.rulers": [
+    80,
+    120
+  ],
   "editor.tabSize": 2,
-  "editor.insertSpaces": true
+  "editor.insertSpaces": true,
+  "workbench.colorCustomizations": {
+    "editor.background": "#1E1E1E",
+    "terminal.background": "#1E1E1E"
+  }
 }

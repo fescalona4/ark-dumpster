@@ -34,7 +34,8 @@ export interface Order {
   final_price: number | null;
 
   // Assignment and tracking
-  assigned_to: string | null;
+  assigned_to: string | null;  // Driver assignment
+  dumpster_id: string | null;  // Assigned dumpster
   driver_notes: string | null;
   internal_notes: string | null;
 

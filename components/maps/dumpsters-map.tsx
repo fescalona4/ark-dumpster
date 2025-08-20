@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { useTheme } from 'next-themes';
 import { Dumpster } from '@/types/dumpster';
+import { calculateDistance, parseGpsCoordinates, ARK_HOME_COORDINATES } from '@/lib/utils';
 
 interface DumpstersMapProps {
   dumpsters: Dumpster[];
@@ -27,8 +28,14 @@ export default function DumpstersMap({
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLocations, setHasLocations] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const markersRef = useRef<MarkerInfo[]>([]);
   const { theme } = useTheme();
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Base styles to hide POI (Points of Interest) like businesses
   const hidePOIStyles = [
@@ -146,6 +153,7 @@ export default function DumpstersMap({
   // Light mode styles (also hide POI)
   const lightModeStyles = hidePOIStyles;
 
+
   // Get status color for markers
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -166,6 +174,8 @@ export default function DumpstersMap({
 
   // Initialize Google Maps
   useEffect(() => {
+    if (!mounted) return;
+    
     const initMap = async () => {
       try {
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -185,16 +195,35 @@ export default function DumpstersMap({
 
         if (!mapRef.current) return;
 
+        // Debug: Log current theme
+        console.log('DumpstersMap: Initializing with theme:', theme);
+        
+        // Check for dark mode: explicit 'dark' theme or system preference when theme is 'system'
+        const isDarkMode = theme === 'dark' || 
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+        console.log('DumpstersMap: Initial dark mode:', isDarkMode);
+        
+        // Determine initial styles based on current theme
+        const initialStyles = isDarkMode ? darkModeStyles : lightModeStyles;
+        console.log('DumpstersMap: Applied styles count:', initialStyles.length);
+        
         // Create map centered on ARK Dumpster business home address in St. Petersburg, FL
-        const mapInstance = new google.maps.Map(mapRef.current, {
+        // Note: Cannot use both mapId and custom styles - mapId styles are controlled via Cloud Console
+        const mapOptions: google.maps.MapOptions = {
           zoom: 11,
           center: { lat: 27.7987, lng: -82.7074 }, // 3024 29th St N, St. Petersburg, FL 33713
           mapTypeControl: true,
           fullscreenControl: true,
           streetViewControl: true,
           zoomControl: true,
-          styles: theme === 'dark' ? darkModeStyles : lightModeStyles,
-        });
+        };
+
+        // Always apply custom styles for dark/light mode support
+        // This means we'll use regular markers instead of AdvancedMarkerElement
+        mapOptions.styles = initialStyles;
+
+        const mapInstance = new google.maps.Map(mapRef.current, mapOptions);
 
         setMap(mapInstance);
         setIsLoaded(true);
@@ -205,16 +234,26 @@ export default function DumpstersMap({
     };
 
     initMap();
-  }, []);
+  }, [mounted]);
 
   // Update map styles when theme changes
   useEffect(() => {
-    if (map) {
+    if (map && mounted) {
+      console.log('DumpstersMap: Updating map styles, theme:', theme);
+      
+      // Check for dark mode: explicit 'dark' theme or system preference when theme is 'system'
+      const isDarkMode = theme === 'dark' || 
+        (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      console.log('DumpstersMap: Is dark mode:', isDarkMode);
+      
+      // Force map style update using setOptions
+      const newStyles = isDarkMode ? darkModeStyles : lightModeStyles;
       map.setOptions({
-        styles: theme === 'dark' ? darkModeStyles : lightModeStyles,
+        styles: newStyles,
       });
     }
-  }, [theme, map, darkModeStyles, lightModeStyles]);
+  }, [theme, map, mounted]);
 
   // Geocode address to get coordinates
   const geocodeAddress = async (address: string): Promise<google.maps.LatLng | null> => {
@@ -233,7 +272,7 @@ export default function DumpstersMap({
 
   // Update markers when dumpsters change
   useEffect(() => {
-    if (!map || !isLoaded) return;
+    if (!map || !isLoaded || !mounted) return;
 
     // Clear existing markers
     markersRef.current.forEach(({ marker, infoWindow }) => {
@@ -257,13 +296,18 @@ export default function DumpstersMap({
         // Try to use GPS coordinates first if available
         if (dumpster.gps_coordinates) {
           try {
-            const [lat, lng] = dumpster.gps_coordinates.split(',').map(Number);
-            if (!isNaN(lat) && !isNaN(lng)) {
-              position = new google.maps.LatLng(lat, lng);
+            const coords = parseGpsCoordinates(dumpster.gps_coordinates);
+            if (coords) {
+              position = new google.maps.LatLng(coords.lat, coords.lng);
+              console.log(`Successfully parsed GPS coordinates for ${dumpster.name}: ${coords.lat}, ${coords.lng}`);
+            } else {
+              console.warn(`Failed to parse GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}" - parseGpsCoordinates returned null`);
             }
           } catch (err) {
-            console.warn(`Invalid GPS coordinates for dumpster ${dumpster.name}: ${dumpster.gps_coordinates}`);
+            console.error(`Error parsing GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}"`, err);
           }
+        } else {
+          console.log(`No GPS coordinates provided for dumpster ${dumpster.name}, will try geocoding address: ${address}`);
         }
 
         // Fallback to geocoding the address
@@ -275,6 +319,18 @@ export default function DumpstersMap({
 
         hasValidLocation = true;
         bounds.extend(position);
+
+        // Pre-calculate distance from ARK-HOME for non-business-home dumpsters
+        let preCalculatedDistance: number | null = null;
+        if (dumpster.name !== 'ARK-HOME' && dumpster.gps_coordinates) {
+          const coords = parseGpsCoordinates(dumpster.gps_coordinates);
+          if (coords) {
+            preCalculatedDistance = calculateDistance(ARK_HOME_COORDINATES, coords);
+            console.log(`Distance calculated for ${dumpster.name}: ${preCalculatedDistance} miles`);
+          } else {
+            console.warn(`Cannot calculate distance for ${dumpster.name}: invalid GPS coordinates`);
+          }
+        }
 
         // Create custom marker icon with status color
         const isBusinessHome = dumpster.name === 'ARK-HOME';
@@ -299,12 +355,12 @@ export default function DumpstersMap({
           anchor: new google.maps.Point(12, 17), // Center bottom of icon
         };
 
-        // Create marker
+        // Create marker using regular Marker (not AdvancedMarkerElement)
         const marker = new google.maps.Marker({
           position,
           map,
           title: dumpster.name,
-          icon,
+          icon: icon,
         });
 
         // Create info window (content will be set dynamically on click)
@@ -318,12 +374,13 @@ export default function DumpstersMap({
           // Close all other info windows
           markersRef.current.forEach(({ infoWindow: iw }) => iw.close());
 
+          // Use pre-calculated distance
+          const distance = preCalculatedDistance;
+
           // Generate theme-aware content dynamically
           const isDark = theme === 'dark';
           const bgColor = isDark ? '#1f2937' : '#ffffff';
           const textColor = isDark ? '#f9fafb' : '#111827';
-          const mutedColor = isDark ? '#9ca3af' : '#6b7280';
-          const borderColor = isDark ? '#374151' : '#e5e7eb';
 
           const infoWindowContent = isBusinessHome ? `
             <style>
@@ -373,9 +430,16 @@ export default function DumpstersMap({
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Status:</strong> <span style="text-transform: capitalize; color: ${getStatusColor(dumpster.status)}; font-weight: 600;">${dumpster.status.replace('_', ' ')}</span></div>
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Size:</strong> ${dumpster.size || 'Not specified'}</div>
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Condition:</strong> <span style="text-transform: capitalize;">${dumpster.condition}</span></div>
+                ${distance ? `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Distance from ARK-HOME:</strong> <span style="color: #3b82f6; font-weight: 600;">${distance} mi</span></div>` : ''}
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Address:</strong> ${address}</div>
-                ${dumpster.assigned_to ? `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Assigned to:</strong> ${dumpster.assigned_to}</div>` : ''}
-                ${dumpster.order_number ? `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Order:</strong> ${dumpster.order_number}</div>` : ''}
+                ${dumpster.current_order_id && dumpster.orders ? (() => {
+                  const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
+                  if (order) {
+                    const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
+                    return `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Assigned to Order:</strong> #${order.order_number} - ${customerName}</div>`;
+                  }
+                  return '';
+                })() : ''}
                 ${dumpster.notes ? `<div style="color: ${textColor};"><strong>Notes:</strong> ${dumpster.notes}</div>` : ''}
               </div>
             </div>
@@ -409,7 +473,7 @@ export default function DumpstersMap({
     };
 
     addMarkersSequentially();
-  }, [map, dumpsters, isLoaded, theme]);
+  }, [map, dumpsters, isLoaded, theme, mounted]);
 
   if (error) {
     return (
