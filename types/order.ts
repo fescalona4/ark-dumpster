@@ -38,6 +38,10 @@ export interface Order {
   dumpster_id: string | null;  // Assigned dumpster
   driver_notes: string | null;
   internal_notes: string | null;
+  
+  // Completed order tracking
+  completed_with_dumpster_id: string | null;  // Dumpster used when order was completed
+  completed_with_dumpster_name: string | null;  // Name of dumpster used when order was completed
 
   // Scheduling
   scheduled_delivery_date: string | null;
