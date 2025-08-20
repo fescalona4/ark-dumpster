@@ -7,7 +7,7 @@
 export const QUOTE_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'completed'] as const;
 
 // Order status values  
-export const ORDER_STATUSES = ['pending', 'scheduled', 'on_way', 'in_progress', 'delivered', 'on_way_pickup', 'picked_up', 'completed', 'cancelled'] as const;
+export const ORDER_STATUSES = ['pending', 'scheduled', 'on_way', 'delivered', 'on_way_pickup', 'completed', 'cancelled'] as const;
 
 // Dumpster status values
 export const DUMPSTER_STATUSES = ['available', 'assigned', 'in_transit', 'maintenance', 'out_of_service'] as const;

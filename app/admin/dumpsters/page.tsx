@@ -186,27 +186,98 @@ export default function DumpstersPage() {
     }
   };
 
+  const handleUnassignDumpster = async (tableId: number) => {
+    try {
+      // Find the original dumpster by matching the table ID to the filtered dumpster array
+      const filteredDumpsters = dumpsters.filter(d => d.name !== 'ARK-HOME');
+      const originalDumpster = filteredDumpsters[tableId - 1]; // Table ID is index + 1 in filtered array
+      if (!originalDumpster) {
+        setError('Dumpster not found');
+        return;
+      }
+
+      // Only unassign if currently assigned
+      if (!originalDumpster.current_order_id) {
+        setError('Dumpster is not currently assigned');
+        return;
+      }
+
+      // First, update the order to remove the dumpster assignment
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          dumpster_id: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', originalDumpster.current_order_id);
+
+      if (orderError) {
+        console.error('Error updating order:', orderError);
+        setError('Failed to update order: ' + orderError.message);
+        return;
+      }
+
+      // Then update the dumpster to mark it as available
+      const { error: dumpsterError } = await supabase
+        .from('dumpsters')
+        .update({
+          current_order_id: null,
+          status: 'available',
+          address: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', originalDumpster.id);
+
+      if (dumpsterError) {
+        console.error('Error unassigning dumpster:', dumpsterError);
+        setError('Failed to unassign dumpster: ' + dumpsterError.message);
+      } else {
+        console.log('Dumpster unassigned successfully');
+        // Refresh the dumpsters list
+        await fetchDumpsters();
+      }
+    } catch (err) {
+      console.error('Unexpected error unassigning dumpster:', err);
+      setError('Failed to unassign dumpster');
+    }
+  };
+
   // Transform dumpsters data for the data table (excluding ARK-HOME)
   const dumpstersTableData = dumpsters
     .filter(dumpster => dumpster.name !== 'ARK-HOME')
     .map((dumpster, index) => {
-      // Calculate distance from ARK-HOME
+      // Get assignment info from the related order
+      let assignmentInfo = 'Unassigned';
+      let isAssigned = false;
+      if (dumpster.current_order_id && dumpster.orders) {
+        const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
+        if (order) {
+          const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
+          assignmentInfo = `Order #${order.order_number} - ${customerName}`;
+          isAssigned = true;
+        }
+      }
+
+      // Calculate distance from ARK-HOME (0 if unassigned)
       let distance: number | null = null;
-      if (dumpster.gps_coordinates) {
+      if (!isAssigned) {
+        // Unassigned dumpsters are at home
+        distance = 0;
+      } else if (dumpster.gps_coordinates) {
         const coords = parseGpsCoordinates(dumpster.gps_coordinates);
         if (coords) {
           distance = calculateDistance(ARK_HOME_COORDINATES, coords);
         }
       }
 
-      // Get assignment info from the related order
-      let assignmentInfo = 'Unassigned';
-      if (dumpster.current_order_id && dumpster.orders) {
-        const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
-        if (order) {
-          const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
-          assignmentInfo = `Order #${order.order_number} - ${customerName}`;
-        }
+      // Set location based on assignment status
+      let location = 'Location unknown';
+      if (!isAssigned) {
+        location = 'At Home';
+      } else if (dumpster.address) {
+        location = dumpster.address;
+      } else if (dumpster.last_known_location) {
+        location = dumpster.last_known_location;
       }
 
       return {
@@ -214,11 +285,11 @@ export default function DumpstersPage() {
         header: dumpster.name,
         type: dumpster.size || 'Not specified',
         status: dumpster.status, // Keep original status for filtering
-        target: dumpster.address || dumpster.last_known_location || 'Location unknown',
+        target: location,
         limit: dumpster.condition,
         reviewer: assignmentInfo,
-        distance: distance ? `${distance} mi` : 'Unknown',
-        sortableDistance: distance || 999, // For sorting purposes
+        distance: distance !== null ? `${distance} mi` : 'Unknown',
+        sortableDistance: distance !== null ? distance : 999, // For sorting purposes
       };
     })
     .sort((a, b) => a.sortableDistance - b.sortableDistance); // Sort by distance
@@ -292,6 +363,7 @@ export default function DumpstersPage() {
                 onAdd={handleAddDumpster}
                 onEdit={handleEditDumpster}
                 onDelete={handleDeleteDumpster}
+                onUnassign={handleUnassignDumpster}
               />
             </div>
 

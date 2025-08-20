@@ -11,6 +11,7 @@ import {
   IconTrash,
   IconTruck,
   IconX,
+  IconUnlink,
 } from '@tabler/icons-react';
 import { z } from 'zod';
 
@@ -118,12 +119,14 @@ function DumpsterCard({
   item,
   statuses,
   onEdit,
-  onDelete
+  onDelete,
+  onUnassign
 }: {
   item: z.infer<typeof dumpsterSchema>;
   statuses?: readonly string[];
   onEdit?: (data: EditDumpsterData) => void;
   onDelete?: (id: number) => void;
+  onUnassign?: (id: number) => void;
 }) {
   const isMobile = useIsMobile();
 
@@ -225,6 +228,9 @@ function DumpsterCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {onEdit && <EditDumpsterDialog item={item} onEdit={onEdit} />}
+              {onUnassign && item.reviewer !== 'Unassigned' && (
+                <UnassignDumpsterDialog item={item} onUnassign={onUnassign} />
+              )}
               <DropdownMenuSeparator />
               {onDelete && <DeleteDumpsterDialog item={item} onDelete={onDelete} />}
             </DropdownMenuContent>
@@ -452,6 +458,41 @@ function EditDumpsterDialog({
   );
 }
 
+function UnassignDumpsterDialog({
+  item,
+  onUnassign
+}: {
+  item: z.infer<typeof dumpsterSchema>;
+  onUnassign: (id: number) => void;
+}) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <IconUnlink className="mr-2 h-4 w-4" />
+          Unassign dumpster
+        </DropdownMenuItem>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Unassign Dumpster</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to unassign "{item.header}" from {item.reviewer}? The dumpster will be marked as available.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => onUnassign(item.id)}
+          >
+            Unassign
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function DeleteDumpsterDialog({
   item,
   onDelete
@@ -494,12 +535,14 @@ export function DumpstersDataTable({
   onAdd,
   onEdit,
   onDelete,
+  onUnassign,
 }: {
   data: z.infer<typeof dumpsterSchema>[];
   statuses?: readonly string[];
   onAdd?: (data: AddDumpsterData) => void;
   onEdit?: (data: EditDumpsterData) => void;
   onDelete?: (id: number) => void;
+  onUnassign?: (id: number) => void;
 }) {
   const [data] = useState(initialData);
   const [searchFilter, setSearchFilter] = useState('');
@@ -620,7 +663,7 @@ export function DumpstersDataTable({
             {filteredData.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredData.map(item => (
-                  <DumpsterCard key={item.id} item={item} statuses={statuses} onEdit={onEdit} onDelete={onDelete} />
+                  <DumpsterCard key={item.id} item={item} statuses={statuses} onEdit={onEdit} onDelete={onDelete} onUnassign={onUnassign} />
                 ))}
               </div>
             ) : (

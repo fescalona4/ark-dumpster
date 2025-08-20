@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { geocodeAddress } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ import {
   RiMailLine,
   RiBox1Line,
   RiMoneyDollarCircleLine,
+  RiDeleteBinLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -70,7 +72,7 @@ export default function OrdersAdminPage() {
  */
 function OrdersPageContent() {
   const router = useRouter();
-  
+
   // Core data state
   const [orders, setOrders] = useState<Order[]>([]);
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
@@ -171,14 +173,10 @@ function OrdersPageContent() {
         return '📅';
       case 'on_way':
         return '🚛';
-      case 'in_progress':
-        return '📍';
       case 'delivered':
         return '✅';
       case 'on_way_pickup':
         return '🚛';
-      case 'picked_up':
-        return '🔄';
       case 'completed':
         return '🏁';
       case 'cancelled':
@@ -259,20 +257,68 @@ function OrdersPageContent() {
   };
 
   /**
+   * Deletes an order
+   */
+  const deleteOrder = async (orderId: string) => {
+    try {
+      // First, if there's a dumpster assigned, free it up
+      const order = orders.find(o => o.id === orderId);
+      if (order?.dumpster_id) {
+        await supabase
+          .from('dumpsters')
+          .update({
+            status: 'available',
+            current_order_id: null
+          })
+          .eq('id', order.dumpster_id);
+      }
+
+      // Delete the order
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error deleting order:', error);
+        alert('Failed to delete order');
+        return;
+      }
+
+      // Update local state
+      setOrders(orders.filter(order => order.id !== orderId));
+
+      // Update dumpsters state if needed
+      if (order?.dumpster_id) {
+        setDumpsters(dumpsters.map(d =>
+          d.id === order.dumpster_id
+            ? { ...d, status: 'available' as const, current_order_id: undefined }
+            : d
+        ));
+      }
+
+    } catch (err) {
+      console.error('Unexpected error deleting order:', err);
+      alert('Failed to delete order');
+    }
+  };
+
+  /**
    * Assigns a dumpster to an order
    */
   const assignDumpsterToOrder = async (orderId: string, dumpsterId: string | null) => {
     try {
-      // Find the dumpster details
+      // Find the dumpster and order details
       const dumpster = dumpsterId ? dumpsters.find(d => d.id === dumpsterId) : null;
-      
+      const order = orders.find(o => o.id === orderId);
+
       // If we're assigning a dumpster, update both the order and the dumpster
-      if (dumpsterId && dumpster) {
+      if (dumpsterId && dumpster && order) {
         // Update the order with the dumpster assignment
         const { error: orderError } = await supabase
           .from('orders')
-          .update({ 
-            dumpster_id: dumpsterId 
+          .update({
+            dumpster_id: dumpsterId
           })
           .eq('id', orderId);
 
@@ -282,15 +328,40 @@ function OrdersPageContent() {
           return;
         }
 
-        // Update the dumpster to mark it as assigned
+        // Build the dumpster's address from the order
+        let dumpsterAddress = order.address || '';
+        if (order.city && order.state) {
+          dumpsterAddress = dumpsterAddress ? `${dumpsterAddress}, ${order.city}, ${order.state}` : `${order.city}, ${order.state}`;
+        }
+
+        // Update the dumpster to mark it as assigned and set its location
+        const updateData: any = {
+          status: 'assigned',
+          current_order_id: orderId,
+          address: dumpsterAddress,
+          last_assigned_at: new Date().toISOString()
+        };
+
         const { error: dumpsterError } = await supabase
           .from('dumpsters')
-          .update({ 
-            status: 'assigned',
-            current_order_id: orderId,
-            last_assigned_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq('id', dumpsterId);
+        
+        if (!dumpsterError && dumpsterAddress) {
+          // Geocode and update GPS coordinates separately using raw SQL
+          const coords = await geocodeAddress(dumpsterAddress);
+          if (coords) {
+            const { error: gpsError } = await supabase.rpc('update_dumpster_gps', {
+              dumpster_id: dumpsterId,
+              lng: coords.lng,
+              lat: coords.lat
+            });
+            
+            if (gpsError) {
+              console.warn('Failed to update GPS coordinates:', gpsError);
+            }
+          }
+        }
 
         if (dumpsterError) {
           console.error('Error updating dumpster:', dumpsterError);
@@ -331,7 +402,7 @@ function OrdersPageContent() {
         if (currentDumpster) {
           const { error: dumpsterError } = await supabase
             .from('dumpsters')
-            .update({ 
+            .update({
               status: 'available',
               current_order_id: null
             })
@@ -436,8 +507,37 @@ function OrdersPageContent() {
         <div className="grid gap-6">
           {orders.map(order => (
             <Card key={order.id} className="relative">
-              {/* Status badge positioned in top right */}
-              <div className="absolute top-4 right-4">
+              {/* Status badge and delete button positioned in top right */}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                    >
+                      <RiDeleteBinLine className="h-4 w-4 mr-1" />
+
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Order</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to permanently delete this order for {order.first_name} {order.last_name}? This action cannot be undone and will remove all order data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deleteOrder(order.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Delete Order
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <Badge className={`${getStatusColor(order.status)} text-base px-4 py-2 font-semibold`}>
                   <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
                   {order.status.replace('_', ' ').toUpperCase()}
@@ -521,7 +621,7 @@ function OrdersPageContent() {
                           <span>Price: ${order.quoted_price}</span>
                         </div>
                       )}
-                      
+
                       {/* Driver Assignment */}
                       <div className="space-y-2">
                         <Label htmlFor={`driver-${order.id}`} className="text-xs font-medium">
@@ -561,9 +661,9 @@ function OrdersPageContent() {
                           Assigned Dumpster
                         </Label>
                         <Select
-                          value={order.dumpster_id || 
-                                 dumpsters.find(d => d.current_order_id === order.id)?.id || 
-                                 "unassigned"}
+                          value={order.dumpster_id ||
+                            dumpsters.find(d => d.current_order_id === order.id)?.id ||
+                            "unassigned"}
                           onValueChange={(value) => {
                             const dumpsterId = value === "unassigned" ? null : value;
                             assignDumpsterToOrder(order.id, dumpsterId);
@@ -574,7 +674,7 @@ function OrdersPageContent() {
                               <div className="flex items-center gap-2">
                                 <RiBox1Line className="h-3 w-3" />
                                 <span className="text-sm">
-                                  {order.dumpster_id 
+                                  {order.dumpster_id
                                     ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
                                     : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
                                 </span>
@@ -632,7 +732,7 @@ function OrdersPageContent() {
                     >
                       View Details →
                     </Button>
-                    
+
                     {/* Status-specific buttons */}
                     {order.status === 'scheduled' && (
                       <>
@@ -682,24 +782,6 @@ function OrdersPageContent() {
                           ↩️ Back to Scheduled
                         </Button>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'in_progress')}
-                          className="bg-orange-600 hover:bg-orange-700"
-                          size="sm"
-                        >
-                          📍 Arrived
-                        </Button>
-                      </>
-                    )}
-                    {order.status === 'in_progress' && (
-                      <>
-                        <Button
-                          onClick={() => updateOrderStatus(order.id, 'on_way')}
-                          variant="outline"
-                          size="sm"
-                        >
-                          ↩️ Back to On Way
-                        </Button>
-                        <Button
                           onClick={() => updateOrderStatus(order.id, 'delivered')}
                           className="bg-green-600 hover:bg-green-700"
                           size="sm"
@@ -711,18 +793,18 @@ function OrdersPageContent() {
                     {order.status === 'delivered' && (
                       <>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'completed')}
-                          className="bg-gray-600 hover:bg-gray-700"
+                          onClick={() => updateOrderStatus(order.id, 'on_way')}
+                          variant="outline"
                           size="sm"
                         >
-                          🏁 Complete Order
+                          ↩️ Back to On Way
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'on_way_pickup')}
                           className="bg-yellow-600 hover:bg-yellow-700"
                           size="sm"
                         >
-                          🔄🚛 On Way to Pickup
+                          🚛 On Way to Pickup
                         </Button>
                       </>
                     )}
@@ -736,22 +818,13 @@ function OrdersPageContent() {
                           ↩️ Back to Delivered
                         </Button>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'picked_up')}
-                          className="bg-purple-600 hover:bg-purple-700"
+                          onClick={() => updateOrderStatus(order.id, 'completed')}
+                          className="bg-gray-600 hover:bg-gray-700"
                           size="sm"
                         >
-                          🔄 Mark Picked Up
+                          🏁 Complete Order
                         </Button>
                       </>
-                    )}
-                    {order.status === 'picked_up' && (
-                      <Button
-                        onClick={() => updateOrderStatus(order.id, 'completed')}
-                        className="bg-gray-600 hover:bg-gray-700"
-                        size="sm"
-                      >
-                        🏁 Complete Order
-                      </Button>
                     )}
                     {(order.status === 'completed' || order.status === 'cancelled') && (
                       <div className="text-sm text-muted-foreground italic">

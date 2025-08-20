@@ -280,12 +280,51 @@ export default function DumpstersMap({
       infoWindow.close();
     });
     markersRef.current = [];
+    
+    // Clear existing polylines
+    if ((window as any).mapPolylines) {
+      (window as any).mapPolylines.forEach((polyline: google.maps.Polyline) => {
+        polyline.setMap(null);
+      });
+      (window as any).mapPolylines = [];
+    }
 
     // Add markers for dumpsters with addresses
     const addMarkersSequentially = async () => {
       const bounds = new google.maps.LatLngBounds();
       let hasValidLocation = false;
+      let arkHomePosition: google.maps.LatLng | null = null;
+      const polylines: google.maps.Polyline[] = [];
 
+      // First pass: Find ARK-HOME position
+      for (const dumpster of dumpsters) {
+        if (dumpster.name === 'ARK-HOME') {
+          const address = dumpster.address || dumpster.last_known_location;
+          if (!address) continue;
+          
+          let position: google.maps.LatLng | null = null;
+          
+          if (dumpster.gps_coordinates) {
+            const coords = parseGpsCoordinates(dumpster.gps_coordinates);
+            if (coords) {
+              position = new google.maps.LatLng(coords.lat, coords.lng);
+              arkHomePosition = position;
+              console.log('ARK-HOME position found:', coords.lat, coords.lng);
+            }
+          }
+          
+          if (!position) {
+            position = await geocodeAddress(address);
+            if (position) {
+              arkHomePosition = position;
+              console.log('ARK-HOME position geocoded');
+            }
+          }
+          break;
+        }
+      }
+
+      // Second pass: Create all markers and polylines
       for (const dumpster of dumpsters) {
         const address = dumpster.address || dumpster.last_known_location;
 
@@ -299,7 +338,12 @@ export default function DumpstersMap({
             const coords = parseGpsCoordinates(dumpster.gps_coordinates);
             if (coords) {
               position = new google.maps.LatLng(coords.lat, coords.lng);
-              console.log(`Successfully parsed GPS coordinates for ${dumpster.name}: ${coords.lat}, ${coords.lng}`);
+              console.log(`Successfully parsed GPS coordinates for ${dumpster.name}: lat=${coords.lat}, lng=${coords.lng}`);
+              if (dumpster.name === 'ARK-HOME') {
+                console.log('ARK-HOME raw GPS data:', dumpster.gps_coordinates);
+                console.log('ARK-HOME parsed coords:', coords);
+                console.log('ARK-HOME expected coords: lat=27.7987, lng=-82.7074');
+              }
             } else {
               console.warn(`Failed to parse GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}" - parseGpsCoordinates returned null`);
             }
@@ -450,7 +494,53 @@ export default function DumpstersMap({
         });
 
         markersRef.current.push({ dumpster, marker, infoWindow });
+        
+        // Create polyline from dumpster to ARK-HOME (for all non-ARK-HOME dumpsters)
+        if (!isBusinessHome && arkHomePosition && position) {
+          console.log(`Creating polyline from ARK-HOME to ${dumpster.name}`);
+          
+          const polyline = new google.maps.Polyline({
+            path: [arkHomePosition, position],
+            geodesic: true,
+            strokeColor: '#3b82f6', // blue-500
+            strokeOpacity: 0.6,
+            strokeWeight: 4,
+            map: map,
+            zIndex: 1,
+          });
+          
+          // Add hover effect to make line more prominent
+          polyline.addListener('mouseover', () => {
+            polyline.setOptions({
+              strokeOpacity: 0.9,
+              strokeWeight: 6,
+              zIndex: 100,
+            });
+          });
+          
+          polyline.addListener('mouseout', () => {
+            polyline.setOptions({
+              strokeOpacity: 0.6,
+              strokeWeight: 4,
+              zIndex: 1,
+            });
+          });
+          
+          polylines.push(polyline);
+          console.log(`Polyline created for ${dumpster.name}, total polylines: ${polylines.length}`);
+        } else {
+          if (isBusinessHome) {
+            console.log('Skipping polyline for ARK-HOME itself');
+          } else if (!arkHomePosition) {
+            console.log(`No ARK-HOME position available for polyline to ${dumpster.name}`);
+          } else if (!position) {
+            console.log(`No position for ${dumpster.name}`);
+          }
+        }
       }
+
+      // Store polylines reference for cleanup
+      (window as any).mapPolylines = polylines;
 
       // Fit map to show all markers
       if (hasValidLocation) {
