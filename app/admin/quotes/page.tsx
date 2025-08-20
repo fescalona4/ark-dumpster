@@ -126,7 +126,7 @@ function QuotesPageContent() {
   const [editForms, setEditForms] = useState<{ [key: string]: Partial<Quote> }>({});
 
   // Filter state for quote display
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('pending');
 
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
