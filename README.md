@@ -468,7 +468,7 @@ npm run analyze      # Analyze bundle size
 
 For support or questions about ARK Dumpster Rentals:
 
-- Email: arkdumpsterrentals@gmail.com
+- Email: info@arkdumpsterrentals.com
 - Phone: (727) 564-1794
 
 ## 📄 License

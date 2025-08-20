@@ -25,17 +25,12 @@ export async function POST(request: NextRequest) {
 
     const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData } = body;
 
-    // Determine if emails should be skipped based on environment variable
-    const skipEmailInDevelopment = process.env.SKIP_EMAIL_IN_DEVELOPMENT === 'true';
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const skipEmail = isDevelopment && skipEmailInDevelopment;
+    // Determine if company emails should be sent
+    const sendCompanyEmails = process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS !== 'false';
 
-    console.log('Email skip logic:', {
-      isDevelopment,
-      skipEmailInDevelopment,
-      skipEmail,
-      NODE_ENV: process.env.NODE_ENV,
-      SKIP_EMAIL_IN_DEVELOPMENT: process.env.SKIP_EMAIL_IN_DEVELOPMENT,
+    console.log('Email configuration:', {
+      sendCompanyEmails,
+      SEND_COMPANY_EMAIL_NOTIFICATIONS: process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS,
     });
 
     // Validate required fields
@@ -80,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: undefined,
     };
 
-    if (fullFormData && !skipEmail) {
+    if (fullFormData && sendCompanyEmails) {
       console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');
 
       const quoteId = dbResult.quoteId ? generateQuoteId(dbResult.quoteId) : 'PENDING-DB-SAVE';
@@ -104,7 +99,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.log(
-        '⚠️ Skipping company email - no form data or development environment email skip enabled'
+        '⚠️ Skipping company email - no form data or company email notifications disabled'
       );
     }
 
@@ -114,24 +109,22 @@ export async function POST(request: NextRequest) {
 
     const emailSubject = subject || getDefaultEmailSubject(type);
 
-    // Skip user email if skipEmail flag is true OR if user notifications are disabled
-    if (skipEmail || !sendUserNotifications) {
-      const reason = skipEmail
-        ? 'development environment (SKIP_EMAIL_IN_DEVELOPMENT=true)'
-        : 'user email notifications disabled';
-      console.log(`Skipping user email send due to: ${reason}`);
+
+    // If user notifications are disabled, skip user email but continue processing
+    if (!sendUserNotifications) {
+      console.log('Skipping user email - notifications disabled');
 
       return Response.json({
         success: true,
-        emailSkipped: true,
-        emailSkipReason: reason,
+        emailSkipped: false,
         userEmailSent: false,
+        userEmailSkipReason: 'user email notifications disabled',
         companyEmailSent: companyEmailResult.success,
         companyEmailError: companyEmailResult.error,
         dbSaved: dbResult.success,
         dbSaveError: dbResult.error,
         savedQuoteId: dbResult.quoteId,
-        message: `Request processed successfully (user email ${reason})`,
+        message: 'Request processed successfully (user email notifications disabled)',
       });
     }
 

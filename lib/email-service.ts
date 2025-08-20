@@ -87,7 +87,7 @@ export async function sendCompanyNotificationEmail(
     );
 
     const companyEmailPayload = {
-      from: 'ARK Dumpster Notifications <onboarding@resend.dev>',
+      from: 'ARK Dumpster Notifications <quote@arkdumpsterrentals.com>',
       replyTo: options.customerDetails.email,
       to: process.env.COMPANY_EMAIL,
       subject: `🚨 NEW QUOTE REQUEST - ${options.customerDetails.firstName} ${options.customerDetails.lastName || ''} - ${options.quoteDetails.dumpsterSize} yard dumpster`,
@@ -152,8 +152,8 @@ export async function sendUserEmail(
 
     // Create email payload
     const emailPayload = {
-      from: 'ARK Dumpster <onboarding@resend.dev>',
-      replyTo: 'arkdumpsterrentals@gmail.com',
+      from: 'ARK Dumpster <info@arkdumpsterrentals.com>',
+      replyTo: 'info@arkdumpsterrentals.com',
       to: email,
       subject: subject,
       html: emailHtml,
@@ -259,5 +259,5 @@ We'll get back to you within 24 hours.
 Best regards,
 ARK Dumpster Team
 Phone: (727) 564-1794
-Email: arkdumpsterrentals@gmail.com`;
+Email: katherine@arkdumpsterrentals.com`;
 }

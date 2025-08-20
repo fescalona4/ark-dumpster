@@ -186,12 +186,12 @@ const Contacts = () => {
         const title = 'Request Sent Successfully!';
         let description;
 
-        if (result.emailSkipped || !result.userEmailSent) {
+        if (!result.userEmailSent) {
           description =
-            "Thank you! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.";
+            `Thank you, ${formData.firstName}! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.`;
         } else {
           description =
-            "Thank you! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.";
+            `Thank you, ${formData.firstName}! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.`;
         }
 
         // Add development info if email was skipped
@@ -317,9 +317,9 @@ const Contacts = () => {
                 <h3 className="font-semibold">Email:</h3>
                 <Link
                   className="font-light truncate ml-1"
-                  href="mailto:arkdumpsterrentals@gmail.com"
+                  href="mailto:info@arkdumpsterrentals.com"
                 >
-                  arkdumpsterrentals@gmail.com
+                  info@arkdumpsterrentals.com
                 </Link>
               </div>
               <div className="flex max-md:flex-col justify-between text-lg md:text-md">

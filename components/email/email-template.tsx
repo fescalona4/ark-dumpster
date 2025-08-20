@@ -404,7 +404,7 @@ export function EmailTemplate({
             }}
           >
             Simply reply to this email to reach us directly at{' '}
-            <strong>arkdumpsterrentals@gmail.com</strong>
+            <strong>katherine@arkdumpsterrentals.com</strong>
           </p>
         </div>
 
@@ -449,10 +449,10 @@ export function EmailTemplate({
             </a>{' '}
             | 📧{' '}
             <a
-              href="mailto:arkdumpsterrentals@gmail.com"
+              href="mailto:katherine@arkdumpsterrentals.com"
               style={{ color: '#059669', textDecoration: 'none' }}
             >
-              arkdumpsterrentals@gmail.com
+              katherine@arkdumpsterrentals.com
             </a>
           </div>
         </div>
