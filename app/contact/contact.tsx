@@ -474,7 +474,7 @@ const Contacts = () => {
                         onValueChange={value => handleSelectChange('timeNeeded', value)}
                         required
                       >
-                        <SelectTrigger className="mt-1.5 w-full !h-11">
+                        <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
                           <SelectValue placeholder="Select duration" />
                         </SelectTrigger>
                         <SelectContent>
@@ -496,7 +496,7 @@ const Contacts = () => {
                         onValueChange={value => handleSelectChange('dumpsterSize', value)}
                         required
                       >
-                        <SelectTrigger className="mt-1.5 w-full !h-11">
+                        <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
                           <SelectValue placeholder="15 Yard Dump Trailer" />
                         </SelectTrigger>
                         <SelectContent>
