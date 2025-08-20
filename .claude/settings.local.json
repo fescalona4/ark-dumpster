@@ -30,7 +30,14 @@
       "Bash(supabase:*)",
       "Bash(npm install:*)",
       "Bash(npx supabase:*)",
-      "Bash(brew list:*)"
+      "Bash(brew list:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": [],
     "ask": []
