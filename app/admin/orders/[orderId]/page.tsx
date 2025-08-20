@@ -50,6 +50,8 @@ import { Order } from '@/types/order';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
+import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
 
 export default function OrderDetailPage() {
   return (
@@ -68,6 +70,10 @@ function OrderDetailContent() {
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Dialog state for dumpster assignment
+  const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
+  const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
 
   useEffect(() => {
     fetchOrder();
@@ -219,23 +225,63 @@ function OrderDetailContent() {
   const updateOrderStatus = async (newStatus: Order['status']) => {
     if (!order) return;
 
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          status: newStatus,
-          ...(newStatus === 'delivered' ? { actual_delivery_date: new Date().toISOString() } : {}),
-          ...(newStatus === 'completed' ? { completed_at: new Date().toISOString() } : {})
-        })
-        .eq('id', orderId);
+    const result = await updateOrderStatusShared({
+      orderId: orderId as string,
+      newStatus,
+      currentOrder: order,
+      dumpsters
+    });
 
-      if (error) throw error;
-
+    if (result.success) {
+      // Refresh both order and dumpster data to ensure UI consistency
       await fetchOrder();
-    } catch (err) {
-      console.error('Error updating order status:', err);
-      alert('Failed to update order status');
+      await fetchDumpsters();
+    } else {
+      alert(result.error || 'Failed to update order status');
     }
+  };
+
+  /**
+   * Handles "On My Way" button click with dumpster assignment check
+   */
+  const handleOnMyWayClick = async () => {
+    if (!order) return;
+
+    // Check if dumpster is assigned
+    const hasAssignedDumpster = order.dumpster_id || 
+      dumpsters.some(d => d.current_order_id === order.id);
+    
+    if (!hasAssignedDumpster) {
+      // Open dumpster assignment dialog
+      setSelectedOrderForDumpster(order);
+      setDumpsterDialogOpen(true);
+    } else {
+      // Proceed directly to "On My Way" status
+      await updateOrderStatus('on_way');
+    }
+  };
+
+  /**
+   * Handles proceeding without dumpster assignment (fallback)
+   */
+  const handleProceedWithoutDumpster = async () => {
+    if (selectedOrderForDumpster) {
+      await updateOrderStatus('on_way');
+      setDumpsterDialogOpen(false);
+      setSelectedOrderForDumpster(null);
+    }
+  };
+
+  /**
+   * Assigns dumpster and proceeds to "On My Way" status
+   */
+  const assignDumpsterAndProceed = async (orderId: string, dumpsterId: string) => {
+    if (!order) return;
+    
+    await assignDumpsterToOrder(dumpsterId);
+    await updateOrderStatus('on_way');
+    setDumpsterDialogOpen(false);
+    setSelectedOrderForDumpster(null);
   };
 
   const deleteOrder = async () => {
@@ -270,31 +316,6 @@ function OrderDetailContent() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      scheduled: 'bg-blue-100 text-blue-800',
-      on_way: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      on_way_pickup: 'bg-purple-100 text-purple-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getStatusIcon = (status: string) => {
-    const icons: { [key: string]: string } = {
-      pending: '⏳',
-      scheduled: '📅',
-      on_way: '🚛',
-      delivered: '✅',
-      on_way_pickup: '🚛',
-      completed: '✅',
-      cancelled: '❌',
-    };
-    return icons[status] || '📋';
-  };
 
   const formatPhoneNumber = (phone: number | string | null) => {
     if (!phone) return '';
@@ -488,85 +509,117 @@ function OrderDetailContent() {
                   <Label htmlFor="driver" className="text-xs font-medium">
                     Assigned Driver
                   </Label>
-                  <Select
-                    value={order.assigned_to || "unassigned"}
-                    onValueChange={(value) => {
-                      const driverName = value === "unassigned" ? null : value;
-                      assignDriverToOrder(driverName);
-                    }}
-                  >
-                    <SelectTrigger id="driver" className="w-full">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          <RiTruckLine className="h-3 w-3" />
-                          <span className="text-sm">{order.assigned_to || 'Select a driver'}</span>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">
-                        <span className="text-muted-foreground">Unassigned</span>
-                      </SelectItem>
-                      {DRIVERS.map((driver) => (
-                        <SelectItem key={driver.value} value={driver.value}>
-                          {driver.label}
+                  {order.status === 'completed' ? (
+                    // Show read-only driver info for completed orders
+                    <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-md border">
+                      <RiTruckLine className="h-3 w-3 text-gray-700" />
+                      <span className="text-sm text-gray-800 font-medium">
+                        {order.assigned_to || 'No driver assigned'}
+                      </span>
+                      {order.assigned_to && (
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          Completed
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    // Show dropdown for non-completed orders
+                    <Select
+                      value={order.assigned_to || "unassigned"}
+                      onValueChange={(value) => {
+                        const driverName = value === "unassigned" ? null : value;
+                        assignDriverToOrder(driverName);
+                      }}
+                    >
+                      <SelectTrigger id="driver" className="w-full">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <RiTruckLine className="h-3 w-3" />
+                            <span className="text-sm">{order.assigned_to || 'Select a driver'}</span>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">
+                          <span className="text-muted-foreground">Unassigned</span>
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        {DRIVERS.map((driver) => (
+                          <SelectItem key={driver.value} value={driver.value}>
+                            {driver.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
 
                 {/* Dumpster Assignment */}
                 <div className="space-y-2 mt-3">
                   <Label htmlFor="dumpster" className="text-xs font-medium">
-                    Assigned Dumpster
+                    {order.status === 'completed' ? 'Dumpster Used' : 'Assigned Dumpster'}
                   </Label>
-                  <Select
-                    value={order.dumpster_id ||
-                      dumpsters.find(d => d.current_order_id === order.id)?.id ||
-                      "unassigned"}
-                    onValueChange={(value) => {
-                      const dumpsterId = value === "unassigned" ? null : value;
-                      assignDumpsterToOrder(dumpsterId);
-                    }}
-                  >
-                    <SelectTrigger id="dumpster" className="w-full">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          <RiBox1Line className="h-3 w-3" />
-                          <span className="text-sm">
-                            {order.dumpster_id
-                              ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
-                              : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
-                          </span>
-                        </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">
-                        <span className="text-muted-foreground">Unassigned</span>
-                      </SelectItem>
-                      {dumpsters
-                        .filter(d => d.name !== 'ARK-HOME' && (d.status === 'available' || d.current_order_id === order.id))
-                        .map(dumpster => (
-                          <SelectItem key={dumpster.id} value={dumpster.id}>
-                            <div className="flex items-center justify-between w-full">
-                              <span>{dumpster.name}</span>
-                              {dumpster.size && (
-                                <span className="text-xs text-muted-foreground ml-2">
-                                  {dumpster.size} yard
-                                </span>
-                              )}
-                              {dumpster.current_order_id === order.id && (
-                                <Badge variant="secondary" className="ml-2 text-xs">
-                                  Current
-                                </Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  {order.status === 'completed' ? (
+                    // Show read-only dumpster info for completed orders
+                    <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-md border">
+                      <RiBox1Line className="h-3 w-3 text-gray-700" />
+                      <span className="text-sm text-gray-800 font-medium">
+                        {order.completed_with_dumpster_name || 'No dumpster assigned'}
+                      </span>
+                      {order.completed_with_dumpster_name && (
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          Completed
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    // Show dropdown for non-completed orders
+                    <Select
+                      value={order.dumpster_id ||
+                        dumpsters.find(d => d.current_order_id === order.id)?.id ||
+                        "unassigned"}
+                      onValueChange={(value) => {
+                        const dumpsterId = value === "unassigned" ? null : value;
+                        assignDumpsterToOrder(dumpsterId);
+                      }}
+                    >
+                      <SelectTrigger id="dumpster" className="w-full">
+                        <SelectValue>
+                          <div className="flex items-center gap-2">
+                            <RiBox1Line className="h-3 w-3" />
+                            <span className="text-sm">
+                              {order.dumpster_id
+                                ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
+                                : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
+                            </span>
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">
+                          <span className="text-muted-foreground">Unassigned</span>
+                        </SelectItem>
+                        {dumpsters
+                          .filter(d => d.name !== 'ARK-HOME' && (d.status === 'available' || d.current_order_id === order.id))
+                          .map(dumpster => (
+                            <SelectItem key={dumpster.id} value={dumpster.id}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{dumpster.name}</span>
+                                {dumpster.size && (
+                                  <span className="text-xs text-muted-foreground ml-2">
+                                    {dumpster.size} yard
+                                  </span>
+                                )}
+                                {dumpster.current_order_id === order.id && (
+                                  <Badge variant="secondary" className="ml-2 text-xs">
+                                    Current
+                                  </Badge>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Created: {format(new Date(order.created_at), "MMM dd, yyyy 'at' h:mm a")}
@@ -656,7 +709,7 @@ function OrderDetailContent() {
                     </AlertDialogContent>
                   </AlertDialog>
                   <Button
-                    onClick={() => updateOrderStatus('on_way')}
+                    onClick={handleOnMyWayClick}
                     className="bg-indigo-600 hover:bg-indigo-700"
                     size="sm"
                   >
@@ -769,6 +822,18 @@ function OrderDetailContent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dumpster Assignment Dialog */}
+      {selectedOrderForDumpster && (
+        <DumpsterAssignmentDialog
+          open={dumpsterDialogOpen}
+          onOpenChange={setDumpsterDialogOpen}
+          order={selectedOrderForDumpster}
+          dumpsters={dumpsters}
+          onAssign={assignDumpsterAndProceed}
+          onProceedWithoutDumpster={handleProceedWithoutDumpster}
+        />
+      )}
     </div>
   );
 }
