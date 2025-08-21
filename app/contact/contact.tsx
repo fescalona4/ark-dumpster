@@ -101,10 +101,10 @@ const Contacts = () => {
   }) => {
     setFormData(prev => ({
       ...prev,
-      address: placeData.address,
-      city: placeData.city,
-      state: placeData.state || prev.state, // Keep existing state if not provided
-      zipCode: placeData.zipCode,
+      address: placeData.address || prev.address,
+      city: placeData.city || prev.city,
+      state: placeData.state || prev.state,
+      zipCode: placeData.zipCode || prev.zipCode,
     }));
   };
 
@@ -203,6 +203,10 @@ const Contacts = () => {
           type: 'success',
           title,
           description,
+          action: {
+            label: 'Call Us',
+            onClick: () => window.open('tel:7275641794', '_self')
+          }
         });
 
         // Log detailed info for development
@@ -351,174 +355,203 @@ const Contacts = () => {
             {/* Form */}
             <Card className="lg:col-span-3 bg-gray-950/30 backdrop-blur-lg shadow-none border mx-2">
               <CardContent className="p-4 md:p-10">
-                <form onSubmit={handleSubmit}>
-                  <div className="grid md:grid-cols-6 gap-x-8 gap-y-6">
-                    <div className="col-span-6 sm:col-span-3">
-                      <Label htmlFor="firstName">First Name *</Label>
-                      <Input
-                        placeholder="First name"
-                        id="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Section 1: Customer Information */}
+                  <div className="space-y-6">
+                    <div className="border-b border-white/20 pb-4">
+                      <h3 className="text-lg font-semibold text-white">Customer Information</h3>
+                      <p className="text-sm text-white/70 mt-1">Your contact details</p>
                     </div>
-                    <div className="col-span-6 sm:col-span-3">
-                      <Label htmlFor="lastName">Last Name *</Label>
-                      <Input
-                        placeholder="Last name"
-                        id="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <Label htmlFor="firstName" className="text-white">First Name *</Label>
+                        <Input
+                          placeholder="First name"
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className="mt-1.5 bg-white h-11 shadow-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName" className="text-white">Last Name *</Label>
+                        <Input
+                          placeholder="Last name"
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="mt-1.5 bg-white h-11 shadow-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone" className="text-white">Phone Number *</Label>
+                        <Input
+                          type="tel"
+                          placeholder="(555) 123-4567"
+                          id="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="mt-1.5 bg-white h-11 shadow-none"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email" className="text-white">Email Address *</Label>
+                        <Input
+                          type="email"
+                          placeholder="john.doe@example.com"
+                          id="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="mt-1.5 bg-white h-11 shadow-none"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div className="col-span-6">
-                      <Label htmlFor="phone">Phone Number *</Label>
-                      <Input
-                        type="tel"
-                        placeholder="(555) 123-4567"
-                        id="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
-                    <div className="col-span-6">
-                      <Label htmlFor="email">Email *</Label>
-                      <Input
-                        type="email"
-                        placeholder="Email"
-                        id="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
-                    <div className="col-span-6 sm:col-span-4">
-                      <Label htmlFor="address">Address *</Label>
-                      <GooglePlacesAutocomplete
-                        id="address"
-                        placeholder="Street address"
-                        value={formData.address}
-                        onPlaceSelect={handlePlaceSelect}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="address2">Address 2 (Opt)</Label>
-                      <Input
-                        placeholder="Apt, suite, unit, etc."
-                        id="address2"
-                        type="text"
-                        value={formData.address2}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                      />
-                    </div>
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="city">City *</Label>
-                      <Input
-                        placeholder="City"
-                        id="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="state">State *</Label>
-                      <Input
-                        placeholder="FL"
-                        id="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        maxLength={2}
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="zipCode">ZIP Code *</Label>
-                      <Input
-                        type="tel"
-                        placeholder="12345"
-                        id="zipCode"
-                        value={formData.zipCode}
-                        onChange={handleInputChange}
-                        maxLength={5}
-                        pattern="[0-9]{5}"
-                        className="mt-1.5 bg-white h-11 shadow-none"
-                        required
-                      />
-                    </div>
+                  </div>
 
-                    <div className="col-span-6 sm:col-span-2">
-                      {/* <Label htmlFor="dropoffDate">Drop-off Date *</Label> */}
-                      <DropoffCalendar
-                        value={formData.dropoffDate}
-                        onChange={date => handleSelectChange('dropoffDate', date)}
-                      />
+                  {/* Section 2: Service Location */}
+                  <div className="space-y-6">
+                    <div className="border-b border-white/20 pb-4">
+                      <h3 className="text-lg font-semibold text-white">Service Location</h3>
+                      <p className="text-sm text-white/70 mt-1">Where should we deliver the dumpster?</p>
                     </div>
-
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="timeNeeded">Time Needed</Label>
-                      <Select
-                        value={formData.timeNeeded}
-                        onValueChange={value => handleSelectChange('timeNeeded', value)}
-                        required
-                      >
-                        <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectLabel>Select duration</SelectLabel>
-                            <SelectItem value="1-day">1 Day</SelectItem>
-                            <SelectItem value="2-6-days">2-6 Days</SelectItem>
-                            <SelectItem value="1-week">1 Week</SelectItem>
-                            <SelectItem value="2-weeks">2 Weeks</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid gap-6">
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div className="md:col-span-2">
+                          <Label htmlFor="address" className="text-white">Street Address *</Label>
+                          <GooglePlacesAutocomplete
+                            id="address"
+                            placeholder="123 Main Street"
+                            value={formData.address}
+                            onPlaceSelect={handlePlaceSelect}
+                            className="mt-1.5 bg-white h-11 shadow-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="address2" className="text-white truncate">Apt/Suite (Optional)</Label>
+                          <Input
+                            placeholder="Apt, suite, unit, etc."
+                            id="address2"
+                            type="text"
+                            value={formData.address2}
+                            onChange={handleInputChange}
+                            className="mt-1.5 bg-white h-11 shadow-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div>
+                          <Label htmlFor="city" className="text-white">City *</Label>
+                          <Input
+                            placeholder="City"
+                            id="city"
+                            value={formData.city}
+                            onChange={handleInputChange}
+                            className="mt-1.5 bg-white h-11 shadow-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="state" className="text-white">State *</Label>
+                          <Input
+                            placeholder="FL"
+                            id="state"
+                            value={formData.state}
+                            onChange={handleInputChange}
+                            maxLength={2}
+                            className="mt-1.5 bg-white h-11 shadow-none"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="zipCode" className="text-white">ZIP Code *</Label>
+                          <Input
+                            type="tel"
+                            placeholder="12345"
+                            id="zipCode"
+                            value={formData.zipCode}
+                            onChange={handleInputChange}
+                            maxLength={5}
+                            pattern="[0-9]{5}"
+                            className="mt-1.5 bg-white h-11 shadow-none"
+                            required
+                          />
+                        </div>
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="col-span-6 sm:col-span-2">
-                      <Label htmlFor="dumpsterSize">Dumpster Size</Label>
-                      <Select
-                        value={formData.dumpsterSize}
-                        onValueChange={value => handleSelectChange('dumpsterSize', value)}
-                        required
-                      >
-                        <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
-                          <SelectValue placeholder="15 Yard Dump Trailer" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            {/* <SelectLabel>Select size</SelectLabel> */}
-                            <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
-                            <SelectItem value="20">20 Yard Dumpster</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
+                  {/* Section 3: Service Details */}
+                  <div className="space-y-6">
+                    <div className="border-b border-white/20 pb-4">
+                      <h3 className="text-lg font-semibold text-white">Service Details</h3>
+                      <p className="text-sm text-white/70 mt-1">When do you need the dumpster and for how long?</p>
                     </div>
-
-                    <div className="col-span-6">
-                      <Label htmlFor="message">Message</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="Tell us about your project..."
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        className="mt-1.5 bg-white shadow-none"
-                        rows={6}
-                      />
+                    <div className="grid gap-6">
+                      <div className="grid md:grid-cols-3 gap-6">
+                        <div>
+                          <DropoffCalendar
+                            value={formData.dropoffDate}
+                            onChange={date => handleSelectChange('dropoffDate', date)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="timeNeeded" className="text-white">Rental Duration *</Label>
+                          <Select
+                            value={formData.timeNeeded}
+                            onValueChange={value => handleSelectChange('timeNeeded', value)}
+                            required
+                          >
+                            <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Select duration</SelectLabel>
+                                <SelectItem value="1-day">1 Day</SelectItem>
+                                <SelectItem value="2-6-days">2-6 Days</SelectItem>
+                                <SelectItem value="1-week">1 Week</SelectItem>
+                                <SelectItem value="2-weeks">2 Weeks</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="dumpsterSize" className="text-white">Dumpster Size *</Label>
+                          <Select
+                            value={formData.dumpsterSize}
+                            onValueChange={value => handleSelectChange('dumpsterSize', value)}
+                            required
+                          >
+                            <SelectTrigger className="mt-1.5 w-full !h-11 bg-white">
+                              <SelectValue placeholder="Select size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectGroup>
+                                <SelectLabel>Available sizes</SelectLabel>
+                                <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
+                                <SelectItem value="20">20 Yard Dumpster</SelectItem>
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="message" className="text-white">Project Details</Label>
+                        <Textarea
+                          id="message"
+                          placeholder="Tell us about your project and what type of materials you'll be disposing of..."
+                          value={formData.message}
+                          onChange={handleInputChange}
+                          className="mt-1.5 bg-white shadow-none"
+                          rows={4}
+                        />
+                        <p className="text-xs text-white/60 mt-1">Help us provide an accurate quote by describing your project</p>
+                      </div>
                     </div>
                   </div>
 
