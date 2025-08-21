@@ -81,6 +81,7 @@ import {
   RiInformationLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import AuthGuard from '@/components/providers/auth-guard';
 import { Order } from '@/types/order';
 
@@ -158,6 +159,9 @@ function QuotesPageContent() {
 
   // Date-time picker dialog state
   const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
+  
+  // Save loading state for individual quotes
+  const [savingQuotes, setSavingQuotes] = useState<Set<string>>(new Set());
 
   // Drivers configuration - easy to expand in the future
   const drivers = [
@@ -281,6 +285,9 @@ function QuotesPageContent() {
     const editForm = editForms[quoteId];
     if (!editForm) return;
 
+    // Set loading state
+    setSavingQuotes(prev => new Set([...prev, quoteId]));
+
     try {
       const updateData = {
         status: editForm.status,
@@ -305,6 +312,7 @@ function QuotesPageContent() {
 
       if (error) {
         console.error('Error updating quote:', error);
+        toast.error('Failed to save quote. Please try again.');
       } else {
         setQuotes(quotes.map(q => (q.id === quoteId ? data[0] : q)));
         // Update the edit form with the new data
@@ -312,9 +320,18 @@ function QuotesPageContent() {
           ...prev,
           [quoteId]: { ...data[0], assigned_to: data[0].assigned_to || 'Ariel' }
         }));
+        toast.success('Quote saved successfully!');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
+      toast.error('An unexpected error occurred while saving the quote.');
+    } finally {
+      // Clear loading state
+      setSavingQuotes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(quoteId);
+        return newSet;
+      });
     }
   };
 
@@ -672,7 +689,11 @@ function QuotesPageContent() {
                           {quote.dropoff_date && (
                             <div className="flex items-center gap-2">
                               <RiTimeLine className="h-4 w-4" />
-                              <span>Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}</span>
+                              <span>Dropoff: {(() => {
+                                const [year, month, day] = quote.dropoff_date.split('-').map(Number);
+                                const localDate = new Date(year, month - 1, day);
+                                return format(localDate, 'MMM dd');
+                              })()}</span>
                             </div>
                           )}
                         </div>
@@ -904,7 +925,12 @@ function QuotesPageContent() {
                                 >
                                   <RiCalendarLine className="mr-2 h-4 w-4" />
                                   {(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                    ? format(new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || ''), 'MMM dd, yyyy')
+                                    ? (() => {
+                                        const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
+                                        const [year, month, day] = dateStr.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return format(localDate, 'MMM dd, yyyy');
+                                      })()
                                     : "Pick a date"
                                   }
                                 </Button>
@@ -916,7 +942,11 @@ function QuotesPageContent() {
                                 <DateTimePicker
                                   date={
                                     (editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                      ? new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || '')
+                                      ? (() => {
+                                          const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
+                                          const [year, month, day] = dateStr.split('-').map(Number);
+                                          return new Date(year, month - 1, day); // month is 0-indexed
+                                        })()
                                       : undefined
                                   }
                                   time={editForms[quote.id]?.dropoff_time || quote.dropoff_time || ''}
@@ -955,9 +985,13 @@ function QuotesPageContent() {
                                         const hour12 = parseInt(hours) % 12 || 12;
                                         const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
                                         const formattedTime = `${hour12}:${minutes} ${ampm}`;
-                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} at ${formattedTime}`;
+                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return `${format(localDate, 'MMM dd, yyyy')} at ${formattedTime}`;
                                       } else if (currentDate) {
-                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} - Select time`;
+                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return `${format(localDate, 'MMM dd, yyyy')} - Select time`;
                                       } else if (currentTime) {
                                         const [hours, minutes] = currentTime.split(':');
                                         const hour12 = parseInt(hours) % 12 || 12;
@@ -1025,9 +1059,19 @@ function QuotesPageContent() {
                             variant="secondary"
                             className="w-full"
                             onClick={() => saveQuote(quote.id)}
+                            disabled={savingQuotes.has(quote.id)}
                           >
-                            <RiSaveLine className="mr-2 h-4 w-4" />
-                            Save Quote
+                            {savingQuotes.has(quote.id) ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 mr-2 border-b-2 border-current"></div>
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <RiSaveLine className="mr-2 h-4 w-4" />
+                                Save Quote
+                              </>
+                            )}
                           </Button>
                           <Tooltip>
                             <TooltipTrigger asChild>
