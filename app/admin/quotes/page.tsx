@@ -897,7 +897,7 @@ function QuotesPageContent() {
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                  className={`mt-1 w-full justify-start text-left font-normal rounded-md ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                                     ? "text-muted-foreground border-red-300 hover:border-red-400"
                                     : ""
                                     }`}
@@ -980,7 +980,7 @@ function QuotesPageContent() {
                             </label>
                             <Button
                               variant="outline"
-                              className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                              className={`mt-1 w-full justify-start text-left font-normal rounded-md ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
                                 ? "text-muted-foreground border-red-300 hover:border-red-400"
                                 : ""
                                 }`}
