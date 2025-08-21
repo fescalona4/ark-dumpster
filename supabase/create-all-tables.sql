@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS quotes (
     
     -- Service Location
     address VARCHAR(500),
+    address2 VARCHAR(500),
     city VARCHAR(255),
     state VARCHAR(100),
     zip_code VARCHAR(20),
