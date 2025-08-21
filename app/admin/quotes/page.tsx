@@ -51,6 +51,19 @@ import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
 import { OrderConfirmationDialog } from '@/components/dialogs/order-confirmation-dialog';
 import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   RiDeleteBin2Line,
   RiEditLine,
   RiSaveLine,
@@ -62,6 +75,10 @@ import {
   RiBox1Line,
   RiTimeLine,
   RiMoneyDollarCircleLine,
+  RiSearchLine,
+  RiFilterLine,
+  RiHome3Line,
+  RiInformationLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -127,6 +144,9 @@ function QuotesPageContent() {
 
   // Filter state for quote display
   const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [assignedToFilter, setAssignedToFilter] = useState<string>('all');
 
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
@@ -180,6 +200,14 @@ function QuotesPageContent() {
         query = query.eq('status', statusFilter);
       }
 
+      if (priorityFilter !== 'all') {
+        query = query.eq('priority', priorityFilter);
+      }
+
+      if (assignedToFilter !== 'all') {
+        query = query.eq('assigned_to', assignedToFilter);
+      }
+
       const { data, error } = await query;
 
       if (error) {
@@ -197,7 +225,20 @@ function QuotesPageContent() {
           console.log(`Quote ${quote.id}: phone = "${quote.phone}" (type: ${typeof quote.phone})`);
         });
 
-        setQuotes(validQuotes);
+        // Apply client-side search filtering if search term exists
+        let filteredQuotes = validQuotes;
+        if (searchTerm.trim()) {
+          const searchLower = searchTerm.toLowerCase();
+          filteredQuotes = validQuotes.filter(quote =>
+            quote.first_name?.toLowerCase().includes(searchLower) ||
+            quote.last_name?.toLowerCase().includes(searchLower) ||
+            quote.email?.toLowerCase().includes(searchLower) ||
+            quote.phone?.toString().includes(searchTerm) ||
+            quote.id.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        setQuotes(filteredQuotes);
 
         if (data && data.length !== validQuotes.length) {
           console.warn(`Filtered out ${data.length - validQuotes.length} invalid quote records`);
@@ -209,7 +250,7 @@ function QuotesPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, priorityFilter, assignedToFilter]);
 
   useEffect(() => {
     fetchQuotes();
@@ -466,29 +507,96 @@ function QuotesPageContent() {
 
   return (
     <div className="p-2 md:p-6">
+      {/* Breadcrumb Navigation */}
+      <div className="mb-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/admin" className="flex items-center gap-2">
+                <RiHome3Line className="h-4 w-4" />
+                Dashboard
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Quotes</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
+      
       {/* Header section with stats and filters */}
       <div className="mb-8">
-        <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="quoted">Quoted</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="declined">Declined</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={fetchQuotes} variant="outline">
-            Refresh
-          </Button>
-          <Badge variant="outline" className="gap-2 ml-auto">
-            <RiBox1Line className="h-4 w-4" />
-            {quotes.length} Total Quotes
-          </Badge>
+        {/* Enhanced filtering and search */}
+        <div className="space-y-4">
+          {/* Search bar */}
+          <div className="relative max-w-md">
+            <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search quotes by name, email, phone, or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {/* Filter controls */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <RiFilterLine className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Filters:</span>
+            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="quoted">Quoted</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="declined">Declined</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-36">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={assignedToFilter} onValueChange={setAssignedToFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Assigned To" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Drivers</SelectItem>
+                {drivers.map((driver) => (
+                  <SelectItem key={driver.value} value={driver.value}>
+                    {driver.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button onClick={fetchQuotes} variant="outline" size="sm">
+              Refresh
+            </Button>
+            
+            <Badge variant="outline" className="gap-2 ml-auto">
+              <RiBox1Line className="h-4 w-4" />
+              {quotes.length} {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || assignedToFilter !== 'all' ? 'Filtered' : 'Total'} Quotes
+            </Badge>
+          </div>
         </div>
       </div>
 
@@ -528,10 +636,10 @@ function QuotesPageContent() {
                         {quote.first_name} {quote.last_name || ''}
                       </CardTitle>
 
-                      {/* Status and priority badges */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
-                        <Badge className={getPriorityColor(quote.priority)}>{quote.priority}</Badge>
+                      {/* Status and priority badges with improved spacing */}
+                      <div className="flex items-center gap-3 mb-6">
+                        <Badge className={`${getStatusColor(quote.status)} px-3 py-1`}>{quote.status}</Badge>
+                        <Badge className={`${getPriorityColor(quote.priority)} px-3 py-1`}>{quote.priority}</Badge>
                       </div>
 
                       {/* Customer contact information */}
@@ -571,16 +679,26 @@ function QuotesPageContent() {
                       </div>
                     </div>
 
-                    {/* Action buttons - edit and delete */}
+                    {/* Action buttons - edit and delete with tooltips */}
                     <div className="flex gap-2">
-                      <QuoteEditDialog
-                        quote={quote}
-                        editForms={editForms}
-                        setEditForms={setEditForms}
-                        onSave={saveQuote}
-                        isOpen={editDialogOpen === quote.id}
-                        onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <QuoteEditDialog
+                              quote={quote}
+                              editForms={editForms}
+                              setEditForms={setEditForms}
+                              onSave={saveQuote}
+                              isOpen={editDialogOpen === quote.id}
+                              onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Edit customer and service details
+                        </TooltipContent>
+                      </Tooltip>
+                      
                       <AlertDialog>
                         <AlertDialogContent>
                           <AlertDialogHeader>
@@ -600,15 +718,22 @@ function QuotesPageContent() {
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <RiDeleteBin2Line className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <RiDeleteBin2Line className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Delete this quote permanently
+                          </TooltipContent>
+                        </Tooltip>
                       </AlertDialog>
                     </div>
                   </div>
@@ -730,7 +855,7 @@ function QuotesPageContent() {
                                     }
                                   }))
                                 }
-                                className="pl-7"
+                                className="pl-7 w-full min-w-[120px]"
                                 placeholder="0.00"
                               />
                             </div>
@@ -894,33 +1019,60 @@ function QuotesPageContent() {
                           />
                         </div>
 
-                        {/* Action buttons for quote management */}
+                        {/* Action buttons for quote management with improved feedback */}
                         <div className="grid grid-cols-2 gap-4">
                           <Button
                             variant="secondary"
                             className="w-full"
                             onClick={() => saveQuote(quote.id)}
                           >
+                            <RiSaveLine className="mr-2 h-4 w-4" />
                             Save Quote
                           </Button>
-                          <Button
-                            variant="default"
-                            className="w-full"
-                            onClick={() => createOrder(quote.id)}
-                            disabled={
-                              !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
-                              !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                            }
-                            title={
-                              !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="default"
+                                className="w-full"
+                                onClick={() => createOrder(quote.id)}
+                                disabled={
+                                  !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                                  !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                }
+                              >
+                                Create Order
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
                                 !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                                 ? "Dropoff date and time are required to create an order"
                                 : "Create order from this quote"
-                            }
-                          >
-                            Create Order
-                          </Button>
+                              }
+                            </TooltipContent>
+                          </Tooltip>
                         </div>
+                        
+                        {/* Validation feedback */}
+                        {(!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                          !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)) && (
+                          <div className="mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                            <div className="flex items-start gap-2">
+                              <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                                <p className="font-medium">Missing required fields for order creation:</p>
+                                <ul className="mt-1 space-y-1">
+                                  {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
+                                    <li>• Dropoff date is required</li>
+                                  )}
+                                  {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
+                                    <li>• Dropoff time is required</li>
+                                  )}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
