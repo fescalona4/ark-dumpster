@@ -7,6 +7,8 @@ import {
   QuoteDetails,
   EmailResult,
 } from '@/lib/email-service';
+import { emailApiSchema, validateInput } from '@/lib/validation-schemas';
+import { withRateLimit } from '@/lib/rate-limiter';
 
 export async function GET() {
   return Response.json({
@@ -16,55 +18,62 @@ export async function GET() {
   });
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withRateLimit(async (request: NextRequest) => {
   try {
-    console.log('=== EMAIL API CALLED ===');
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      console.log('Email API called');
+    }
 
-    const body = await request.json();
-    console.log('Request body received:', JSON.stringify(body, null, 2));
+    const rawBody = await request.json();
 
-    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData } = body;
+    // SECURITY: Comprehensive input validation
+    const validation = validateInput(emailApiSchema, rawBody);
+    
+    if (!validation.success) {
+      return Response.json(
+        { 
+          error: 'Input validation failed', 
+          details: validation.errors 
+        }, 
+        { status: 400 }
+      );
+    }
+
+    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData } = validation.data;
 
     // Determine if company emails should be sent
     const sendCompanyEmails = process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS !== 'false';
-
-    console.log('Email configuration:', {
-      sendCompanyEmails,
-      SEND_COMPANY_EMAIL_NOTIFICATIONS: process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS,
-    });
-
-    // Validate required fields
-    if (!firstName || !email) {
-      console.log('Validation failed: missing required fields');
-      return Response.json({ error: 'firstName and email are required' }, { status: 400 });
-    }
 
     // STEP 1: SAVE TO DATABASE FIRST
     let dbResult;
 
     if (fullFormData) {
-      console.log('=== SAVING QUOTE TO DATABASE FIRST ===');
+      if (isDevelopment) {
+        console.log('Saving quote to database');
+      }
+      
       dbResult = await saveQuoteToDatabase(fullFormData);
 
       if (!dbResult.success) {
-        console.error('Database save failed:', dbResult.error);
+        if (isDevelopment) {
+          console.error('Database save failed:', dbResult.error);
+        }
 
-        // If database save fails, return error immediately
         return Response.json(
           {
             error: 'Quote creation failed',
             details: 'Unable to save quote to database. Please try again or contact us directly.',
-            dbSaved: false,
-            dbSaveError: dbResult.error,
-            message: 'Database connection issue - quote could not be saved',
           },
           { status: 500 }
         );
-      } else {
-        console.log('✅ Quote saved successfully with ID:', dbResult.quoteId);
+      }
+      
+      if (isDevelopment) {
+        console.log('Quote saved successfully');
       }
     } else {
-      console.log('⚠️ No fullFormData provided - skipping database save');
       dbResult = { success: true, quoteId: undefined, error: undefined };
     }
 
@@ -76,7 +85,9 @@ export async function POST(request: NextRequest) {
     };
 
     if (fullFormData && sendCompanyEmails) {
-      console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');
+      if (isDevelopment) {
+        console.log('Sending company notification email');
+      }
 
       const quoteId = dbResult.quoteId ? generateQuoteId(dbResult.quoteId) : 'PENDING-DB-SAVE';
 
@@ -92,44 +103,32 @@ export async function POST(request: NextRequest) {
         submittedAt: new Date().toISOString(),
       });
 
-      if (!companyEmailResult.success) {
+      if (!companyEmailResult.success && isDevelopment) {
         console.error('Company email failed:', companyEmailResult.error);
-      } else {
-        console.log('✅ Company notification sent successfully');
       }
-    } else {
-      console.log(
-        '⚠️ Skipping company email - no form data or company email notifications disabled'
-      );
     }
 
     // STEP 3: HANDLE USER EMAIL
     const sendUserNotifications = shouldSendUserEmails();
-    console.log('Send user email notifications:', sendUserNotifications);
-
     const emailSubject = subject || getDefaultEmailSubject(type);
-
 
     // If user notifications are disabled, skip user email but continue processing
     if (!sendUserNotifications) {
-      console.log('Skipping user email - notifications disabled');
-
       return Response.json({
         success: true,
-        emailSkipped: false,
         userEmailSent: false,
         userEmailSkipReason: 'user email notifications disabled',
         companyEmailSent: companyEmailResult.success,
-        companyEmailError: companyEmailResult.error,
         dbSaved: dbResult.success,
-        dbSaveError: dbResult.error,
         savedQuoteId: dbResult.quoteId,
         message: 'Request processed successfully (user email notifications disabled)',
       });
     }
 
     // STEP 4: SEND USER EMAIL
-    console.log('=== SENDING USER EMAIL ===');
+    if (isDevelopment) {
+      console.log('Sending user email');
+    }
 
     const userQuoteDetails: QuoteDetails = {
       service: quoteDetails?.service,
@@ -143,30 +142,30 @@ export async function POST(request: NextRequest) {
     const userEmailResult = await sendUserEmail(
       firstName,
       email,
-      type as 'welcome' | 'quote' | 'confirmation',
+      type,
       emailSubject,
       userQuoteDetails
     );
 
     if (!userEmailResult.success) {
-      console.error('User email failed:', userEmailResult.error);
+      if (isDevelopment) {
+        console.error('User email failed:', userEmailResult.error);
+      }
 
-      // Return error but include database and company email status
       return Response.json(
         {
-          error: 'User email sending failed',
-          details: userEmailResult.error,
+          error: 'Email sending failed',
           dbSaved: dbResult.success,
-          dbSaveError: dbResult.error,
           savedQuoteId: dbResult.quoteId,
           companyEmailSent: companyEmailResult.success,
-          companyEmailError: companyEmailResult.error,
         },
         { status: 500 }
       );
     }
 
-    console.log('✅ User email sent successfully!');
+    if (isDevelopment) {
+      console.log('User email sent successfully');
+    }
 
     // Return complete success response
     return Response.json({
@@ -174,22 +173,23 @@ export async function POST(request: NextRequest) {
       data: userEmailResult.data,
       userEmailSent: true,
       companyEmailSent: companyEmailResult.success,
-      companyEmailError: companyEmailResult.error,
       dbSaved: dbResult.success,
-      dbSaveError: dbResult.error,
       savedQuoteId: dbResult.quoteId,
     });
   } catch (error) {
-    console.error('Unexpected error in email API:', error);
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (isDevelopment) {
+      console.error('Unexpected error in email API:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
     return Response.json(
       {
         error: 'Failed to process request',
-        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
-}
+});
 
 function getDefaultEmailSubject(type: string): string {
   switch (type) {

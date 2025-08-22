@@ -28,53 +28,49 @@ export interface SaveQuoteResult {
 
 export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<SaveQuoteResult> {
   try {
-    console.log('=== SAVING QUOTE TO DATABASE ===');
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('Form data to save:', JSON.stringify(formData, null, 2));
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // Only log in development
+    if (isDevelopment) {
+      console.log('Saving quote to database');
+    }
 
     // Check if Supabase is configured
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.error('Supabase not configured - missing NEXT_PUBLIC_SUPABASE_URL');
+      if (isDevelopment) {
+        console.error('Supabase not configured - missing URL');
+      }
       return {
         success: false,
-        error: 'Database not configured - missing Supabase URL',
+        error: 'Database not configured',
       };
     }
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.error('Supabase not configured - missing both service role and anon keys');
+      if (isDevelopment) {
+        console.error('Supabase not configured - missing credentials');
+      }
       return {
         success: false,
-        error: 'Database not configured - missing Supabase credentials',
+        error: 'Database not configured',
       };
     }
 
-    console.log('✅ Supabase environment variables found');
-
     // Create proxy-aware Supabase client
-    const isDevelopment = process.env.NODE_ENV === 'development';
     let supabase;
 
     if (isDevelopment) {
       // Use custom API proxy in development to bypass corporate firewall
       const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy`;
-      console.log('🔀 Using custom API proxy for Supabase:', proxyUrl);
-      console.log('🔧 Environment check - NODE_ENV:', process.env.NODE_ENV);
-      console.log('🔧 App URL:', process.env.NEXT_PUBLIC_APP_URL);
-
-      // Prefer service role key for server-side operations, fallback to anon key
       const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-      console.log('🔑 Using API key type:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Service Role' : 'Anon');
 
       supabase = createClient(proxyUrl, apiKey, {
         auth: {
           persistSession: false,
         },
       });
-      console.log('✅ Created proxy-aware Supabase client for development');
     } else {
       // Use direct connection in production
-      console.log('🌐 Using direct Supabase URL for production');
       supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -85,57 +81,22 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
           },
         }
       );
-      console.log('✅ Created direct Supabase client for production');
     }
 
-    // Test basic network connectivity first
-    console.log('🔍 Testing network connectivity...');
-    try {
-      const testUrl = isDevelopment
-        ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy/health`
-        : process.env.NEXT_PUBLIC_SUPABASE_URL + '/health';
-
-      const networkTest = await fetch(testUrl);
-      console.log('✅ Network connectivity test successful, status:', networkTest.status);
-    } catch (networkError) {
-      console.error('❌ Network connectivity test failed:', {
-        message: networkError instanceof Error ? networkError.message : 'Unknown network error',
-        details: networkError instanceof Error ? networkError.stack : 'No stack trace available',
-      });
-
-      // If basic network fails, maybe try a different approach
-      console.log('🔄 Trying alternative network test...');
-      try {
-        const altTest = await fetch('https://httpbin.org/status/200');
-        console.log('✅ Alternative network test successful, status:', altTest.status);
-        console.log('❌ Issue seems to be specifically with Supabase URL');
-      } catch {
-        // altError not used - just checking if alternative network fails
-        console.log('❌ Alternative network test also failed - general network issue');
-        return {
-          success: false,
-          error: 'Network connectivity issue - unable to reach external services',
-        };
-      }
-    }
-
-    // Test connection first
-    console.log('🔍 Testing Supabase connection...');
+    // Test connection first (minimal logging)
     const { error: testError } = await supabase.from('quotes').select('count').limit(1);
 
     if (testError) {
-      console.error('❌ Supabase connection test failed:', testError);
+      if (isDevelopment) {
+        console.error('Supabase connection test failed:', testError.message);
+      }
       return {
         success: false,
-        error: `Database connection failed: ${testError.message}`,
-        data: testError,
+        error: 'Database connection failed',
       };
     }
 
-    console.log('✅ Supabase connection test successful');
-
     // Save to structured quotes table
-    console.log('📝 Inserting quote data...');
     const { data: quoteData, error: quoteError } = await supabase
       .from('quotes')
       .insert([
@@ -160,16 +121,20 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
       .select();
 
     if (quoteError) {
-      console.error('Database save error:', quoteError);
+      if (isDevelopment) {
+        console.error('Database save error:', quoteError.message);
+      }
       return {
         success: false,
-        error: quoteError.message,
-        data: null,
+        error: 'Failed to save quote',
       };
     }
 
     const savedQuote = quoteData?.[0];
-    console.log('✅ Quote saved to database successfully:', savedQuote);
+    
+    if (isDevelopment) {
+      console.log('Quote saved successfully');
+    }
 
     return {
       success: true,
@@ -178,11 +143,13 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
       error: undefined,
     };
   } catch (error) {
-    console.error('Unexpected database error:', error);
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (isDevelopment) {
+      console.error('Unexpected database error:', error instanceof Error ? error.message : 'Unknown error');
+    }
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Database save failed',
-      data: null,
+      error: 'Database operation failed',
     };
   }
 }

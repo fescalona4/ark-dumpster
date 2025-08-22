@@ -2,11 +2,24 @@ import type { NextConfig } from 'next';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+// Content Security Policy configuration
+const cspHeader = `
+  default-src 'self';
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' ${isDevelopment ? "'unsafe-eval'" : ''} https://maps.googleapis.com https://maps.gstatic.com https://va.vercel-scripts.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  img-src 'self' blob: data: https://*.supabase.co https://framerusercontent.com https://maps.googleapis.com https://maps.gstatic.com;
+  font-src 'self' https://fonts.gstatic.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  upgrade-insecure-requests;
+  connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com ${isDevelopment ? 'http://localhost:*' : ''};
+`;
+
 const nextConfig: NextConfig = {
   images: {
-    // Set to true for static exports or when external image optimization is preferred
-    // This allows Next.js Image component benefits (lazy loading, aspect ratio, etc.)
-    // without requiring a running Next.js server for image optimization
+    // SECURITY: Restrict image sources to trusted domains only
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,16 +30,57 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/image-proxy**',
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'maps.gstatic.com',
       },
+      // Development only
+      ...(isDevelopment ? [{
+        protocol: 'http' as const,
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/api/image-proxy**',
+      }] : []),
     ],
+  },
+
+  // Security headers
+  async headers() {
+    return [
+      {
+        // Apply security headers to all routes
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: cspHeader.replace(/\s{2,}/g, ' ').trim()
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin'
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()'
+          },
+          ...(isDevelopment ? [] : [{
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload'
+          }]),
+        ],
+      },
+    ];
   },
 
   experimental: {

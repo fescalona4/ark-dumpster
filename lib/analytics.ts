@@ -33,7 +33,7 @@ async function getGeolocation(): Promise<GeolocationData> {
 
     // Fallback: Using ip-api.com (1000 requests/month free)
     try {
-      const response = await fetch('http://ip-api.com/json/', {
+      const response = await fetch('https://ip-api.com/json/', {
         method: 'GET',
       });
 
