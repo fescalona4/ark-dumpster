@@ -39,9 +39,23 @@
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_console_messages",
-      "mcp__playwright__browser_press_key"
+      "mcp__playwright__browser_press_key",
+      "Bash(claude mcp:*)",
+      "Bash(npx:*)",
+      "Bash(sudo chown:*)",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__execute_sql"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "memory",
+    "browser-server",
+    "supabase"
+  ],
+  "outputStyle": "default"
 }
