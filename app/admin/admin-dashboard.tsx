@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminSectionCards } from '@/components/admin/admin-section-cards';
+import { DataFlowVisualization } from '@/components/admin/data-flow-visualization';
 import { QuotesDataTable } from '@/components/data-tables/quotes-data-table';
 import { OrdersDataTable } from '@/components/data-tables/orders-data-table';
-import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
+import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
+import { CountingNumber } from '@/components/ui/counting-number';
+import { Spinner } from '@/components/ui/spinner';
 import { Order } from '@/types/order';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { QUOTE_STATUSES, ORDER_STATUSES, DUMPSTER_STATUSES } from '@/lib/constants';
@@ -71,10 +74,7 @@ export default function AdminDashboard() {
   const [dumpsterStats, setDumpsterStats] = useState<DumpsterStats>({
     total: 0,
     available: 0,
-    assigned: 0,
-    in_transit: 0,
-    maintenance: 0,
-    out_of_service: 0,
+    in_use: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,10 +175,7 @@ export default function AdminDashboard() {
         const stats = {
           total: dumpstersData.length,
           available: dumpstersData.filter(d => d.status === 'available').length,
-          assigned: dumpstersData.filter(d => d.status === 'assigned').length,
-          in_transit: dumpstersData.filter(d => d.status === 'in_transit').length,
-          maintenance: dumpstersData.filter(d => d.status === 'maintenance').length,
-          out_of_service: dumpstersData.filter(d => d.status === 'out_of_service').length,
+          in_use: dumpstersData.filter(d => d.status === 'in_use').length,
         };
         setDumpsterStats(stats);
       }
@@ -222,7 +219,7 @@ export default function AdminDashboard() {
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Spinner variant="circle-filled" size={48} />
             <p className="text-muted-foreground">Loading dashboard...</p>
           </div>
         </div>
@@ -244,7 +241,15 @@ export default function AdminDashboard() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <AdminSectionCards stats={quoteStats} />
+          <AdminSectionCards stats={quoteStats} orderStats={orderStats} />
+
+          {/* Data Flow Visualization */}
+          <div className="px-4 lg:px-6">
+            <DataFlowVisualization 
+              quoteStats={quoteStats}
+              orderStats={orderStats}
+            />
+          </div>
 
           {/* Dumpster Summary */}
           <div className="px-4 lg:px-6">
@@ -260,24 +265,34 @@ export default function AdminDashboard() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{dumpsterStats.total}</div>
+                  <div className="text-2xl font-bold">
+                    <CountingNumber 
+                      number={dumpsterStats.total}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Total</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{dumpsterStats.available}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    <CountingNumber 
+                      number={dumpsterStats.available}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Available</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{dumpsterStats.assigned}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    <CountingNumber 
+                      number={dumpsterStats.in_use}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Assigned</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{dumpsterStats.in_transit}</div>
-                  <div className="text-sm text-muted-foreground">In Transit</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{dumpsterStats.maintenance + dumpsterStats.out_of_service}</div>
-                  <div className="text-sm text-muted-foreground">Need Attention</div>
                 </div>
               </div>
             </div>
@@ -296,7 +311,9 @@ export default function AdminDashboard() {
           </div>
 
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
+            <div className="bg-card rounded-lg border">
+              <AdvancedAreaChart />
+            </div>
           </div>
         </div>
       </div>

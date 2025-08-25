@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
-import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
-import { SiteHeader } from '@/components/layout/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { MobileAwareLayout } from '@/components/layout/mobile-aware-layout';
+import AdminAuthGuard from '@/components/providers/admin-auth-guard';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - ARK Dumpster Rentals',
@@ -14,19 +13,10 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
-    >
-      <AdminAppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
+    <AdminAuthGuard>
+      <MobileAwareLayout>
         {children}
-      </SidebarInset>
-    </SidebarProvider>
+      </MobileAwareLayout>
+    </AdminAuthGuard>
   );
 }

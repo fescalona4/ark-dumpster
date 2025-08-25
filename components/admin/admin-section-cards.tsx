@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CountingNumber } from '@/components/ui/counting-number';
 
 interface QuoteStats {
   total: number;
@@ -18,46 +19,31 @@ interface QuoteStats {
   completed: number;
 }
 
-interface AdminSectionCardsProps {
-  stats: QuoteStats;
+interface OrderStats {
+  total: number;
+  pending: number;
+  scheduled: number;
+  in_progress: number;
+  completed: number;
 }
 
-export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
-  const acceptanceRate = stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
-  // TODO: Add completion rate display in future update
-  // const completionRate =
-  //   stats.accepted > 0
-  //     ? Math.round((stats.completed / stats.accepted) * 100)
-  //     : 0;
+interface AdminSectionCardsProps {
+  stats: QuoteStats;
+  orderStats: OrderStats;
+}
 
+export function AdminSectionCards({ stats, orderStats }: AdminSectionCardsProps) {
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Total Quotes</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.total}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              All requests
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Customer requests <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Total quote requests received</div>
-        </CardFooter>
-      </Card>
-
+    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2">
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Pending Quotes</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.pending}
+            <CountingNumber 
+              number={stats.pending}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -76,43 +62,26 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
 
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Acceptance Rate</CardDescription>
+          <CardDescription>Scheduled Orders</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {acceptanceRate}%
+            <CountingNumber 
+              number={orderStats.scheduled}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {acceptanceRate >= 50 ? <IconTrendingUp /> : <IconTrendingDown />}
-              Success
+              {orderStats.scheduled > 0 ? <IconTrendingUp /> : <IconTrendingDown />}
+              Ready
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            Quote conversions <IconTrendingUp className="size-4" />
+            Upcoming deliveries <IconTrendingUp className="size-4" />
           </div>
-          <div className="text-muted-foreground">Quotes that became accepted jobs</div>
-        </CardFooter>
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Completed Jobs</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.completed}
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              Done
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Finished rentals <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Successfully completed dumpster rentals</div>
+          <div className="text-muted-foreground">Orders scheduled for delivery</div>
         </CardFooter>
       </Card>
     </div>

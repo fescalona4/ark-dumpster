@@ -265,7 +265,7 @@ dumpsters {
   id: UUID (Primary Key)
   name: VARCHAR
   size: VARCHAR
-  status: ENUM (available, rented, maintenance)
+  status: ENUM (available, in_use)
   current_location: VARCHAR
   latitude: NUMERIC
   longitude: NUMERIC

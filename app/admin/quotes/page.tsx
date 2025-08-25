@@ -18,6 +18,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
+import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +53,11 @@ import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
 import { OrderConfirmationDialog } from '@/components/dialogs/order-confirmation-dialog';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   RiDeleteBin2Line,
   RiEditLine,
   RiSaveLine,
@@ -62,8 +69,13 @@ import {
   RiBox1Line,
   RiTimeLine,
   RiMoneyDollarCircleLine,
+  RiSearchLine,
+  RiFilterLine,
+  RiInformationLine,
+  RiRefreshLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import AuthGuard from '@/components/providers/auth-guard';
 import { Order } from '@/types/order';
 
@@ -116,7 +128,7 @@ export default function QuotesAdminPage() {
  */
 function QuotesPageContent() {
   const router = useRouter();
-  
+
   // Core data state
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +138,8 @@ function QuotesPageContent() {
   const [editForms, setEditForms] = useState<{ [key: string]: Partial<Quote> }>({});
 
   // Filter state for quote display
-  const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
@@ -138,6 +151,9 @@ function QuotesPageContent() {
 
   // Date-time picker dialog state
   const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
+
+  // Save loading state for individual quotes
+  const [savingQuotes, setSavingQuotes] = useState<Set<string>>(new Set());
 
   // Drivers configuration - easy to expand in the future
   const drivers = [
@@ -180,6 +196,7 @@ function QuotesPageContent() {
         query = query.eq('status', statusFilter);
       }
 
+
       const { data, error } = await query;
 
       if (error) {
@@ -197,7 +214,20 @@ function QuotesPageContent() {
           console.log(`Quote ${quote.id}: phone = "${quote.phone}" (type: ${typeof quote.phone})`);
         });
 
-        setQuotes(validQuotes);
+        // Apply client-side search filtering if search term exists
+        let filteredQuotes = validQuotes;
+        if (searchTerm.trim()) {
+          const searchLower = searchTerm.toLowerCase();
+          filteredQuotes = validQuotes.filter(quote =>
+            quote.first_name?.toLowerCase().includes(searchLower) ||
+            quote.last_name?.toLowerCase().includes(searchLower) ||
+            quote.email?.toLowerCase().includes(searchLower) ||
+            quote.phone?.toString().includes(searchTerm) ||
+            quote.id.toLowerCase().includes(searchLower)
+          );
+        }
+
+        setQuotes(filteredQuotes);
 
         if (data && data.length !== validQuotes.length) {
           console.warn(`Filtered out ${data.length - validQuotes.length} invalid quote records`);
@@ -240,6 +270,9 @@ function QuotesPageContent() {
     const editForm = editForms[quoteId];
     if (!editForm) return;
 
+    // Set loading state
+    setSavingQuotes(prev => new Set([...prev, quoteId]));
+
     try {
       const updateData = {
         status: editForm.status,
@@ -264,6 +297,7 @@ function QuotesPageContent() {
 
       if (error) {
         console.error('Error updating quote:', error);
+        toast.error('Failed to save quote. Please try again.');
       } else {
         setQuotes(quotes.map(q => (q.id === quoteId ? data[0] : q)));
         // Update the edit form with the new data
@@ -271,9 +305,18 @@ function QuotesPageContent() {
           ...prev,
           [quoteId]: { ...data[0], assigned_to: data[0].assigned_to || 'Ariel' }
         }));
+        toast.success('Quote saved successfully!');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
+      toast.error('An unexpected error occurred while saving the quote.');
+    } finally {
+      // Clear loading state
+      setSavingQuotes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(quoteId);
+        return newSet;
+      });
     }
   };
 
@@ -399,24 +442,20 @@ function QuotesPageContent() {
     }
   };
 
-  /**
-   * Returns Tailwind CSS classes for status badge styling
-   * Maps quote status to appropriate color scheme
-   */
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'quoted':
-        return 'bg-blue-100 text-blue-800';
+
+  // Helper function to map quote status to Status component status
+  const mapQuoteStatusToStatusType = (quoteStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+    switch (quoteStatus) {
       case 'accepted':
-        return 'bg-green-100 text-green-800';
-      case 'declined':
-        return 'bg-red-100 text-red-800';
       case 'completed':
-        return 'bg-purple-100 text-purple-800';
+        return 'online';
+      case 'declined':
+        return 'offline';
+      case 'pending':
+        return 'degraded';
+      case 'quoted':
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'maintenance';
     }
   };
 
@@ -444,7 +483,7 @@ function QuotesPageContent() {
       <div className="p-2 md:p-6">
         <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Spinner variant="circle-filled" size={48} />
             <p className="text-muted-foreground">Loading quotes...</p>
           </div>
         </div>
@@ -466,36 +505,56 @@ function QuotesPageContent() {
 
   return (
     <div className="p-2 md:p-6">
+
       {/* Header section with stats and filters */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="quoted">Quoted</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="declined">Declined</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={fetchQuotes} variant="outline">
-            Refresh
-          </Button>
-          <Badge variant="outline" className="gap-2 ml-auto">
-            <RiBox1Line className="h-4 w-4" />
-            {quotes.length} Total Quotes
-          </Badge>
+      <div className="mb-4">
+        {/* Enhanced filtering and search */}
+        <div className="space-y-4">
+          {/* Search bar */}
+          <div className="relative max-w-md">
+            <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search quotes by name, email, phone, or ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Filter controls */}
+          <div className="flex flex-wrap items-center gap-4">
+
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="quoted">Quoted</SelectItem>
+                <SelectItem value="accepted">Accepted</SelectItem>
+                <SelectItem value="declined">Declined</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+
+
+            <Button onClick={fetchQuotes} variant="outline" size="icon" className="min-h-[34px] min-w-[34px]">
+              <RiRefreshLine className="h-4 w-4" />
+            </Button>
+
+            <Badge variant="outline" className="gap-2 ml-auto">
+              <RiBox1Line className="h-4 w-4" />
+              {quotes.length} {searchTerm || statusFilter !== 'all' ? 'Filtered' : 'Total'} Quotes
+            </Badge>
+          </div>
         </div>
       </div>
 
       {/* Main content area - empty state or quotes grid */}
       {quotes.length === 0 ? (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4">
             <div className="text-center py-8">
               <RiBox1Line className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No quotes found</h3>
@@ -513,111 +572,106 @@ function QuotesPageContent() {
           {quotes
             .filter(quote => quote && quote.id && quote.first_name)
             .map(quote => (
-              <Card key={quote.id} className="relative">
-                <CardHeader className="pb-4">
+              <Card
+                key={quote.id}
+                className="relative"
+                role="article"
+                aria-labelledby={`quote-${quote.id}-title`}
+              >
+                {/* Status badge and delete button positioned in top right */}
+                <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 min-w-[44px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 touch-manipulation"
+                      >
+                        <RiDeleteBin2Line className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Quote</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this quote from {quote.first_name}{' '}
+                          {quote.last_name}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteQuote(quote.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete Quote
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <Status status={mapQuoteStatusToStatusType(quote.status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
+                    <StatusIndicator />
+                    <StatusLabel className="ml-2">
+                      {quote.status.toUpperCase()}
+                    </StatusLabel>
+                  </Status>
+                </div>
+
+                <CardHeader className="pb-4 pr-24 md:pr-32">
                   <div className="flex items-start justify-between">
-                    {/* Quote header - quote number, customer name, then status/priority */}
                     <div>
-                      {/* Quote number at top */}
-                      <div className="text-sm font-medium text-muted-foreground mb-2">
+                      {/* Quote number */}
+                      <div className="text-sm font-bold text-foreground mb-1">
                         Quote #{quote.id.slice(-4).toUpperCase()}
                       </div>
 
                       {/* Customer name */}
-                      <CardTitle className="text-xl mb-3">
+                      <CardTitle id={`quote-${quote.id}-title`} className="text-lg mb-2 font-bold">
                         {quote.first_name} {quote.last_name || ''}
                       </CardTitle>
 
-                      {/* Status and priority badges */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <Badge className={getStatusColor(quote.status)}>{quote.status}</Badge>
-                        <Badge className={getPriorityColor(quote.priority)}>{quote.priority}</Badge>
+                      {/* Priority badge */}
+                      <div className="mb-4">
+                        <Badge className={`${getPriorityColor(quote.priority)} px-3 py-1`}>
+                          {quote.priority}
+                        </Badge>
                       </div>
 
-                      {/* Customer contact information */}
-                      <div className="mt-6 text-sm text-muted-foreground space-y-3">
-                        {quote.phone ? (
-                          <div className="flex items-center gap-2">
-                            <RiPhoneLine className="h-4 w-4 text-green-600" />
-                            <a
-                              href={`tel:${quote.phone}`}
-                              className="text-green-600 font-semibold hover:text-green-700 hover:underline transition-colors duration-200 px-3 py-2 rounded"
-                            >
-                              {formatPhoneNumber(quote.phone)}
-                            </a>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <RiPhoneLine className="h-4 w-4" />
-                            <span>No phone number</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <RiMailLine className="h-4 w-4" />
-                          <span className="px-1">{quote.email}</span>
-                        </div>
-                        <div className="flex gap-6 pt-2">
-                          <div className="flex items-center gap-2">
-                            <RiCalendarLine className="h-4 w-4" />
-                            <span>{format(new Date(quote.created_at), 'MMM dd, yyyy')}</span>
-                          </div>
-                          {quote.dropoff_date && (
+                      {/* Contact info */}
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <div className="space-y-1">
+                          {quote.phone && (
                             <div className="flex items-center gap-2">
-                              <RiTimeLine className="h-4 w-4" />
-                              <span>Dropoff: {format(new Date(quote.dropoff_date), 'MMM dd')}</span>
+                              <RiPhoneLine className="h-4 w-4 flex-shrink-0" />
+                              <a
+                                href={`tel:${quote.phone}`}
+                                className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                aria-label={`Call ${quote.first_name} ${quote.last_name} at ${formatPhoneNumber(quote.phone)}`}
+                              >
+                                {formatPhoneNumber(quote.phone)}
+                              </a>
                             </div>
                           )}
+                          <div className="flex items-center gap-2">
+                            <RiMailLine className="h-4 w-4 flex-shrink-0" />
+                            <a
+                              href={`mailto:${quote.email}`}
+                              className="text-blue-600 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                              aria-label={`Email ${quote.first_name} ${quote.last_name} at ${quote.email}`}
+                            >
+                              {quote.email}
+                            </a>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Action buttons - edit and delete */}
-                    <div className="flex gap-2">
-                      <QuoteEditDialog
-                        quote={quote}
-                        editForms={editForms}
-                        setEditForms={setEditForms}
-                        onSave={saveQuote}
-                        isOpen={editDialogOpen === quote.id}
-                        onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
-                      />
-                      <AlertDialog>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this quote from {quote.first_name}{' '}
-                              {quote.last_name}? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteQuote(quote.id)}
-                              className="bg-red-500 hover:bg-red-600"
-                            >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <RiDeleteBin2Line className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                      </AlertDialog>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Service Details - read-only information */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Service Details</h4>
+                  <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
+                    {/* Service Details */}
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <h4 className="font-semibold mb-2 text-base">Service Details</h4>
                       <div className="space-y-2 text-sm">
                         {quote.dumpster_size && (
                           <div className="flex items-center gap-2">
@@ -627,17 +681,29 @@ function QuotesPageContent() {
                         )}
                         {(quote.address || quote.address2 || quote.city || quote.state) && (
                           <div className="flex items-start gap-2">
-                            <RiMapPinLine className="h-4 w-4 mt-0.5" />
-                            <div>
-                              {quote.address && <div>{quote.address}</div>}
-                              {quote.address2 && <div>{quote.address2}</div>}
+                            <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
                               <div>
-                                {quote.city && quote.city}
-                                {quote.city && quote.state && ', '}
-                                {quote.state && quote.state}
-                                {quote.zip_code && ` ${quote.zip_code}`}
+                                {quote.address && <div>{quote.address}</div>}
+                                {quote.address2 && <div>{quote.address2}</div>}
+                                <div className="text-muted-foreground">
+                                  {quote.city && quote.city}
+                                  {quote.city && quote.state && ', '}
+                                  {quote.state && quote.state}
+                                  {quote.zip_code && ` ${quote.zip_code}`}
+                                </div>
                               </div>
                             </div>
+                          </div>
+                        )}
+                        {quote.dropoff_date && (
+                          <div className="flex items-center gap-2">
+                            <RiCalendarLine className="h-4 w-4" />
+                            <span>Delivery: {(() => {
+                              const [year, month, day] = quote.dropoff_date.split('-').map(Number);
+                              const localDate = new Date(year, month - 1, day);
+                              return format(localDate, 'MMM dd');
+                            })()}</span>
                           </div>
                         )}
                         {quote.time_needed && (
@@ -655,13 +721,41 @@ function QuotesPageContent() {
                       )}
                     </div>
 
-                    {/* Quote Management - editable admin fields */}
-                    <div>
-                      <h4 className="font-semibold mb-3">Quote Management</h4>
-                      <div className="space-y-4">
+                    {/* Quote Management */}
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-base">Quote Details</h4>
+                        {/* Edit customer info button */}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <QuoteEditDialog
+                                quote={quote}
+                                editForms={editForms}
+                                setEditForms={setEditForms}
+                                onSave={saveQuote}
+                                isOpen={editDialogOpen === quote.id}
+                                onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit customer and service information</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="space-y-3 text-sm">
+                        {(editForms[quote.id]?.quoted_price || quote.quoted_price) && (
+                          <div className="flex items-center gap-2 font-bold text-green-600">
+                            <RiMoneyDollarCircleLine className="h-5 w-5" />
+                            <span className="text-lg">${editForms[quote.id]?.quoted_price || quote.quoted_price}</span>
+                          </div>
+                        )}
+
+                        {/* Status and Priority Assignment - 2 Column Layout */}
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Status</label>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Status</Label>
                             <Select
                               value={editForms[quote.id]?.status || quote.status}
                               onValueChange={value =>
@@ -674,7 +768,7 @@ function QuotesPageContent() {
                                 }))
                               }
                             >
-                              <SelectTrigger className="mt-1 w-full">
+                              <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -686,8 +780,9 @@ function QuotesPageContent() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Priority</label>
+
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Priority</Label>
                             <Select
                               value={editForms[quote.id]?.priority || quote.priority}
                               onValueChange={value =>
@@ -700,7 +795,7 @@ function QuotesPageContent() {
                                 }))
                               }
                             >
-                              <SelectTrigger className="mt-1 w-full">
+                              <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -712,10 +807,12 @@ function QuotesPageContent() {
                             </Select>
                           </div>
                         </div>
+
+                        {/* Quote Price and Team Assignment - 2 Column Layout */}
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Quoted Price ($)</label>
-                            <div className="relative mt-1">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Quoted Price ($)</Label>
+                            <div className="relative">
                               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
                               <Input
                                 type="number"
@@ -730,13 +827,14 @@ function QuotesPageContent() {
                                     }
                                   }))
                                 }
-                                className="pl-7"
+                                className="pl-7 w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                 placeholder="0.00"
                               />
                             </div>
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">Assigned To</label>
+
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">Assigned To</Label>
                             <Select
                               value={editForms[quote.id]?.assigned_to || quote.assigned_to || 'Ariel'}
                               onValueChange={value =>
@@ -749,7 +847,7 @@ function QuotesPageContent() {
                                 }))
                               }
                             >
-                              <SelectTrigger className="mt-1 w-full">
+                              <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                                 <SelectValue placeholder="Select team member" />
                               </SelectTrigger>
                               <SelectContent>
@@ -762,24 +860,31 @@ function QuotesPageContent() {
                             </Select>
                           </div>
                         </div>
+
+                        {/* Date/Time Selection - 2 Column Layout */}
                         <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">
                               Dropoff Date
                               <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
-                            </label>
+                            </Label>
                             <Dialog open={dateTimeDialogOpen === quote.id} onOpenChange={(open) => setDateTimeDialogOpen(open ? quote.id : null)}>
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                                     ? "text-muted-foreground border-red-300 hover:border-red-400"
                                     : ""
                                     }`}
                                 >
                                   <RiCalendarLine className="mr-2 h-4 w-4" />
                                   {(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                    ? format(new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || ''), 'MMM dd, yyyy')
+                                    ? (() => {
+                                      const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
+                                      const [year, month, day] = dateStr.split('-').map(Number);
+                                      const localDate = new Date(year, month - 1, day);
+                                      return format(localDate, 'MMM dd');
+                                    })()
                                     : "Pick a date"
                                   }
                                 </Button>
@@ -791,7 +896,11 @@ function QuotesPageContent() {
                                 <DateTimePicker
                                   date={
                                     (editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                      ? new Date(editForms[quote.id]?.dropoff_date || quote.dropoff_date || '')
+                                      ? (() => {
+                                        const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
+                                        const [year, month, day] = dateStr.split('-').map(Number);
+                                        return new Date(year, month - 1, day); // month is 0-indexed
+                                      })()
                                       : undefined
                                   }
                                   time={editForms[quote.id]?.dropoff_time || quote.dropoff_time || ''}
@@ -830,9 +939,13 @@ function QuotesPageContent() {
                                         const hour12 = parseInt(hours) % 12 || 12;
                                         const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
                                         const formattedTime = `${hour12}:${minutes} ${ampm}`;
-                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} at ${formattedTime}`;
+                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return `${format(localDate, 'MMM dd')} at ${formattedTime}`;
                                       } else if (currentDate) {
-                                        return `${format(new Date(currentDate), 'MMM dd, yyyy')} - Select time`;
+                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return `${format(localDate, 'MMM dd')} - Select time`;
                                       } else if (currentTime) {
                                         const [hours, minutes] = currentTime.split(':');
                                         const hour12 = parseInt(hours) % 12 || 12;
@@ -848,14 +961,15 @@ function QuotesPageContent() {
                               </DialogContent>
                             </Dialog>
                           </div>
-                          <div>
-                            <label className="text-sm font-medium">
+
+                          <div className="space-y-2">
+                            <Label className="text-sm font-semibold">
                               Dropoff Time
                               <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
-                            </label>
+                            </Label>
                             <Button
                               variant="outline"
-                              className={`mt-1 w-full justify-start text-left font-normal ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
                                 ? "text-muted-foreground border-red-300 hover:border-red-400"
                                 : ""
                                 }`}
@@ -875,8 +989,10 @@ function QuotesPageContent() {
                             </Button>
                           </div>
                         </div>
-                        <div>
-                          <label className="text-sm font-medium">Quote Notes</label>
+
+                        {/* Quote Notes */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">Quote Notes</Label>
                           <Textarea
                             value={editForms[quote.id]?.quote_notes || quote.quote_notes || ''}
                             onChange={e =>
@@ -888,40 +1004,87 @@ function QuotesPageContent() {
                                 }
                               }))
                             }
-                            className="mt-1"
+                            className="min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                             placeholder="Internal notes about this quote..."
                             rows={3}
                           />
                         </div>
 
-                        {/* Action buttons for quote management */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <Button
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => saveQuote(quote.id)}
-                          >
+                        <div className="text-xs text-muted-foreground">
+                          Created: {format(new Date(quote.created_at), "MMM dd, yyyy 'at' h:mm a")}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
+                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>Quick Actions</h5>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-[44px] px-4 touch-manipulation"
+                        onClick={() => saveQuote(quote.id)}
+                        disabled={savingQuotes.has(quote.id)}
+                      >
+                        {savingQuotes.has(quote.id) ? (
+                          <>
+                            <Spinner variant="circle" size={16} className="mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <RiSaveLine className="mr-2 h-4 w-4" />
                             Save Quote
-                          </Button>
+                          </>
+                        )}
+                      </Button>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button
-                            variant="default"
-                            className="w-full"
+                            className="bg-green-600 hover:bg-green-700 min-h-[44px] px-4 touch-manipulation font-semibold"
+                            size="sm"
                             onClick={() => createOrder(quote.id)}
                             disabled={
                               !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
                               !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                             }
-                            title={
-                              !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
-                                !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                ? "Dropoff date and time are required to create an order"
-                                : "Create order from this quote"
-                            }
                           >
                             Create Order
                           </Button>
-                        </div>
-                      </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                            !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                            ? "Dropoff date and time are required to create an order"
+                            : "Create order from this quote"
+                          }
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Validation feedback */}
+                      {(!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
+                        !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)) && (
+                          <div className="w-full mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                            <div className="flex items-start gap-2">
+                              <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                                <p className="font-medium">Missing required fields for order creation:</p>
+                                <ul className="mt-1 space-y-1">
+                                  {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
+                                    <li>• Dropoff date is required</li>
+                                  )}
+                                  {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
+                                    <li>• Dropoff time is required</li>
+                                  )}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 </CardContent>

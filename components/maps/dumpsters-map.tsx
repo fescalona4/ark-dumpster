@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import type { Loader } from '@googlemaps/js-api-loader';
 import { useTheme } from 'next-themes';
 import { Dumpster } from '@/types/dumpster';
 import { calculateDistance, parseGpsCoordinates, ARK_HOME_COORDINATES } from '@/lib/utils';
@@ -185,6 +185,9 @@ export default function DumpstersMap({
           return;
         }
 
+        // Dynamically import the loader to prevent HMR issues
+        const { Loader } = await import('@googlemaps/js-api-loader');
+        
         const loader = new Loader({
           apiKey,
           version: 'weekly',

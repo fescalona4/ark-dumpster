@@ -3,6 +3,9 @@ import { CompanyNotificationEmail } from '@/components/email/company-notificatio
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { QuoteFormData } from './database-service';
+import { logger } from './logger';
+
+const emailLogger = logger.scope('EMAIL');
 
 // Initialize Resend with error checking
 let resend: Resend;
@@ -13,7 +16,7 @@ try {
   }
   resend = new Resend(process.env.RESEND_API_KEY);
 } catch (error) {
-  console.error('Failed to initialize Resend:', error);
+  emailLogger.error('Failed to initialize Resend', error);
 }
 
 export interface QuoteDetails {
@@ -47,10 +50,10 @@ export async function sendCompanyNotificationEmail(
   options: CompanyNotificationOptions
 ): Promise<EmailResult> {
   try {
-    console.log('=== SENDING COMPANY NOTIFICATION EMAIL ===');
+    emailLogger.info('Sending company notification email');
 
     if (!resend) {
-      console.error('Resend not initialized');
+      emailLogger.error('Resend not initialized');
       return {
         success: false,
         error: 'Email service not configured',
@@ -58,14 +61,14 @@ export async function sendCompanyNotificationEmail(
     }
 
     if (!process.env.COMPANY_EMAIL) {
-      console.warn('Company email not configured - skipping company notification');
+      emailLogger.warn('Company email not configured - skipping company notification');
       return {
         success: false,
         error: 'Company email not configured',
       };
     }
 
-    console.log('Sending company notification email to:', process.env.COMPANY_EMAIL);
+    emailLogger.debug('Company email configured');
 
     const companyEmailHtml = await render(
       CompanyNotificationEmail({
@@ -98,7 +101,7 @@ export async function sendCompanyNotificationEmail(
     const result = await resend.emails.send(companyEmailPayload);
 
     if (result.error) {
-      console.error('❌ Company email send error:', result.error);
+      emailLogger.error('Company email send error', result.error);
       return {
         success: false,
         error: result.error.message || 'Company email send failed',
@@ -106,14 +109,14 @@ export async function sendCompanyNotificationEmail(
       };
     }
 
-    console.log('✅ Company notification email sent successfully:', result.data);
+    emailLogger.success('Company notification email sent successfully');
     return {
       success: true,
       data: result.data,
       error: undefined,
     };
   } catch (error) {
-    console.error('❌ Failed to send company notification email:', error);
+    emailLogger.error('Failed to send company notification email', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Company email send failed',
@@ -129,12 +132,12 @@ export async function sendUserEmail(
   quoteDetails?: QuoteDetails
 ): Promise<EmailResult> {
   try {
-    console.log('=== SENDING USER EMAIL ===');
-    console.log('Sending user email with subject:', subject);
-    console.log('Sending to:', email);
+    emailLogger.info('Sending user email');
+    emailLogger.debug('Email subject configured');
+    emailLogger.debug('Email recipient configured');
 
     if (!resend) {
-      console.error('Resend not initialized');
+      emailLogger.error('Resend not initialized');
       return {
         success: false,
         error: 'Email service not configured',
@@ -160,17 +163,12 @@ export async function sendUserEmail(
       text: generateUserEmailText(firstName, quoteDetails),
     };
 
-    console.log('Email payload prepared:', {
-      from: emailPayload.from,
-      to: emailPayload.to,
-      subject: emailPayload.subject,
-      templateType: type,
-    });
+    emailLogger.debug('Email payload prepared for user notification');
 
     const result = await resend.emails.send(emailPayload);
 
     if (result.error) {
-      console.error('❌ User email send error:', result.error);
+      emailLogger.error('User email send error', result.error);
       return {
         success: false,
         error: result.error.message || 'User email send failed',
@@ -178,14 +176,14 @@ export async function sendUserEmail(
       };
     }
 
-    console.log('✅ User email sent successfully:', result.data);
+    emailLogger.success('User email sent successfully');
     return {
       success: true,
       data: result.data,
       error: undefined,
     };
   } catch (error) {
-    console.error('❌ Failed to send user email:', error);
+    emailLogger.error('Failed to send user email', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'User email send failed',

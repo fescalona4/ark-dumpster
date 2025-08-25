@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
 import { RiAddLine } from '@remixicon/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -234,7 +235,7 @@ function CreateQuoteContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header section */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
           <div></div>
           <Badge variant="outline" className="gap-2">
@@ -470,7 +471,7 @@ function CreateQuoteContent() {
               <Button type="submit" disabled={isSubmitting} className="" size="lg">
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <Spinner variant="circle" size={16} className="text-white" />
                     Creating Quote...
                   </div>
                 ) : (

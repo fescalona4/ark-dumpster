@@ -12,6 +12,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
+import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -51,6 +53,24 @@ import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+
+// Helper function to map order status to Status component status
+const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+  switch (orderStatus) {
+    case 'delivered':
+    case 'completed':
+      return 'online';
+    case 'cancelled':
+      return 'offline';
+    case 'pending':
+    case 'scheduled':
+      return 'degraded';
+    case 'on_way':
+    case 'on_way_pickup':
+    default:
+      return 'maintenance';
+  }
+};
 import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
 
 export default function OrderDetailPage() {
@@ -70,7 +90,7 @@ function OrderDetailContent() {
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Dialog state for dumpster assignment
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
   const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
@@ -172,7 +192,7 @@ function OrderDetailContent() {
         const { error: dumpsterError } = await supabase
           .from('dumpsters')
           .update({
-            status: 'assigned',
+            status: 'in_use',
             current_order_id: orderId,
             address: dumpsterAddress,
             last_assigned_at: new Date().toISOString()
@@ -248,9 +268,9 @@ function OrderDetailContent() {
     if (!order) return;
 
     // Check if dumpster is assigned
-    const hasAssignedDumpster = order.dumpster_id || 
+    const hasAssignedDumpster = order.dumpster_id ||
       dumpsters.some(d => d.current_order_id === order.id);
-    
+
     if (!hasAssignedDumpster) {
       // Open dumpster assignment dialog
       setSelectedOrderForDumpster(order);
@@ -277,7 +297,7 @@ function OrderDetailContent() {
    */
   const assignDumpsterAndProceed = async (orderId: string, dumpsterId: string) => {
     if (!order) return;
-    
+
     await assignDumpsterToOrder(dumpsterId);
     await updateOrderStatus('on_way');
     setDumpsterDialogOpen(false);
@@ -330,7 +350,7 @@ function OrderDetailContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner variant="circle-filled" size={32} className="mx-auto mb-4" />
           <p>Loading order...</p>
         </div>
       </div>
@@ -352,7 +372,7 @@ function OrderDetailContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header with back button */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -407,10 +427,13 @@ function OrderDetailContent() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Badge className={`${getStatusColor(order.status)} text-base px-4 py-2 font-semibold`}>
-            <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
-            {order.status.replace('_', ' ').toUpperCase()}
-          </Badge>
+          <Status status={mapOrderStatusToStatusType(order.status)} className="text-base px-4 py-2 font-semibold">
+            <StatusIndicator />
+            <StatusLabel className="ml-2">
+              <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
+              {order.status.replace('_', ' ').toUpperCase()}
+            </StatusLabel>
+          </Status>
         </div>
 
         <CardHeader className="pb-4 pr-32">

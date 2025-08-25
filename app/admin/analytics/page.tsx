@@ -13,9 +13,10 @@ import {
 import { format } from 'date-fns';
 import { RiBarChartLine } from '@remixicon/react';
 import AuthGuard from '@/components/providers/auth-guard';
-import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
+import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
 import { AnalyticsSectionCards } from '@/components/analytics/analytics-section-cards';
 import { getAnalytics, getPageViews, getDailyVisits, getCountryStats, getCityStats } from '@/lib/analytics';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Visit {
   id: string;
@@ -105,7 +106,7 @@ function AnalyticsPageContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner variant="circle-filled" size={32} className="mx-auto mb-4" />
           <p>Loading analytics...</p>
         </div>
       </div>
@@ -115,7 +116,7 @@ function AnalyticsPageContent() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="flex flex-col gap-4 py-6">
           {/* Header */}
           <div className="flex items-center justify-between px-4 lg:px-6">
             <Select value={timeRange} onValueChange={setTimeRange}>
@@ -145,9 +146,14 @@ function AnalyticsPageContent() {
             }}
           />
 
-          {/* Daily Visitors Chart */}
+          {/* Advanced Analytics Chart */}
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
+            <div className="bg-card rounded-lg border">
+              <AdvancedAreaChart
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+              />
+            </div>
           </div>
 
           {/* Additional Content Grid */}

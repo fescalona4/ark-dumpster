@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "memory": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--read-only",
+        "--project-ref=lszrloiuhwazptzgkgap"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "sbp_c10f26d32e28f20759808618a2805d2fb68895a1"
+      }
+    }
+  }
+}

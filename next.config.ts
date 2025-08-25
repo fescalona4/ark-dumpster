@@ -2,11 +2,10 @@ import type { NextConfig } from 'next';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
+
 const nextConfig: NextConfig = {
   images: {
-    // Set to true for static exports or when external image optimization is preferred
-    // This allows Next.js Image component benefits (lazy loading, aspect ratio, etc.)
-    // without requiring a running Next.js server for image optimization
+    // SECURITY: Restrict image sources to trusted domains only
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,17 +16,23 @@ const nextConfig: NextConfig = {
         hostname: '*.supabase.co',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/image-proxy**',
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
       },
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'maps.gstatic.com',
       },
+      // Development only
+      ...(isDevelopment ? [{
+        protocol: 'http' as const,
+        hostname: 'localhost',
+        port: '3000',
+        pathname: '/api/image-proxy**',
+      }] : []),
     ],
   },
+
 
   experimental: {
     optimizePackageImports: ['@remixicon/react', '@radix-ui/react-icons', '@tabler/icons-react'],

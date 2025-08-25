@@ -19,10 +19,8 @@ import {
   RiMoneyDollarCircleLine,
   RiUserLine,
   RiTruckLine,
-  RiFileTextLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
-import Link from 'next/link';
 
 interface OrderConfirmationDialogProps {
   order: Order | null;
@@ -40,63 +38,70 @@ export function OrderConfirmationDialog({
   if (!order) return null;
 
   const formatDeliveryDate = () => {
-    if (!order.scheduled_delivery_date) return 'Not scheduled';
+    if (!order.scheduled_delivery_date) return 'Not yet scheduled';
     return format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy');
   };
 
   const formatDeliveryTime = () => {
-    if (!order.dropoff_time) return '';
+    if (!order.dropoff_time || order.dropoff_time === '09:00:00') return '';
     return ` at ${order.dropoff_time}`;
+  };
+
+  const getDeliveryStatus = () => {
+    if (!order.scheduled_delivery_date) {
+      return 'Pending schedule confirmation';
+    }
+    return `${formatDeliveryDate()}${formatDeliveryTime()}`;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <RiCheckboxCircleFill className="h-10 w-10 text-green-600" />
+      <DialogContent className="max-w-md" aria-describedby="order-confirmation-description">
+        <DialogHeader className="text-center pb-2">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 shadow-sm">
+            <RiCheckboxCircleFill className="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
-          <DialogTitle className="text-xl">Order Created Successfully!</DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Order Created Successfully!</DialogTitle>
+          <DialogDescription id="order-confirmation-description" className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
             Your order has been created and scheduled for delivery.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Order Number */}
-          <div className="rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-4 text-center shadow-sm">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Order Number</p>
-            <p className="text-2xl font-semibold text-gray-900 font-mono">{order.order_number}</p>
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 p-5 text-center shadow-sm">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Order Number</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wide">{order.order_number}</p>
           </div>
 
           {/* Order Details */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Customer */}
             <div className="flex items-center gap-3">
-              <RiUserLine className="h-5 w-5 text-gray-500" />
+              <RiUserLine className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               <div>
-                <p className="font-medium">{order.first_name} {order.last_name}</p>
-                <p className="text-sm text-gray-600">{order.email}</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{order.first_name} {order.last_name}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{order.email}</p>
               </div>
             </div>
 
             {/* Dumpster Size */}
             {order.dumpster_size && (
               <div className="flex items-center gap-3">
-                <RiBox1Line className="h-5 w-5 text-gray-500" />
+                <RiBox1Line className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 <div>
-                  <p className="font-medium">{order.dumpster_size} Yard Dumpster</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{order.dumpster_size} Yard Dumpster</p>
                 </div>
               </div>
             )}
 
             {/* Delivery Info */}
             <div className="flex items-start gap-3">
-              <RiCalendarLine className="h-5 w-5 text-gray-500 mt-0.5" />
+              <RiCalendarLine className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
               <div>
-                <p className="font-medium">Delivery Scheduled</p>
-                <p className="text-sm text-gray-600">
-                  {formatDeliveryDate()}{formatDeliveryTime()}
+                <p className="font-medium text-gray-900 dark:text-gray-100">Delivery Schedule</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {getDeliveryStatus()}
                 </p>
               </div>
             </div>
@@ -104,10 +109,10 @@ export function OrderConfirmationDialog({
             {/* Address */}
             {order.address && (
               <div className="flex items-start gap-3">
-                <RiMapPinLine className="h-5 w-5 text-gray-500 mt-0.5" />
+                <RiMapPinLine className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
                 <div>
-                  <p className="font-medium">Delivery Address</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Delivery Address</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {order.address}
                     {order.city && order.state && (
                       <><br />{order.city}, {order.state}</>
@@ -120,20 +125,20 @@ export function OrderConfirmationDialog({
             {/* Price */}
             {order.quoted_price && (
               <div className="flex items-center gap-3">
-                <RiMoneyDollarCircleLine className="h-5 w-5 text-gray-500" />
+                <RiMoneyDollarCircleLine className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 <div>
-                  <p className="font-medium">Total Price</p>
-                  <p className="text-sm text-gray-600">${order.quoted_price}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Total Price</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">${order.quoted_price}</p>
                 </div>
               </div>
             )}
 
             {/* Status */}
             <div className="flex items-center gap-3">
-              <RiTruckLine className="h-5 w-5 text-gray-500" />
+              <RiTruckLine className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               <div>
-                <p className="font-medium">Status</p>
-                <Badge className="bg-blue-100 text-blue-800 mt-1">
+                <p className="font-medium text-gray-900 dark:text-gray-100">Status</p>
+                <Badge className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 mt-1 px-3 py-1 font-medium">
                   📅 {order.status.replace('_', ' ').toUpperCase()}
                 </Badge>
               </div>
@@ -141,28 +146,20 @@ export function OrderConfirmationDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-col gap-2">
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <Link href={`/admin/orders/${order.id}/invoice`} target="_blank" className="flex-1">
-              <Button variant="outline" className="w-full">
-                <RiFileTextLine className="h-4 w-4 mr-2" />
-                View Invoice
-              </Button>
-            </Link>
-            {onViewOrder && (
-              <Button onClick={onViewOrder} className="flex-1">
-                <RiTruckLine className="h-4 w-4 mr-2" />
-                View Order
-              </Button>
-            )}
-          </div>
+        <DialogFooter className="flex flex-col items-center gap-3 pt-4">
           <Button
             onClick={() => onOpenChange(false)}
-            variant="ghost"
-            className="w-full"
+            variant="outline"
+            className="w-40 h-11 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Close
           </Button>
+          {onViewOrder && (
+            <Button onClick={onViewOrder} className="w-40 h-11 font-medium">
+              <RiTruckLine className="h-4 w-4 mr-2" />
+              View Order
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -84,17 +84,24 @@ export const dumpsterSchema = z.object({
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'available':
-      return 'default';
+      return 'outline';
+    case 'in_use':
     case 'assigned':
       return 'secondary';
-    case 'in_transit':
-      return 'outline';
-    case 'maintenance':
-      return 'destructive';
-    case 'out_of_service':
-      return 'destructive';
     default:
       return 'secondary';
+  }
+};
+
+const getStatusBadgeClasses = (status: string) => {
+  switch (status) {
+    case 'available':
+      return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30';
+    case 'in_use':
+    case 'assigned':
+      return 'bg-white text-gray-900 border-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-700';
+    default:
+      return '';
   }
 };
 
@@ -102,14 +109,9 @@ const getStatusIcon = (status: string) => {
   switch (status) {
     case 'available':
       return <IconCheck className="size-3" />;
+    case 'in_use':
     case 'assigned':
       return <IconTruck className="size-3" />;
-    case 'in_transit':
-      return <IconTruck className="size-3" />;
-    case 'maintenance':
-      return <IconEdit className="size-3" />;
-    case 'out_of_service':
-      return <IconX className="size-3" />;
     default:
       return null;
   }
@@ -135,7 +137,7 @@ function DumpsterCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{item.header}</CardTitle>
-          <Badge variant={getStatusBadgeVariant(item.status)} className="gap-1">
+          <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 ${getStatusBadgeClasses(item.status)}`}>
             {getStatusIcon(item.status)}
             {item.status.replace('_', ' ')}
           </Badge>
@@ -185,7 +187,7 @@ function DumpsterCard({
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Status</Label>
-                    <Badge variant={getStatusBadgeVariant(item.status)} className="gap-1 w-fit">
+                    <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 w-fit ${getStatusBadgeClasses(item.status)}`}>
                       {getStatusIcon(item.status)}
                       {item.status.replace('_', ' ')}
                     </Badge>
@@ -357,11 +359,11 @@ interface EditDumpsterData {
   notes: string;
 }
 
-function EditDumpsterDialog({ 
-  item, 
-  onEdit 
-}: { 
-  item: z.infer<typeof dumpsterSchema>; 
+function EditDumpsterDialog({
+  item,
+  onEdit
+}: {
+  item: z.infer<typeof dumpsterSchema>;
   onEdit: (data: EditDumpsterData) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -545,7 +547,6 @@ export function DumpstersDataTable({
   onUnassign?: (id: number) => void;
 }) {
   const [data] = useState(initialData);
-  const [searchFilter, setSearchFilter] = useState('');
 
   // Group data by status
   const statusOnlyTabs = statuses ?
@@ -561,24 +562,9 @@ export function DumpstersDataTable({
         count: data.filter(item => item.status === 'available').length,
       },
       {
-        label: 'assigned',
-        value: 'assigned',
-        count: data.filter(item => item.status === 'assigned').length,
-      },
-      {
-        label: 'in transit',
-        value: 'in_transit',
-        count: data.filter(item => item.status === 'in_transit').length,
-      },
-      {
-        label: 'maintenance',
-        value: 'maintenance',
-        count: data.filter(item => item.status === 'maintenance').length,
-      },
-      {
-        label: 'out of service',
-        value: 'out_of_service',
-        count: data.filter(item => item.status === 'out_of_service').length,
+        label: 'in use',
+        value: 'in_use',
+        count: data.filter(item => item.status === 'in_use').length,
       },
     ];
 
@@ -602,37 +588,29 @@ export function DumpstersDataTable({
     ));
   };
 
-  // Filter data based on search and status
+  // Filter data based on status
   const getFilteredData = (status: string) => {
     return data.filter(item => {
       const matchesStatus = status === 'all' || item.status === status;
-      const matchesSearch = searchFilter === '' ||
-        item.header.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.target.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.reviewer.toLowerCase().includes(searchFilter.toLowerCase());
-      return matchesStatus && matchesSearch;
+      return matchesStatus;
     });
   };
 
   return (
     <Tabs value={currentView} onValueChange={setCurrentView} className="w-full">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <Input
-              placeholder="Filter dumpsters..."
-              value={searchFilter}
-              onChange={event => setSearchFilter(event.target.value)}
-              className="max-w-sm"
-            />
-            <Select value={currentView} onValueChange={setCurrentView}>
-              <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm">
-                <SelectValue placeholder="Select a view" />
-              </SelectTrigger>
-              <SelectContent>
-                {getStatusOptions()}
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row justify-between">
+          <div>
+            <TabsList className="flex">
+              {statusTabs.map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                  {tab.label}
+                  <Badge variant="secondary" className="rounded-full px-1.5 py-0.5 text-xs">
+                    {tab.count}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
           <div className="flex items-center gap-2">
             {onAdd && <AddDumpsterDialog onAdd={onAdd} />}
@@ -640,16 +618,6 @@ export function DumpstersDataTable({
         </div>
       </div>
 
-      <TabsList className="@4xl/main:flex hidden">
-        {statusTabs.map(tab => (
-          <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
-            {tab.label}
-            <Badge variant="secondary" className="rounded-full px-1.5 py-0.5 text-xs">
-              {tab.count}
-            </Badge>
-          </TabsTrigger>
-        ))}
-      </TabsList>
 
       {statusTabs.map(tab => {
         const filteredData = getFilteredData(tab.value);
@@ -671,10 +639,7 @@ export function DumpstersDataTable({
                 <IconTruck className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No dumpsters found</h3>
                 <p className="text-muted-foreground">
-                  {searchFilter
-                    ? `No dumpsters found matching "${searchFilter}" with status "${tab.label}".`
-                    : `No dumpsters found with status "${tab.label}".`
-                  }
+                  No dumpsters found with status "{tab.label}".
                 </p>
               </div>
             )}
