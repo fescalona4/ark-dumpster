@@ -13,7 +13,6 @@ import {
 import { format } from 'date-fns';
 import { RiBarChartLine } from '@remixicon/react';
 import AuthGuard from '@/components/providers/auth-guard';
-import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
 import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
 import { AnalyticsSectionCards } from '@/components/analytics/analytics-section-cards';
 import { getAnalytics, getPageViews, getDailyVisits, getCountryStats, getCityStats } from '@/lib/analytics';
@@ -149,16 +148,11 @@ function AnalyticsPageContent() {
 
           {/* Advanced Analytics Chart */}
           <div className="px-4 lg:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-card rounded-lg border">
-                <ChartAreaInteractive />
-              </div>
-              <div className="bg-card rounded-lg border">
-                <AdvancedAreaChart 
-                  timeRange={timeRange}
-                  onTimeRangeChange={setTimeRange}
-                />
-              </div>
+            <div className="bg-card rounded-lg border">
+              <AdvancedAreaChart 
+                timeRange={timeRange}
+                onTimeRangeChange={setTimeRange}
+              />
             </div>
           </div>
 
