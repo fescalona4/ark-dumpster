@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminSectionCards } from '@/components/admin/admin-section-cards';
+import { DataFlowVisualization } from '@/components/admin/data-flow-visualization';
 import { QuotesDataTable } from '@/components/data-tables/quotes-data-table';
 import { OrdersDataTable } from '@/components/data-tables/orders-data-table';
-import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
+import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
 import { CountingNumber } from '@/components/ui/counting-number';
 import { Spinner } from '@/components/ui/spinner';
 import { Order } from '@/types/order';
@@ -246,7 +247,15 @@ export default function AdminDashboard() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <AdminSectionCards stats={quoteStats} />
+          <AdminSectionCards stats={quoteStats} orderStats={orderStats} />
+
+          {/* Data Flow Visualization */}
+          <div className="px-4 lg:px-6">
+            <DataFlowVisualization 
+              quoteStats={quoteStats}
+              orderStats={orderStats}
+            />
+          </div>
 
           {/* Dumpster Summary */}
           <div className="px-4 lg:px-6">
@@ -328,7 +337,9 @@ export default function AdminDashboard() {
           </div>
 
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive />
+            <div className="bg-card rounded-lg border">
+              <AdvancedAreaChart />
+            </div>
           </div>
         </div>
       </div>
