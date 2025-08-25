@@ -50,7 +50,10 @@
       "mcp__supabase__execute_sql",
       "mcp__shadcn__getComponents",
       "mcp__shadcn__getComponent",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "mcp__playwright__browser_resize",
+      "mcp__playwright__browser_close",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []

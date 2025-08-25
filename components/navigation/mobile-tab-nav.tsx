@@ -25,9 +25,11 @@ interface TabItem {
 interface MobileTabNavigationProps {
   className?: string;
   onFabClick?: () => void;
+  pendingQuotes?: number;
+  pendingOrders?: number;
 }
 
-export function MobileTabNavigation({ className, onFabClick }: MobileTabNavigationProps) {
+export function MobileTabNavigation({ className, onFabClick, pendingQuotes, pendingOrders }: MobileTabNavigationProps) {
   const pathname = usePathname();
 
   const tabs: TabItem[] = [
@@ -41,14 +43,14 @@ export function MobileTabNavigation({ className, onFabClick }: MobileTabNavigati
       href: '/admin/orders',
       icon: <IconTruck className="h-5 w-5" />,
       label: 'Orders',
-      badge: 3, // This could be dynamic based on pending orders
+      badge: pendingOrders,
       isActive: pathname.startsWith('/admin/orders'),
     },
     {
       href: '/admin/quotes',
       icon: <IconMessage className="h-5 w-5" />,
       label: 'Quotes',
-      badge: 5, // Dynamic quote count
+      badge: pendingQuotes,
       isActive: pathname.startsWith('/admin/quotes'),
     },
     {
@@ -115,10 +117,10 @@ function TabButton({ href, icon, label, badge, isActive }: TabButtonProps) {
       >
         <div className="relative">
           {icon}
-          {badge && badge > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs font-medium min-w-[20px]"
+          {!!badge && badge > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-3 w-3 p-0 flex items-center justify-center text-[9px] font-medium min-w-[12px]"
             >
               {badge > 99 ? '99+' : badge}
             </Badge>
@@ -168,13 +170,13 @@ export function QuickActionsSheet({ isOpen, onClose }: QuickActionsSheetProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
-      <div 
+      <div
         className="fixed bottom-0 left-0 right-0 bg-background rounded-t-xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-12 h-1 bg-muted rounded mx-auto mb-4" />
         <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
-        
+
         <div className="grid grid-cols-2 gap-3">
           <QuickActionButton
             icon={<IconTruck className="h-5 w-5" />}
@@ -201,10 +203,10 @@ export function QuickActionsSheet({ isOpen, onClose }: QuickActionsSheetProps) {
             onClick={onClose}
           />
         </div>
-        
-        <Button 
-          variant="outline" 
-          className="w-full mt-4" 
+
+        <Button
+          variant="outline"
+          className="w-full mt-4"
           size="touch"
           onClick={onClose}
         >
@@ -225,9 +227,9 @@ interface QuickActionButtonProps {
 function QuickActionButton({ icon, label, href, onClick }: QuickActionButtonProps) {
   return (
     <Link href={href} onClick={onClick}>
-      <Button 
-        variant="outline" 
-        size="touch-large" 
+      <Button
+        variant="outline"
+        size="touch-large"
         className="w-full h-16 flex-col gap-1 hover:bg-accent"
       >
         {icon}

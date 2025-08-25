@@ -6,7 +6,6 @@ import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import {
   RiPhoneLine,
-  RiMailLine,
   RiMapPinLine,
   RiBox1Line,
   RiMoneyDollarCircleLine,
@@ -75,7 +74,7 @@ export const MiniOrderView = ({
             <Button
               size="sm"
               variant="outline"
-              className="text-xs px-2 py-1 h-6"
+              className="text-xs px-3 py-2 min-h-[36px] touch-manipulation"
               onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange?.(order.id, 'cancelled');
@@ -85,7 +84,7 @@ export const MiniOrderView = ({
             </Button>
             <Button
               size="sm"
-              className="text-xs px-2 py-1 h-6 bg-indigo-600 hover:bg-indigo-700"
+              className="text-xs px-3 py-2 min-h-[36px] bg-indigo-600 hover:bg-indigo-700 touch-manipulation font-semibold"
               onClick={(e) => {
                 e.stopPropagation();
                 onStatusChange?.(order.id, 'on_way');
@@ -99,7 +98,7 @@ export const MiniOrderView = ({
         return (
           <Button
             size="sm"
-            className="text-xs px-2 py-1 h-6 bg-green-600 hover:bg-green-700"
+            className="text-xs px-3 py-2 min-h-[36px] bg-green-600 hover:bg-green-700 touch-manipulation font-semibold"
             onClick={(e) => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'delivered');
@@ -112,7 +111,7 @@ export const MiniOrderView = ({
         return (
           <Button
             size="sm"
-            className="text-xs px-2 py-1 h-6 bg-yellow-600 hover:bg-yellow-700"
+            className="text-xs px-3 py-2 min-h-[36px] bg-yellow-600 hover:bg-yellow-700 touch-manipulation font-semibold"
             onClick={(e) => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'on_way_pickup');
@@ -125,7 +124,7 @@ export const MiniOrderView = ({
         return (
           <Button
             size="sm"
-            className="text-xs px-2 py-1 h-6 bg-gray-600 hover:bg-gray-700"
+            className="text-xs px-3 py-2 min-h-[36px] bg-gray-600 hover:bg-gray-700 touch-manipulation font-semibold"
             onClick={(e) => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'completed');
@@ -141,81 +140,116 @@ export const MiniOrderView = ({
 
   return (
     <div 
-      className={`p-3 space-y-2 cursor-pointer hover:bg-accent/5 transition-colors rounded-md ${className}`}
+      className={`p-4 space-y-3 cursor-pointer hover:bg-accent/10 transition-colors rounded-lg touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${className}`}
       onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const mockEvent = { stopPropagation: () => {} } as React.MouseEvent;
+          handleClick(mockEvent);
+        }
+      }}
+      aria-labelledby={`order-${order.id}-customer`}
+      aria-describedby={`order-${order.id}-details`}
     >
       {/* Header Row - Order Number & Status */}
-      <div className="flex items-center justify-between">
-        <div className="text-xs font-medium text-muted-foreground">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-bold text-foreground bg-primary/10 px-2 py-1 rounded">
           #{order.order_number}
         </div>
-        <Status status={mapOrderStatusToStatusType(order.status)} className="text-xs px-2 py-0.5">
+        <Status status={mapOrderStatusToStatusType(order.status)} className="text-xs px-3 py-1 min-h-[28px] flex items-center">
           <StatusIndicator />
-          <StatusLabel className="ml-1 text-xs">
+          <StatusLabel className="ml-1 text-xs font-semibold">
             <span className="mr-1">{getStatusIcon(order.status)}</span>
           </StatusLabel>
         </Status>
       </div>
 
       {/* Customer Name - Prominent */}
-      <div className="flex items-center gap-1">
-        <RiUserLine className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-        <h4 className="font-semibold text-sm truncate">
+      <div className="flex items-center gap-2 mb-3">
+        <RiUserLine className="h-4 w-4 text-primary flex-shrink-0" />
+        <h4 id={`order-${order.id}-customer`} className="font-bold text-base truncate text-foreground">
           {order.first_name} {order.last_name}
         </h4>
       </div>
 
-      {/* Key Details Grid - 2 columns */}
-      <div className="grid grid-cols-2 gap-1 text-xs">
-        {/* Left Column */}
-        <div className="space-y-1">
+      {/* Quick Info - Mobile First Single Column */}
+      <div id={`order-${order.id}-details`} className="space-y-2">
+        {/* Top row - Price and Size */}
+        <div className="flex items-center justify-between">
+          {order.quoted_price && (
+            <div className="flex items-center gap-2 text-green-600 font-bold text-base">
+              <RiMoneyDollarCircleLine className="h-4 w-4" />
+              <span>${order.quoted_price}</span>
+            </div>
+          )}
           {order.dumpster_size && (
-            <div className="flex items-center gap-1">
-              <RiBox1Line className="h-3 w-3 text-muted-foreground" />
-              <span className="truncate">{order.dumpster_size}Y</span>
-            </div>
-          )}
-          {order.phone && (
-            <div className="flex items-center gap-1">
-              <RiPhoneLine className="h-3 w-3 text-muted-foreground" />
-              <span className="truncate">{formatPhoneNumber(order.phone)}</span>
-            </div>
-          )}
-          {order.scheduled_delivery_date && (
-            <div className="flex items-center gap-1">
-              <RiCalendarLine className="h-3 w-3 text-muted-foreground" />
-              <span className="truncate">{format(new Date(order.scheduled_delivery_date), 'MMM dd')}</span>
+            <div className="flex items-center gap-1 bg-secondary px-2 py-1 rounded">
+              <RiBox1Line className="h-3 w-3" />
+              <span className="text-sm font-semibold">{order.dumpster_size} Yard</span>
             </div>
           )}
         </div>
-
-        {/* Right Column */}
-        <div className="space-y-1">
-          {order.quoted_price && (
-            <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-              <RiMoneyDollarCircleLine className="h-3 w-3" />
-              <span className="truncate">${order.quoted_price}</span>
+        
+        {/* Contact info */}
+        <div className="space-y-1.5">
+          {order.phone && (
+            <div className="flex items-center gap-2">
+              <RiPhoneLine className="h-4 w-4 text-blue-600 flex-shrink-0" />
+              <a 
+                href={`tel:${order.phone}`} 
+                className="text-sm font-medium text-blue-600 hover:underline touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Call ${order.first_name} ${order.last_name} at ${formatPhoneNumber(order.phone)}`}
+              >
+                {formatPhoneNumber(order.phone)}
+              </a>
             </div>
           )}
-          {order.assigned_to && (
-            <div className="flex items-center gap-1">
-              <RiTruckLine className="h-3 w-3 text-muted-foreground" />
-              <span className="truncate text-xs">{order.assigned_to}</span>
-            </div>
-          )}
+          
           {order.address && (
-            <div className="flex items-start gap-1">
-              <RiMapPinLine className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <div className="truncate">
-                <div className="truncate text-xs">{order.address}</div>
+            <div className="flex items-start gap-2">
+              <RiMapPinLine className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  let fullAddress = order.address!;
+                  if (order.city && order.state) {
+                    fullAddress = `${order.address}, ${order.city}, ${order.state}`;
+                  }
+                  const encodedAddress = encodeURIComponent(fullAddress);
+                  window.open(`https://maps.google.com/?q=${encodedAddress}`, '_blank');
+                }}
+                className="min-w-0 flex-1 text-left hover:underline touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                aria-label={`Navigate to ${order.address}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
+              >
+                <div className="text-sm font-medium truncate text-blue-600">{order.address}</div>
                 {order.city && order.state && (
-                  <div className="truncate text-xs opacity-75">
+                  <div className="text-xs text-muted-foreground">
                     {order.city}, {order.state}
                   </div>
                 )}
-              </div>
+              </button>
             </div>
           )}
+          
+          {/* Secondary info */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            {order.scheduled_delivery_date && (
+              <div className="flex items-center gap-1">
+                <RiCalendarLine className="h-3 w-3" />
+                <span>{format(new Date(order.scheduled_delivery_date), 'MMM dd')}</span>
+              </div>
+            )}
+            {order.assigned_to && (
+              <div className="flex items-center gap-1">
+                <RiTruckLine className="h-3 w-3" />
+                <span className="truncate">{order.assigned_to}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -237,7 +271,7 @@ export const MiniOrderView = ({
 
       {/* Action Buttons */}
       {getStatusActions() && (
-        <div className="pt-2 border-t border-border/50">
+        <div className="pt-3 mt-3 border-t border-border/50">
           {getStatusActions()}
         </div>
       )}

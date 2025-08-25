@@ -6,9 +6,9 @@ import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { MobileTabNavigation, QuickActionsSheet, useMobileNavigation } from '@/components/navigation/mobile-tab-nav';
-import { PWAInstallPrompt } from '@/components/pwa/pwa-install-prompt';
 import { ServiceWorkerRegistration, UpdateNotification, useServiceWorker } from '@/components/pwa/service-worker-registration';
 import { OfflineIndicator } from '@/components/mobile/offline-indicator';
+import { supabase } from '@/lib/supabase';
 
 interface MobileAwareLayoutProps {
   children: React.ReactNode;
@@ -19,7 +19,8 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
   const { isQuickActionsOpen, openQuickActions, closeQuickActions } = useMobileNavigation();
   const { updateAvailable, update } = useServiceWorker();
   const [showUpdateNotification, setShowUpdateNotification] = React.useState(false);
-  const [showPWAPrompt, setShowPWAPrompt] = React.useState(false);
+  const [pendingQuotes, setPendingQuotes] = React.useState<number>(0);
+  const [activeOrders, setActiveOrders] = React.useState<number>(0);
 
   React.useEffect(() => {
     if (updateAvailable) {
@@ -27,18 +28,50 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
     }
   }, [updateAvailable]);
 
+  // Fetch pending counts for mobile tabs
   React.useEffect(() => {
-    // Show PWA install prompt after user has been on the site for a bit
-    const timer = setTimeout(() => {
-      setShowPWAPrompt(true);
-    }, 10000); // Show after 10 seconds
+    if (isMobile) {
+      const fetchPendingCounts = async () => {
+        try {
+          // Fetch pending quotes
+          const { data: quotes, error: quotesError } = await supabase
+            .from('quotes')
+            .select('id')
+            .eq('status', 'pending');
 
-    return () => clearTimeout(timer);
-  }, []);
+          if (!quotesError && quotes) {
+            setPendingQuotes(quotes.length);
+          }
+
+          // Fetch orders not completed
+          const { data: orders, error: ordersError } = await supabase
+            .from('orders')
+            .select('id')
+            .neq('status', 'completed');
+
+          if (!ordersError && orders) {
+            setActiveOrders(orders.length);
+          }
+        } catch (error) {
+          console.error('Error fetching pending counts:', error);
+        }
+      };
+
+      fetchPendingCounts();
+    }
+  }, [isMobile]);
+
 
   if (isMobile) {
     return (
-      <div className="relative min-h-screen bg-background">
+      <SidebarProvider
+        style={
+          {
+            '--sidebar-width': 'calc(var(--spacing) * 72)',
+            '--header-height': 'calc(var(--spacing) * 12)',
+          } as React.CSSProperties
+        }
+      >
         {/* Service Worker Registration */}
         <ServiceWorkerRegistration />
         
@@ -52,41 +85,32 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
           onDismiss={() => setShowUpdateNotification(false)}
         />
 
-        {/* Mobile Header - simplified */}
-        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-          <div className="flex h-14 items-center justify-between px-4">
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">ARK Admin</h1>
-            </div>
-            {/* Offline indicator in header */}
-            <OfflineIndicator compact />
-          </div>
-        </header>
+        <AdminAppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          
+          {/* Mobile-specific content wrapper */}
+          <div className="relative min-h-screen bg-background">
+            {/* Mobile Content Area */}
+            <main className="mobile-content">
+              {children}
+            </main>
 
-        {/* PWA Install Prompt */}
-        {showPWAPrompt && (
-          <div className="p-4">
-            <PWAInstallPrompt 
-              onInstall={() => setShowPWAPrompt(false)}
-              onDismiss={() => setShowPWAPrompt(false)}
+            {/* Mobile Bottom Navigation */}
+            <MobileTabNavigation 
+              onFabClick={openQuickActions} 
+              pendingQuotes={pendingQuotes}
+              pendingOrders={activeOrders}
+            />
+            
+            {/* Quick Actions Sheet */}
+            <QuickActionsSheet 
+              isOpen={isQuickActionsOpen} 
+              onClose={closeQuickActions} 
             />
           </div>
-        )}
-
-        {/* Mobile Content Area */}
-        <main className="mobile-content min-h-[calc(100vh-3.5rem)]">
-          {children}
-        </main>
-
-        {/* Mobile Bottom Navigation */}
-        <MobileTabNavigation onFabClick={openQuickActions} />
-        
-        {/* Quick Actions Sheet */}
-        <QuickActionsSheet 
-          isOpen={isQuickActionsOpen} 
-          onClose={closeQuickActions} 
-        />
-      </div>
+        </SidebarInset>
+      </SidebarProvider>
     );
   }
 

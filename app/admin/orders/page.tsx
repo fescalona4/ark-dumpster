@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { geocodeAddress } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,22 +56,7 @@ import { useRouter } from 'next/navigation';
 import { Order } from '@/types/order';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
-import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
-import { 
-  KanbanProvider, 
-  KanbanBoard, 
-  KanbanHeader, 
-  KanbanCards,
-  type DragEndEvent
-} from '@/components/ui/kanban';
-import { 
-  KANBAN_COLUMNS, 
-  transformOrdersForKanban, 
-  handleKanbanOrderMove,
-  type KanbanOrder 
-} from '@/lib/kanban-utils';
-import { OrderKanbanCard } from '@/components/admin/order-kanban-card';
-import { RiListCheck, RiDashboardLine } from '@remixicon/react';
+import { updateOrderStatus as updateOrderStatusShared, getStatusIcon } from '@/components/order-management/order-status-manager';
 
 // Helper function to map order status to Status component status
 const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
@@ -119,8 +104,10 @@ function OrdersPageContent() {
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>('all');
   
-  // View toggle state
-  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  // Mobile interaction state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Dialog state for dumpster assignment
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
@@ -149,9 +136,13 @@ function OrdersPageContent() {
   /**
    * Fetches orders from the database with optional filtering
    */
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (showRefreshIndicator = false) => {
     try {
-      setLoading(true);
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       let query = supabase
         .from('orders')
         .select('*')
@@ -173,6 +164,7 @@ function OrdersPageContent() {
       setError(err instanceof Error ? err.message : 'Failed to fetch orders');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [statusFilter]);
 
@@ -181,6 +173,49 @@ function OrdersPageContent() {
     fetchOrders();
     fetchDumpsters();
   }, [fetchOrders, fetchDumpsters]);
+
+  // Pull-to-refresh functionality for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    
+    // Only trigger if we're at the top of the scroll container and pulling down
+    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 50) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const currentY = e.changedTouches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    
+    // Trigger refresh if pulled down enough
+    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 80 && !isRefreshing) {
+      fetchOrders(true);
+      fetchDumpsters();
+    }
+  };
+
+  // Quick action for call
+  const handleQuickCall = (phone: number) => {
+    if (phone) {
+      window.location.href = `tel:${phone}`;
+    }
+  };
+
+  // Quick action for navigation
+  const handleQuickNavigate = (address: string, city?: string | null, state?: string | null) => {
+    let fullAddress = address;
+    if (city && state) {
+      fullAddress = `${address}, ${city}, ${state}`;
+    }
+    const encodedAddress = encodeURIComponent(fullAddress);
+    window.open(`https://maps.google.com/?q=${encodedAddress}`, '_blank');
+  };
 
 
   /**
@@ -343,34 +378,6 @@ function OrdersPageContent() {
     await updateOrderStatus(orderId, 'on_way');
   };
 
-  /**
-   * Handle Kanban drag and drop
-   */
-  const handleKanbanDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const orderId = active.id as string;
-    const newColumn = over.id as string;
-    
-    // Use the utility function to handle the move
-    await handleKanbanOrderMove(orderId, newColumn, updateOrderStatus);
-  };
-
-  /**
-   * Transform orders for Kanban display
-   */
-  const kanbanOrders: KanbanOrder[] = transformOrdersForKanban(orders);
-
-  /**
-   * Handle order click in Kanban view
-   */
-  const handleKanbanOrderClick = (order: Order) => {
-    router.push(`/admin/orders/${order.id}`);
-  };
 
   /**
    * Assigns a dumpster to an order
@@ -519,7 +526,7 @@ function OrdersPageContent() {
     return (
       <div className="text-center py-8">
         <p className="text-red-600 mb-4">Error: {error}</p>
-        <Button onClick={fetchOrders} className="mt-4">
+        <Button onClick={() => fetchOrders()} className="mt-4">
           Retry
         </Button>
       </div>
@@ -531,131 +538,91 @@ function OrdersPageContent() {
       {/* Header section with stats and filters */}
       <div className="mb-8">
         <div className="flex items-center gap-4">
-          {/* View Toggle */}
-          <div className="flex items-center border rounded-lg p-1">
-            <Button
-              size="sm"
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('list')}
-              className="h-8 px-3"
-            >
-              <RiListCheck className="h-4 w-4 mr-1" />
-              List
-            </Button>
-            <Button
-              size="sm"
-              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-              onClick={() => setViewMode('kanban')}
-              className="h-8 px-3"
-            >
-              <RiDashboardLine className="h-4 w-4 mr-1" />
-              Kanban
-            </Button>
-          </div>
+          {/* Status Filter */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="on_way">On Way</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="on_way_pickup">On Way to Pickup</SelectItem>
+              <SelectItem value="picked_up">Picked Up</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Status Filter - only show for list view */}
-          {viewMode === 'list' && (
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem value="scheduled">Scheduled</SelectItem>
-                <SelectItem value="on_way">On Way</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="on_way_pickup">On Way to Pickup</SelectItem>
-                <SelectItem value="picked_up">Picked Up</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-
-          <Button onClick={fetchOrders} variant="outline">
-            Refresh
+          <Button 
+            onClick={(e) => {
+              e.preventDefault();
+              fetchOrders(true);
+              fetchDumpsters();
+            }} 
+            variant="outline"
+            disabled={isRefreshing}
+            className="min-h-[44px] touch-manipulation"
+          >
+            {isRefreshing ? (
+              <div className="flex items-center gap-2">
+                <Spinner variant="circle-filled" size={16} />
+                <span>Refreshing...</span>
+              </div>
+            ) : (
+              'Refresh'
+            )}
           </Button>
           <Badge variant="outline" className="gap-2 ml-auto">
             <RiTruckLine className="h-4 w-4" />
-            {viewMode === 'kanban' ? kanbanOrders.length : orders.length} Total Orders
+            {orders.length} Total Orders
           </Badge>
         </div>
       </div>
 
       {/* Main content area */}
-      {(viewMode === 'list' ? orders.length === 0 : kanbanOrders.length === 0) ? (
+      {orders.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <RiTruckLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No orders found</h3>
               <p className="text-muted-foreground">
-                {viewMode === 'list' && statusFilter === 'all'
+                {statusFilter === 'all'
                   ? 'Orders will appear here when quotes are converted to orders.'
-                  : viewMode === 'list'
-                  ? `No orders with status "${statusFilter}" found.`
-                  : 'No orders available for Kanban view. Orders need to be in scheduled, on way, delivered, on way to pickup, or completed status.'}
+                  : `No orders with status "${statusFilter}" found.`}
               </p>
             </div>
           </CardContent>
         </Card>
-      ) : viewMode === 'kanban' ? (
-        /* Kanban View */
-        <div className="h-[calc(100vh-200px)]">
-          <KanbanProvider
-            columns={KANBAN_COLUMNS}
-            data={kanbanOrders as any} // Temporary type assertion to fix compatibility
-            onDragEnd={handleKanbanDragEnd}
-            className="h-full"
-          >
-            {(column) => (
-              <KanbanBoard 
-                id={column.id} 
-                key={column.id}
-                className={`${column.color || 'bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800'} min-h-96`}
-              >
-                <KanbanHeader className="bg-card dark:bg-card border-b border-border font-semibold text-sm py-3 px-4">
-                  <div className="flex items-center justify-between">
-                    <span>{column.name}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {kanbanOrders.filter(order => order.column === column.id).length}
-                    </Badge>
-                  </div>
-                </KanbanHeader>
-                <KanbanCards id={column.id}>
-                  {(order) => {
-                    // Find the full order data from kanbanOrders
-                    const fullOrder = kanbanOrders.find(o => o.id === order.id);
-                    return fullOrder ? (
-                      <OrderKanbanCard
-                        key={order.id}
-                        order={fullOrder}
-                        onClick={handleKanbanOrderClick}
-                        onStatusChange={updateOrderStatus}
-                      />
-                    ) : null;
-                  }}
-                </KanbanCards>
-              </KanbanBoard>
-            )}
-          </KanbanProvider>
-        </div>
       ) : (
         /* List View */
-        <div className="grid gap-6">
+        <div 
+          ref={scrollContainerRef}
+          className="grid gap-6 touch-pan-y"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {orders.map(order => (
-            <Card key={order.id} className="relative">
+            <Card 
+              key={order.id} 
+              className="relative"
+              role="article"
+              aria-labelledby={`order-${order.id}-title`}
+            >
               {/* Status badge and delete button positioned in top right */}
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                      className="h-11 min-w-[44px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 touch-manipulation"
                     >
-                      <RiDeleteBinLine className="h-4 w-4 mr-1" />
+                      <RiDeleteBinLine className="h-4 w-4" />
 
                     </Button>
                   </AlertDialogTrigger>
@@ -677,7 +644,7 @@ function OrdersPageContent() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Status status={mapOrderStatusToStatusType(order.status)} className="text-base px-4 py-2 font-semibold">
+                <Status status={mapOrderStatusToStatusType(order.status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
                   <StatusIndicator />
                   <StatusLabel className="ml-2">
                     <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
@@ -686,35 +653,54 @@ function OrdersPageContent() {
                 </Status>
               </div>
 
-              <CardHeader className="pb-4 pr-32">
+              <CardHeader className="pb-4 pr-24 md:pr-32">
                 <div className="flex items-start justify-between">
                   <div>
                     {/* Order number */}
-                    <div className="text-sm font-medium text-muted-foreground mb-2">
+                    <div className="text-sm font-bold text-foreground mb-1">
                       <button
                         onClick={() => router.push(`/admin/orders/${order.id}`)}
-                        className="hover:text-blue-600 hover:underline transition-colors"
+                        className="hover:text-blue-600 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                        aria-label={`View details for order ${order.order_number}`}
                       >
                         Order {order.order_number}
                       </button>
                     </div>
 
                     {/* Customer name */}
-                    <CardTitle className="text-xl mb-3">
+                    <CardTitle id={`order-${order.id}-title`} className="text-lg mb-2 font-bold">
                       {order.first_name} {order.last_name || ''}
                     </CardTitle>
 
                     {/* Contact info */}
-                    <div className="text-sm text-muted-foreground space-y-2">
-                      {order.phone && (
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <div className="space-y-1">
+                        {order.phone && (
+                          <div className="flex items-center gap-2">
+                            <RiPhoneLine className="h-4 w-4 flex-shrink-0" />
+                            <a 
+                              href={`tel:${order.phone}`} 
+                              className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickCall(order.phone!);
+                              }}
+                              aria-label={`Call ${order.first_name} ${order.last_name} at ${formatPhoneNumber(order.phone)}`}
+                            >
+                              {formatPhoneNumber(order.phone)}
+                            </a>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2">
-                          <RiPhoneLine className="h-4 w-4" />
-                          <span>{formatPhoneNumber(order.phone)}</span>
+                          <RiMailLine className="h-4 w-4 flex-shrink-0" />
+                          <a 
+                            href={`mailto:${order.email}`} 
+                            className="text-blue-600 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                            aria-label={`Email ${order.first_name} ${order.last_name} at ${order.email}`}
+                          >
+                            {order.email}
+                          </a>
                         </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <RiMailLine className="h-4 w-4" />
-                        <span>{order.email}</span>
                       </div>
                     </div>
                   </div>
@@ -722,10 +708,10 @@ function OrdersPageContent() {
               </CardHeader>
 
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                   {/* Service Details */}
-                  <div>
-                    <h4 className="font-semibold mb-3">Service Details</h4>
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <h4 className="font-semibold mb-2 text-base">Service Details</h4>
                     <div className="space-y-2 text-sm">
                       {order.dumpster_size && (
                         <div className="flex items-center gap-2">
@@ -735,12 +721,21 @@ function OrdersPageContent() {
                       )}
                       {order.address && (
                         <div className="flex items-start gap-2">
-                          <RiMapPinLine className="h-4 w-4 mt-0.5" />
-                          <div>
-                            <div>{order.address}</div>
-                            {order.city && order.state && (
-                              <div>{order.city}, {order.state}</div>
-                            )}
+                          <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
+                          <div className="flex-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickNavigate(order.address!, order.city || undefined, order.state || undefined);
+                              }}
+                              className="text-left hover:underline font-medium text-blue-600 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                              aria-label={`Navigate to ${order.address || ''}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
+                            >
+                              <div>{order.address}</div>
+                              {order.city && order.state && (
+                                <div className="text-muted-foreground">{order.city}, {order.state}</div>
+                              )}
+                            </button>
                           </div>
                         </div>
                       )}
@@ -754,24 +749,24 @@ function OrdersPageContent() {
                   </div>
 
                   {/* Order Management */}
-                  <div>
-                    <h4 className="font-semibold mb-3">Order Details</h4>
-                    <div className="space-y-2 text-sm">
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <h4 className="font-semibold mb-2 text-base">Order Details</h4>
+                    <div className="space-y-3 text-sm">
                       {order.quoted_price && (
-                        <div className="flex items-center gap-2">
-                          <RiMoneyDollarCircleLine className="h-4 w-4" />
-                          <span>Price: ${order.quoted_price}</span>
+                        <div className="flex items-center gap-2 font-bold text-green-600">
+                          <RiMoneyDollarCircleLine className="h-5 w-5" />
+                          <span className="text-lg">${order.quoted_price}</span>
                         </div>
                       )}
 
                       {/* Driver Assignment */}
                       <div className="space-y-2">
-                        <Label htmlFor={`driver-${order.id}`} className="text-xs font-medium">
+                        <Label htmlFor={`driver-${order.id}`} className="text-sm font-semibold">
                           Assigned Driver
                         </Label>
                         {order.status === 'completed' ? (
                           // Show read-only driver info for completed orders
-                          <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-md border">
+                          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border min-h-[44px]">
                             <RiTruckLine className="h-3 w-3 text-gray-700" />
                             <span className="text-sm text-gray-800 font-medium">
                               {order.assigned_to || 'No driver assigned'}
@@ -791,7 +786,11 @@ function OrdersPageContent() {
                               assignDriverToOrder(order.id, driverName);
                             }}
                           >
-                            <SelectTrigger id={`driver-${order.id}`} className="w-full">
+                            <SelectTrigger 
+                              id={`driver-${order.id}`} 
+                              className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                              aria-label="Select driver for this order"
+                            >
                               <SelectValue>
                                 <div className="flex items-center gap-2">
                                   <RiTruckLine className="h-3 w-3" />
@@ -815,12 +814,12 @@ function OrdersPageContent() {
 
                       {/* Dumpster Assignment */}
                       <div className="space-y-2">
-                        <Label htmlFor={`dumpster-${order.id}`} className="text-xs font-medium">
+                        <Label htmlFor={`dumpster-${order.id}`} className="text-sm font-semibold">
                           {order.status === 'completed' ? 'Dumpster Used' : 'Assigned Dumpster'}
                         </Label>
                         {order.status === 'completed' ? (
                           // Show read-only dumpster info for completed orders
-                          <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-md border">
+                          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border min-h-[44px]">
                             <RiBox1Line className="h-3 w-3 text-gray-700" />
                             <span className="text-sm text-gray-800 font-medium">
                               {order.completed_with_dumpster_name || 'No dumpster assigned'}
@@ -842,7 +841,11 @@ function OrdersPageContent() {
                               assignDumpsterToOrder(order.id, dumpsterId);
                             }}
                           >
-                            <SelectTrigger id={`dumpster-${order.id}`} className="w-full">
+                            <SelectTrigger 
+                              id={`dumpster-${order.id}`} 
+                              className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                              aria-label="Select dumpster for this order"
+                            >
                               <SelectValue>
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-3 w-3" />
@@ -895,9 +898,9 @@ function OrdersPageContent() {
                 </div>
 
                 {/* Driver Action Buttons */}
-                <div className="mt-6 pt-4 border-t">
-                  <h5 className="font-medium text-sm mb-3">Actions</h5>
-                  <div className="flex flex-wrap gap-2">
+                <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
+                  <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>Quick Actions</h5>
+                  <div className="flex flex-wrap gap-3">
 
                     {/* Status-specific buttons */}
                     {order.status === 'scheduled' && (
@@ -907,6 +910,7 @@ function OrdersPageContent() {
                             <Button
                               variant="destructive"
                               size="sm"
+                              className="min-h-[44px] px-4 touch-manipulation font-semibold"
                             >
                               ❌ Cancel
                             </Button>
@@ -931,7 +935,7 @@ function OrdersPageContent() {
                         </AlertDialog>
                         <Button
                           onClick={() => handleOnMyWayClick(order)}
-                          className="bg-indigo-600 hover:bg-indigo-700"
+                          className="bg-indigo-600 hover:bg-indigo-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
                           🚛 On My Way
@@ -944,12 +948,13 @@ function OrdersPageContent() {
                           onClick={() => updateOrderStatus(order.id, 'scheduled')}
                           variant="outline"
                           size="sm"
+                          className="min-h-[44px] px-4 touch-manipulation"
                         >
                           ↩️ Back to Scheduled
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'delivered')}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-green-600 hover:bg-green-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
                           ✅ Delivered
@@ -962,12 +967,13 @@ function OrdersPageContent() {
                           onClick={() => updateOrderStatus(order.id, 'on_way')}
                           variant="outline"
                           size="sm"
+                          className="min-h-[44px] px-4 touch-manipulation"
                         >
                           ↩️ Back to On Way
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'on_way_pickup')}
-                          className="bg-yellow-600 hover:bg-yellow-700"
+                          className="bg-yellow-600 hover:bg-yellow-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
                           🚛 On Way to Pickup
@@ -980,12 +986,13 @@ function OrdersPageContent() {
                           onClick={() => updateOrderStatus(order.id, 'delivered')}
                           variant="outline"
                           size="sm"
+                          className="min-h-[44px] px-4 touch-manipulation"
                         >
                           ↩️ Back to Delivered
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'completed')}
-                          className="bg-gray-600 hover:bg-gray-700"
+                          className="bg-gray-600 hover:bg-gray-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
                           🏁 Complete Order

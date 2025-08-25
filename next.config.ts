@@ -14,7 +14,7 @@ const cspHeader = `
   form-action 'self';
   frame-ancestors 'none';
   upgrade-insecure-requests;
-  connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com https://vercel.live ${isDevelopment ? 'http://localhost:*' : ''};
+  connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://vercel.live ${isDevelopment ? 'http://localhost:*' : ''};
 `;
 
 const nextConfig: NextConfig = {
