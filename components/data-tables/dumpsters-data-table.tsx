@@ -84,7 +84,8 @@ export const dumpsterSchema = z.object({
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'available':
-      return 'default';
+      return 'outline';
+    case 'in_use':
     case 'assigned':
       return 'secondary';
     default:
@@ -92,10 +93,23 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
+const getStatusBadgeClasses = (status: string) => {
+  switch (status) {
+    case 'available':
+      return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30';
+    case 'in_use':
+    case 'assigned':
+      return 'bg-white text-gray-900 border-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-700';
+    default:
+      return '';
+  }
+};
+
 const getStatusIcon = (status: string) => {
   switch (status) {
     case 'available':
       return <IconCheck className="size-3" />;
+    case 'in_use':
     case 'assigned':
       return <IconTruck className="size-3" />;
     default:
@@ -123,7 +137,7 @@ function DumpsterCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{item.header}</CardTitle>
-          <Badge variant={getStatusBadgeVariant(item.status)} className="gap-1">
+          <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 ${getStatusBadgeClasses(item.status)}`}>
             {getStatusIcon(item.status)}
             {item.status.replace('_', ' ')}
           </Badge>
@@ -173,7 +187,7 @@ function DumpsterCard({
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Status</Label>
-                    <Badge variant={getStatusBadgeVariant(item.status)} className="gap-1 w-fit">
+                    <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 w-fit ${getStatusBadgeClasses(item.status)}`}>
                       {getStatusIcon(item.status)}
                       {item.status.replace('_', ' ')}
                     </Badge>
@@ -548,9 +562,9 @@ export function DumpstersDataTable({
         count: data.filter(item => item.status === 'available').length,
       },
       {
-        label: 'assigned',
-        value: 'assigned',
-        count: data.filter(item => item.status === 'assigned').length,
+        label: 'in use',
+        value: 'in_use',
+        count: data.filter(item => item.status === 'in_use').length,
       },
     ];
 

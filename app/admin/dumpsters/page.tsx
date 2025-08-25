@@ -14,7 +14,7 @@ export default function DumpstersPage() {
   const [dumpsterStats, setDumpsterStats] = useState<DumpsterStats>({
     total: 0,
     available: 0,
-    assigned: 0,
+    in_use: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function DumpstersPage() {
         const stats = {
           total: dumpstersData.length,
           available: dumpstersData.filter(d => d.status === 'available').length,
-          assigned: dumpstersData.filter(d => d.status === 'assigned').length,
+          in_use: dumpstersData.filter(d => d.status === 'in_use').length,
         };
         setDumpsterStats(stats);
       }
@@ -335,8 +335,8 @@ export default function DumpstersPage() {
               <div className="text-sm text-muted-foreground">Available</div>
             </div>
             <div className="bg-card rounded-lg border p-6">
-              <div className="text-2xl font-bold text-blue-600 mb-1">{dumpsterStats.assigned}</div>
-              <div className="text-sm text-muted-foreground">Assigned</div>
+              <div className="text-2xl font-bold text-white mb-1">{dumpsterStats.in_use}</div>
+              <div className="text-sm text-muted-foreground">In Use</div>
             </div>
           </div>
 

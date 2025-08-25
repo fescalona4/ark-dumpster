@@ -3,7 +3,7 @@ export interface Dumpster {
   name: string;
   address?: string;
   order_number?: string;
-  status: 'available' | 'assigned';
+  status: 'available' | 'in_use';
   current_order_id?: string;
   assigned_to?: string;
   size?: string;
@@ -31,5 +31,5 @@ export interface Dumpster {
 export interface DumpsterStats {
   total: number;
   available: number;
-  assigned: number;
+  in_use: number;
 }

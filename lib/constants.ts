@@ -10,7 +10,7 @@ export const QUOTE_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'com
 export const ORDER_STATUSES = ['pending', 'scheduled', 'on_way', 'delivered', 'on_way_pickup', 'completed', 'cancelled'] as const;
 
 // Dumpster status values
-export const DUMPSTER_STATUSES = ['available', 'assigned'] as const;
+export const DUMPSTER_STATUSES = ['available', 'in_use'] as const;
 
 // TypeScript types derived from the constants
 export type QuoteStatus = typeof QUOTE_STATUSES[number];

@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS quotes (
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255),
     email VARCHAR(255) NOT NULL,
-    phone VARCHAR(50),
+    phone NUMERIC,
     
     -- Service Location
     address VARCHAR(500),
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS orders (
   
   -- Order-specific fields
   order_number text UNIQUE NOT NULL,
-  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'scheduled', 'on_way', 'in_progress', 'delivered', 'picked_up', 'completed', 'cancelled')),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'scheduled', 'on_way', 'in_progress', 'delivered', 'on_way_pickup', 'picked_up', 'completed', 'cancelled')),
   priority text NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
   
   -- Pricing information
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS dumpsters (
   order_number text,
   
   -- Status tracking
-  status text NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'assigned', 'in_transit', 'maintenance', 'out_of_service')),
+  status text NOT NULL DEFAULT 'available' CHECK (status IN ('available', 'in_use')),
   
   -- Assignment tracking
   current_order_id uuid REFERENCES orders(id) ON DELETE SET NULL,

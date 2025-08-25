@@ -22,11 +22,7 @@ export type OrderStatus =
 
 export type DumpsterStatus = 
   | 'available' 
-  | 'rented' 
-  | 'assigned' 
-  | 'in_transit' 
-  | 'maintenance' 
-  | 'out_of_service';
+  | 'in_use';
 
 export type DumpsterCondition = 'excellent' | 'good' | 'fair' | 'needs_repair';
 
@@ -119,9 +115,13 @@ export interface Order {
   
   // Assignment and tracking
   assigned_to?: string | null;
-  dumpster_id?: string | null;
+  dumpster_id: string | null;
   driver_notes?: string | null;
   internal_notes?: string | null;
+  
+  // Completed order tracking (for historical purposes)
+  completed_with_dumpster_id?: string | null;
+  completed_with_dumpster_name?: string | null;
   
   // Timestamps
   created_at: string;
@@ -307,11 +307,7 @@ export interface Database {
 export interface DumpsterStats {
   total: number;
   available: number;
-  rented: number;
-  assigned: number;
-  in_transit: number;
-  maintenance: number;
-  out_of_service: number;
+  in_use: number;
 }
 
 /**

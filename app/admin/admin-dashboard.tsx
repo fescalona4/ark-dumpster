@@ -175,7 +175,7 @@ export default function AdminDashboard() {
         const stats = {
           total: dumpstersData.length,
           available: dumpstersData.filter(d => d.status === 'available').length,
-          assigned: dumpstersData.filter(d => d.status === 'assigned').length,
+          in_use: dumpstersData.filter(d => d.status === 'in_use').length,
         };
         setDumpsterStats(stats);
       }

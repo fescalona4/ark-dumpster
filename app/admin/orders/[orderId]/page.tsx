@@ -192,7 +192,7 @@ function OrderDetailContent() {
         const { error: dumpsterError } = await supabase
           .from('dumpsters')
           .update({
-            status: 'assigned',
+            status: 'in_use',
             current_order_id: orderId,
             address: dumpsterAddress,
             last_assigned_at: new Date().toISOString()

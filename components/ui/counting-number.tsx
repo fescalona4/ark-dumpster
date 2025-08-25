@@ -38,7 +38,7 @@ function CountingNumber({
   const localRef = React.useRef<HTMLSpanElement>(null);
   React.useImperativeHandle(ref, () => localRef.current as HTMLSpanElement);
 
-  const numberStr = number.toString();
+  const numberStr = (number ?? 0).toString();
   const decimals =
     typeof decimalPlaces === 'number'
       ? decimalPlaces
@@ -55,7 +55,7 @@ function CountingNumber({
   const isInView = !inView || inViewResult;
 
   React.useEffect(() => {
-    if (isInView) motionVal.set(number);
+    if (isInView) motionVal.set(number ?? 0);
   }, [isInView, number, motionVal]);
 
   React.useEffect(() => {
@@ -71,7 +71,7 @@ function CountingNumber({
         }
 
         if (padStart) {
-          const finalIntLength = Math.floor(Math.abs(number)).toString().length;
+          const finalIntLength = Math.floor(Math.abs(number ?? 0)).toString().length;
           const [intPart, fracPart] = formatted.split(decimalSeparator);
           const paddedInt = intPart?.padStart(finalIntLength, '0') ?? '';
           formatted = fracPart
@@ -85,7 +85,7 @@ function CountingNumber({
     return () => unsubscribe();
   }, [springVal, decimals, padStart, number, decimalSeparator]);
 
-  const finalIntLength = Math.floor(Math.abs(number)).toString().length;
+  const finalIntLength = Math.floor(Math.abs(number ?? 0)).toString().length;
   const initialText = padStart
     ? '0'.padStart(finalIntLength, '0') +
       (decimals > 0 ? decimalSeparator + '0'.repeat(decimals) : '')

@@ -412,7 +412,7 @@ function OrdersPageContent() {
 
         // Update the dumpster to mark it as assigned and set its location
         const updateData: any = {
-          status: 'assigned',
+          status: 'in_use',
           current_order_id: orderId,
           address: dumpsterAddress,
           last_assigned_at: new Date().toISOString()
@@ -424,17 +424,21 @@ function OrdersPageContent() {
           .eq('id', dumpsterId);
         
         if (!dumpsterError && dumpsterAddress) {
-          // Geocode and update GPS coordinates separately using raw SQL
+          // Geocode and update GPS coordinates directly
           const coords = await geocodeAddress(dumpsterAddress);
           if (coords) {
-            const { error: gpsError } = await supabase.rpc('update_dumpster_gps', {
-              dumpster_id: dumpsterId,
-              lng: coords.lng,
-              lat: coords.lat
-            });
+            const { error: gpsError } = await supabase
+              .from('dumpsters')
+              .update({
+                gps_coordinates: `(${coords.lng},${coords.lat})`,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', dumpsterId);
             
             if (gpsError) {
               console.warn('Failed to update GPS coordinates:', gpsError);
+            } else {
+              console.log('GPS coordinates updated successfully for dumpster:', dumpsterId);
             }
           }
         }
@@ -454,7 +458,7 @@ function OrdersPageContent() {
 
         setDumpsters(dumpsters.map(d =>
           d.id === dumpsterId
-            ? { ...d, status: 'assigned', current_order_id: orderId, last_assigned_at: new Date().toISOString() }
+            ? { ...d, status: 'in_use', current_order_id: orderId, last_assigned_at: new Date().toISOString() }
             : d
         ));
 
