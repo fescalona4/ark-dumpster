@@ -103,7 +103,7 @@ function OrdersPageContent() {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  
+
   // Mobile interaction state
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartY = useRef(0);
@@ -182,7 +182,7 @@ function OrdersPageContent() {
   const handleTouchMove = (e: React.TouchEvent) => {
     const currentY = e.touches[0].clientY;
     const diff = currentY - touchStartY.current;
-    
+
     // Only trigger if we're at the top of the scroll container and pulling down
     if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 50) {
       e.preventDefault();
@@ -192,7 +192,7 @@ function OrdersPageContent() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const currentY = e.changedTouches[0].clientY;
     const diff = currentY - touchStartY.current;
-    
+
     // Trigger refresh if pulled down enough
     if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 80 && !isRefreshing) {
       fetchOrders(true);
@@ -346,9 +346,9 @@ function OrdersPageContent() {
    */
   const handleOnMyWayClick = async (order: Order) => {
     // Check if dumpster is assigned
-    const hasAssignedDumpster = order.dumpster_id || 
+    const hasAssignedDumpster = order.dumpster_id ||
       dumpsters.some(d => d.current_order_id === order.id);
-    
+
     if (!hasAssignedDumpster) {
       // Open dumpster assignment dialog
       setSelectedOrderForDumpster(order);
@@ -422,7 +422,7 @@ function OrdersPageContent() {
           .from('dumpsters')
           .update(updateData)
           .eq('id', dumpsterId);
-        
+
         if (!dumpsterError && dumpsterAddress) {
           // Geocode and update GPS coordinates directly
           const coords = await geocodeAddress(dumpsterAddress);
@@ -434,7 +434,7 @@ function OrdersPageContent() {
                 updated_at: new Date().toISOString()
               })
               .eq('id', dumpsterId);
-            
+
             if (gpsError) {
               console.warn('Failed to update GPS coordinates:', gpsError);
             } else {
@@ -560,12 +560,12 @@ function OrdersPageContent() {
             </SelectContent>
           </Select>
 
-          <Button 
+          <Button
             onClick={(e) => {
               e.preventDefault();
               fetchOrders(true);
               fetchDumpsters();
-            }} 
+            }}
             variant="outline"
             disabled={isRefreshing}
             className="min-h-[44px] touch-manipulation"
@@ -589,7 +589,7 @@ function OrdersPageContent() {
       {/* Main content area */}
       {orders.length === 0 ? (
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-4">
             <div className="text-center py-8">
               <RiTruckLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No orders found</h3>
@@ -603,7 +603,7 @@ function OrdersPageContent() {
         </Card>
       ) : (
         /* List View */
-        <div 
+        <div
           ref={scrollContainerRef}
           className="grid gap-6 touch-pan-y"
           onTouchStart={handleTouchStart}
@@ -611,8 +611,8 @@ function OrdersPageContent() {
           onTouchEnd={handleTouchEnd}
         >
           {orders.map(order => (
-            <Card 
-              key={order.id} 
+            <Card
+              key={order.id}
               className="relative"
               role="article"
               aria-labelledby={`order-${order.id}-title`}
@@ -682,8 +682,8 @@ function OrdersPageContent() {
                         {order.phone && (
                           <div className="flex items-center gap-2">
                             <RiPhoneLine className="h-4 w-4 flex-shrink-0" />
-                            <a 
-                              href={`tel:${order.phone}`} 
+                            <a
+                              href={`tel:${order.phone}`}
                               className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -697,8 +697,8 @@ function OrdersPageContent() {
                         )}
                         <div className="flex items-center gap-2">
                           <RiMailLine className="h-4 w-4 flex-shrink-0" />
-                          <a 
-                            href={`mailto:${order.email}`} 
+                          <a
+                            href={`mailto:${order.email}`}
                             className="text-blue-600 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                             aria-label={`Email ${order.first_name} ${order.last_name} at ${order.email}`}
                           >
@@ -790,8 +790,8 @@ function OrdersPageContent() {
                               assignDriverToOrder(order.id, driverName);
                             }}
                           >
-                            <SelectTrigger 
-                              id={`driver-${order.id}`} 
+                            <SelectTrigger
+                              id={`driver-${order.id}`}
                               className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               aria-label="Select driver for this order"
                             >
@@ -845,8 +845,8 @@ function OrdersPageContent() {
                               assignDumpsterToOrder(order.id, dumpsterId);
                             }}
                           >
-                            <SelectTrigger 
-                              id={`dumpster-${order.id}`} 
+                            <SelectTrigger
+                              id={`dumpster-${order.id}`}
                               className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               aria-label="Select dumpster for this order"
                             >

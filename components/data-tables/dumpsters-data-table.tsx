@@ -359,11 +359,11 @@ interface EditDumpsterData {
   notes: string;
 }
 
-function EditDumpsterDialog({ 
-  item, 
-  onEdit 
-}: { 
-  item: z.infer<typeof dumpsterSchema>; 
+function EditDumpsterDialog({
+  item,
+  onEdit
+}: {
+  item: z.infer<typeof dumpsterSchema>;
   onEdit: (data: EditDumpsterData) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -598,17 +598,19 @@ export function DumpstersDataTable({
 
   return (
     <Tabs value={currentView} onValueChange={setCurrentView} className="w-full">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <Select value={currentView} onValueChange={setCurrentView}>
-              <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm">
-                <SelectValue placeholder="Select a view" />
-              </SelectTrigger>
-              <SelectContent>
-                {getStatusOptions()}
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-row justify-between">
+          <div>
+            <TabsList className="flex">
+              {statusTabs.map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                  {tab.label}
+                  <Badge variant="secondary" className="rounded-full px-1.5 py-0.5 text-xs">
+                    {tab.count}
+                  </Badge>
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
           <div className="flex items-center gap-2">
             {onAdd && <AddDumpsterDialog onAdd={onAdd} />}
@@ -616,16 +618,6 @@ export function DumpstersDataTable({
         </div>
       </div>
 
-      <TabsList className="@4xl/main:flex hidden">
-        {statusTabs.map(tab => (
-          <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
-            {tab.label}
-            <Badge variant="secondary" className="rounded-full px-1.5 py-0.5 text-xs">
-              {tab.count}
-            </Badge>
-          </TabsTrigger>
-        ))}
-      </TabsList>
 
       {statusTabs.map(tab => {
         const filteredData = getFilteredData(tab.value);

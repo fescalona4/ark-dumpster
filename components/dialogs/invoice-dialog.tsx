@@ -102,9 +102,9 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
           <Button
             variant="outline"
             size="sm"
-            className="bg-blue-50 hover:bg-blue-100 border-blue-200"
+            className="min-h-[44px] px-4 touch-manipulation bg-blue-50 hover:bg-blue-100 border-blue-200"
           >
-            <RiFileTextLine className="h-4 w-4 mr-1" />
+            <RiFileTextLine className="h-4 w-4 mr-2" />
             View Invoice
           </Button>
         )}
@@ -114,13 +114,13 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
           <DialogTitle className="flex items-center justify-between pr-12">
             <span>Invoice for Order {order.order_number}</span>
             <div className="flex items-center space-x-2">
-              <Button onClick={handlePrint} size="sm" variant="outline">
-                <RiPrinterLine className="h-4 w-4 mr-1" />
+              <Button onClick={handlePrint} size="sm" variant="outline" className="min-h-[44px] touch-manipulation">
+                <RiPrinterLine className="h-4 w-4 mr-2" />
                 Print
               </Button>
               <Link href={`/admin/orders/${order.id}/invoice`} target="_blank">
-                <Button size="sm" variant="outline">
-                  <RiExternalLinkLine className="h-4 w-4 mr-1" />
+                <Button size="sm" variant="outline" className="min-h-[44px] touch-manipulation">
+                  <RiExternalLinkLine className="h-4 w-4 mr-2" />
                   Full Page
                 </Button>
               </Link>

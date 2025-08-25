@@ -314,15 +314,7 @@ export default function DumpstersPage() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-6">
         <div className="flex flex-col gap-6 py-6">
-          {/* Header */}
-          <div className="px-6">
-            <div className="mb-2">
-              <h1 className="text-2xl font-semibold">Dumpster Management</h1>
-            </div>
-            <p className="text-muted-foreground">
-              Track and manage your dumpster inventory, assignments, and status.
-            </p>
-          </div>
+
 
           {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-4 px-6">
@@ -343,10 +335,10 @@ export default function DumpstersPage() {
           {/* Dumpsters Table */}
           <div className="space-y-8">
             <div className="px-6">
-              <h2 className="text-lg font-semibold mb-6">Dumpster Inventory</h2>
-              <DumpstersDataTable 
-                data={dumpstersTableData} 
-                statuses={dumpsterStatuses} 
+              <h2 className="text-xl font-semibold mb-4">Dumpster Inventory</h2>
+              <DumpstersDataTable
+                data={dumpstersTableData}
+                statuses={dumpsterStatuses}
                 onAdd={handleAddDumpster}
                 onEdit={handleEditDumpster}
                 onDelete={handleDeleteDumpster}
