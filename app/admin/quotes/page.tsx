@@ -18,6 +18,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
+import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -478,6 +480,22 @@ function QuotesPageContent() {
     }
   };
 
+  // Helper function to map quote status to Status component status
+  const mapQuoteStatusToStatusType = (quoteStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+    switch (quoteStatus) {
+      case 'accepted':
+      case 'completed':
+        return 'online';
+      case 'declined':
+        return 'offline';
+      case 'pending':
+        return 'degraded';
+      case 'quoted':
+      default:
+        return 'maintenance';
+    }
+  };
+
   /**
    * Returns Tailwind CSS classes for priority badge styling
    * Maps quote priority to appropriate color scheme
@@ -502,7 +520,7 @@ function QuotesPageContent() {
       <div className="p-2 md:p-6">
         <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Spinner variant="circle-filled" size={48} />
             <p className="text-muted-foreground">Loading quotes...</p>
           </div>
         </div>
@@ -655,7 +673,10 @@ function QuotesPageContent() {
 
                       {/* Status and priority badges with improved spacing */}
                       <div className="flex items-center gap-3 mb-6">
-                        <Badge className={`${getStatusColor(quote.status)} px-3 py-1`}>{quote.status}</Badge>
+                        <Status status={mapQuoteStatusToStatusType(quote.status)} className="px-3 py-1">
+                          <StatusIndicator />
+                          <StatusLabel className="ml-2">{quote.status}</StatusLabel>
+                        </Status>
                         <Badge className={`${getPriorityColor(quote.priority)} px-3 py-1`}>{quote.priority}</Badge>
                       </div>
 
@@ -1063,7 +1084,7 @@ function QuotesPageContent() {
                           >
                             {savingQuotes.has(quote.id) ? (
                               <>
-                                <div className="animate-spin rounded-full h-4 w-4 mr-2 border-b-2 border-current"></div>
+                                <Spinner variant="circle" size={16} className="mr-2" />
                                 Saving...
                               </>
                             ) : (

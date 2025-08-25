@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { CountingNumber } from '@/components/ui/counting-number';
 
 interface QuoteStats {
   total: number;
@@ -36,7 +37,11 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
         <CardHeader>
           <CardDescription>Total Quotes</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.total}
+            <CountingNumber 
+              number={stats.total}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -57,7 +62,11 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
         <CardHeader>
           <CardDescription>Pending Quotes</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.pending}
+            <CountingNumber 
+              number={stats.pending}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -78,7 +87,11 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
         <CardHeader>
           <CardDescription>Acceptance Rate</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {acceptanceRate}%
+            <CountingNumber 
+              number={acceptanceRate}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />%
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -99,7 +112,11 @@ export function AdminSectionCards({ stats }: AdminSectionCardsProps) {
         <CardHeader>
           <CardDescription>Completed Jobs</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {stats.completed}
+            <CountingNumber 
+              number={stats.completed}
+              transition={{ stiffness: 90, damping: 50 }}
+              inView={true}
+            />
           </CardTitle>
           <CardAction>
             <Badge variant="outline">

@@ -16,6 +16,7 @@ import AuthGuard from '@/components/providers/auth-guard';
 import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
 import { AnalyticsSectionCards } from '@/components/analytics/analytics-section-cards';
 import { getAnalytics, getPageViews, getDailyVisits, getCountryStats, getCityStats } from '@/lib/analytics';
+import { Spinner } from '@/components/ui/spinner';
 
 interface Visit {
   id: string;
@@ -105,7 +106,7 @@ function AnalyticsPageContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner variant="circle-filled" size={32} className="mx-auto mb-4" />
           <p>Loading analytics...</p>
         </div>
       </div>

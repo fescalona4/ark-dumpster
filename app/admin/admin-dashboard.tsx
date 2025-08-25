@@ -6,6 +6,8 @@ import { AdminSectionCards } from '@/components/admin/admin-section-cards';
 import { QuotesDataTable } from '@/components/data-tables/quotes-data-table';
 import { OrdersDataTable } from '@/components/data-tables/orders-data-table';
 import { ChartAreaInteractive } from '@/components/analytics/chart-area-interactive';
+import { CountingNumber } from '@/components/ui/counting-number';
+import { Spinner } from '@/components/ui/spinner';
 import { Order } from '@/types/order';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { QUOTE_STATUSES, ORDER_STATUSES, DUMPSTER_STATUSES } from '@/lib/constants';
@@ -222,7 +224,7 @@ export default function AdminDashboard() {
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Spinner variant="circle-filled" size={48} />
             <p className="text-muted-foreground">Loading dashboard...</p>
           </div>
         </div>
@@ -260,23 +262,53 @@ export default function AdminDashboard() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{dumpsterStats.total}</div>
+                  <div className="text-2xl font-bold">
+                    <CountingNumber 
+                      number={dumpsterStats.total}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Total</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{dumpsterStats.available}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    <CountingNumber 
+                      number={dumpsterStats.available}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Available</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{dumpsterStats.assigned}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    <CountingNumber 
+                      number={dumpsterStats.assigned}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Assigned</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{dumpsterStats.in_transit}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    <CountingNumber 
+                      number={dumpsterStats.in_transit}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">In Transit</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{dumpsterStats.maintenance + dumpsterStats.out_of_service}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    <CountingNumber 
+                      number={dumpsterStats.maintenance + dumpsterStats.out_of_service}
+                      transition={{ stiffness: 90, damping: 50 }}
+                      inView={true}
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground">Need Attention</div>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import DumpstersMap from '@/components/maps/dumpsters-map';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
 import { DUMPSTER_STATUSES } from '@/lib/constants';
 import { calculateDistance, parseGpsCoordinates, ARK_HOME_COORDINATES } from '@/lib/utils';
+import { Spinner } from '@/components/ui/spinner';
 
 export default function DumpstersPage() {
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
@@ -301,7 +302,7 @@ export default function DumpstersPage() {
       <div className="flex flex-1 flex-col">
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <Spinner variant="circle-filled" size={48} />
             <p className="text-muted-foreground">Loading dumpsters...</p>
           </div>
         </div>

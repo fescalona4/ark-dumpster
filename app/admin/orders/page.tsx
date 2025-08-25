@@ -16,6 +16,8 @@ import { supabase } from '@/lib/supabase';
 import { geocodeAddress } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
+import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -55,6 +57,24 @@ import { Order } from '@/types/order';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+
+// Helper function to map order status to Status component status
+const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+  switch (orderStatus) {
+    case 'delivered':
+    case 'completed':
+      return 'online';
+    case 'cancelled':
+      return 'offline';
+    case 'pending':
+    case 'scheduled':
+      return 'degraded';
+    case 'on_way':
+    case 'on_way_pickup':
+    default:
+      return 'maintenance';
+  }
+};
 
 /**
  * Main admin orders page component
@@ -441,7 +461,7 @@ function OrdersPageContent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner variant="circle-filled" size={32} className="mx-auto mb-4" />
           <p>Loading orders...</p>
         </div>
       </div>
@@ -540,10 +560,13 @@ function OrdersPageContent() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Badge className={`${getStatusColor(order.status)} text-base px-4 py-2 font-semibold`}>
-                  <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
-                  {order.status.replace('_', ' ').toUpperCase()}
-                </Badge>
+                <Status status={mapOrderStatusToStatusType(order.status)} className="text-base px-4 py-2 font-semibold">
+                  <StatusIndicator />
+                  <StatusLabel className="ml-2">
+                    <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
+                    {order.status.replace('_', ' ').toUpperCase()}
+                  </StatusLabel>
+                </Status>
               </div>
 
               <CardHeader className="pb-4 pr-32">
