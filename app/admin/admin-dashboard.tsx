@@ -75,9 +75,6 @@ export default function AdminDashboard() {
     total: 0,
     available: 0,
     assigned: 0,
-    in_transit: 0,
-    maintenance: 0,
-    out_of_service: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -179,9 +176,6 @@ export default function AdminDashboard() {
           total: dumpstersData.length,
           available: dumpstersData.filter(d => d.status === 'available').length,
           assigned: dumpstersData.filter(d => d.status === 'assigned').length,
-          in_transit: dumpstersData.filter(d => d.status === 'in_transit').length,
-          maintenance: dumpstersData.filter(d => d.status === 'maintenance').length,
-          out_of_service: dumpstersData.filter(d => d.status === 'out_of_service').length,
         };
         setDumpsterStats(stats);
       }
@@ -299,26 +293,6 @@ export default function AdminDashboard() {
                     />
                   </div>
                   <div className="text-sm text-muted-foreground">Assigned</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">
-                    <CountingNumber 
-                      number={dumpsterStats.in_transit}
-                      transition={{ stiffness: 90, damping: 50 }}
-                      inView={true}
-                    />
-                  </div>
-                  <div className="text-sm text-muted-foreground">In Transit</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">
-                    <CountingNumber 
-                      number={dumpsterStats.maintenance + dumpsterStats.out_of_service}
-                      transition={{ stiffness: 90, damping: 50 }}
-                      inView={true}
-                    />
-                  </div>
-                  <div className="text-sm text-muted-foreground">Need Attention</div>
                 </div>
               </div>
             </div>

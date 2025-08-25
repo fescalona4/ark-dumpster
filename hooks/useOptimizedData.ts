@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useOfflineCache } from '@/hooks/useOfflineSync';
 
 interface DataLoadingOptions {
   pageSize?: number;
@@ -52,13 +51,6 @@ export function useOptimizedData<T>(
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Use offline cache if cache key is provided
-  const { data: cachedData, fetchData: fetchCachedData } = useOfflineCache(
-    cacheKey || '',
-    () => fetcher(1, pageSize),
-    cacheTTL
-  );
 
   const loadData = useCallback(async (page: number, append = false) => {
     // Cancel previous request
@@ -126,20 +118,8 @@ export function useOptimizedData<T>(
 
   // Initial load
   useEffect(() => {
-    if (cacheKey && cachedData) {
-      setState(prev => ({
-        ...prev,
-        items: Array.isArray(cachedData) ? cachedData : cachedData.items || [],
-        totalCount: Array.isArray(cachedData) ? cachedData.length : cachedData.total || 0,
-        hasMore: false,
-        loading: false,
-        currentPage: 1,
-        totalPages: 1,
-      }));
-    } else {
-      loadData(1, false);
-    }
-  }, [loadData, cacheKey, cachedData]);
+    loadData(1, false);
+  }, [loadData]);
 
   // Auto-refresh
   useEffect(() => {

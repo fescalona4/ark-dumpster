@@ -14,6 +14,7 @@ const cspHeader = `
   form-action 'self';
   frame-ancestors 'none';
   upgrade-insecure-requests;
+  worker-src 'self' blob:;
   connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com https://va.vercel-scripts.com https://vercel.live ${isDevelopment ? 'http://localhost:*' : ''};
 `;
 
@@ -54,10 +55,10 @@ const nextConfig: NextConfig = {
         // Apply security headers to all routes
         source: '/(.*)',
         headers: [
-          // {
-          //   key: 'Content-Security-Policy',
-          //   value: cspHeader.replace(/\s{2,}/g, ' ').trim()
-          // },
+          {
+            key: 'Content-Security-Policy',
+            value: cspHeader.replace(/\s{2,}/g, ' ').trim()
+          },
           {
             key: 'X-Frame-Options',
             value: 'DENY'

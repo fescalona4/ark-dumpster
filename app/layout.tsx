@@ -14,20 +14,6 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: 'ARK Dumpster Rentals',
   description: 'Your go-to solution for dumpster rentals and waste management.',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'ARK Admin',
-  },
-  other: {
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'ARK Admin',
-    'mobile-web-app-capable': 'yes',
-    'msapplication-TileColor': '#000000',
-    'msapplication-config': '/browserconfig.xml',
-  },
 };
 
 export const viewport: Viewport = {

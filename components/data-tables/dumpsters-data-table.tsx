@@ -87,12 +87,6 @@ const getStatusBadgeVariant = (status: string) => {
       return 'default';
     case 'assigned':
       return 'secondary';
-    case 'in_transit':
-      return 'outline';
-    case 'maintenance':
-      return 'destructive';
-    case 'out_of_service':
-      return 'destructive';
     default:
       return 'secondary';
   }
@@ -104,12 +98,6 @@ const getStatusIcon = (status: string) => {
       return <IconCheck className="size-3" />;
     case 'assigned':
       return <IconTruck className="size-3" />;
-    case 'in_transit':
-      return <IconTruck className="size-3" />;
-    case 'maintenance':
-      return <IconEdit className="size-3" />;
-    case 'out_of_service':
-      return <IconX className="size-3" />;
     default:
       return null;
   }
@@ -545,7 +533,6 @@ export function DumpstersDataTable({
   onUnassign?: (id: number) => void;
 }) {
   const [data] = useState(initialData);
-  const [searchFilter, setSearchFilter] = useState('');
 
   // Group data by status
   const statusOnlyTabs = statuses ?
@@ -564,21 +551,6 @@ export function DumpstersDataTable({
         label: 'assigned',
         value: 'assigned',
         count: data.filter(item => item.status === 'assigned').length,
-      },
-      {
-        label: 'in transit',
-        value: 'in_transit',
-        count: data.filter(item => item.status === 'in_transit').length,
-      },
-      {
-        label: 'maintenance',
-        value: 'maintenance',
-        count: data.filter(item => item.status === 'maintenance').length,
-      },
-      {
-        label: 'out of service',
-        value: 'out_of_service',
-        count: data.filter(item => item.status === 'out_of_service').length,
       },
     ];
 
@@ -602,15 +574,11 @@ export function DumpstersDataTable({
     ));
   };
 
-  // Filter data based on search and status
+  // Filter data based on status
   const getFilteredData = (status: string) => {
     return data.filter(item => {
       const matchesStatus = status === 'all' || item.status === status;
-      const matchesSearch = searchFilter === '' ||
-        item.header.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.target.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        item.reviewer.toLowerCase().includes(searchFilter.toLowerCase());
-      return matchesStatus && matchesSearch;
+      return matchesStatus;
     });
   };
 
@@ -619,12 +587,6 @@ export function DumpstersDataTable({
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <Input
-              placeholder="Filter dumpsters..."
-              value={searchFilter}
-              onChange={event => setSearchFilter(event.target.value)}
-              className="max-w-sm"
-            />
             <Select value={currentView} onValueChange={setCurrentView}>
               <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm">
                 <SelectValue placeholder="Select a view" />
@@ -671,10 +633,7 @@ export function DumpstersDataTable({
                 <IconTruck className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No dumpsters found</h3>
                 <p className="text-muted-foreground">
-                  {searchFilter
-                    ? `No dumpsters found matching "${searchFilter}" with status "${tab.label}".`
-                    : `No dumpsters found with status "${tab.label}".`
-                  }
+                  No dumpsters found with status "{tab.label}".
                 </p>
               </div>
             )}

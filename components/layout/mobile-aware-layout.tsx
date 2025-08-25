@@ -6,8 +6,6 @@ import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { MobileTabNavigation, QuickActionsSheet, useMobileNavigation } from '@/components/navigation/mobile-tab-nav';
-import { ServiceWorkerRegistration, UpdateNotification, useServiceWorker } from '@/components/pwa/service-worker-registration';
-import { OfflineIndicator } from '@/components/mobile/offline-indicator';
 import { supabase } from '@/lib/supabase';
 
 interface MobileAwareLayoutProps {
@@ -17,16 +15,8 @@ interface MobileAwareLayoutProps {
 export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
   const isMobile = useIsMobile();
   const { isQuickActionsOpen, openQuickActions, closeQuickActions } = useMobileNavigation();
-  const { updateAvailable, update } = useServiceWorker();
-  const [showUpdateNotification, setShowUpdateNotification] = React.useState(false);
   const [pendingQuotes, setPendingQuotes] = React.useState<number>(0);
   const [activeOrders, setActiveOrders] = React.useState<number>(0);
-
-  React.useEffect(() => {
-    if (updateAvailable) {
-      setShowUpdateNotification(true);
-    }
-  }, [updateAvailable]);
 
   // Fetch pending counts for mobile tabs
   React.useEffect(() => {
@@ -72,18 +62,6 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
           } as React.CSSProperties
         }
       >
-        {/* Service Worker Registration */}
-        <ServiceWorkerRegistration />
-        
-        {/* Update Notification */}
-        <UpdateNotification
-          isVisible={showUpdateNotification}
-          onUpdate={() => {
-            update();
-            setShowUpdateNotification(false);
-          }}
-          onDismiss={() => setShowUpdateNotification(false)}
-        />
 
         <AdminAppSidebar variant="inset" />
         <SidebarInset>
