@@ -45,6 +45,7 @@ import {
   RiPhoneLine,
   RiMailLine,
   RiBox1Line,
+  RiRefreshLine,
   RiMoneyDollarCircleLine,
   RiDeleteBinLine,
 } from '@remixicon/react';
@@ -568,15 +569,13 @@ function OrdersPageContent() {
             }}
             variant="outline"
             disabled={isRefreshing}
-            className="min-h-[44px] touch-manipulation"
+            size="icon"
+            className="min-h-[34px] min-w-[34px] touch-manipulation"
           >
             {isRefreshing ? (
-              <div className="flex items-center gap-2">
-                <Spinner variant="circle-filled" size={16} />
-                <span>Refreshing...</span>
-              </div>
+              <Spinner variant="circle-filled" size={16} />
             ) : (
-              'Refresh'
+              <RiRefreshLine className="h-4 w-4" />
             )}
           </Button>
           <Badge variant="outline" className="gap-2 ml-auto">

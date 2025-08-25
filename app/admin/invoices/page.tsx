@@ -29,6 +29,7 @@ import {
   RiMailLine,
   RiMapPinLine,
   RiBox1Line,
+  RiRefreshLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -234,31 +235,21 @@ function InvoicesPageContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header section with stats and filters */}
-      <div className="mb-8">
-        <div className="flex items-center gap-4">
-          {/* Search bar */}
-          <div className="relative">
-            <RiSearchLine className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search invoices..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-48"
-            />
-          </div>
+      <div className="mb-4">
 
-          {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Invoices</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="picked_up">Picked Up</SelectItem>
-            </SelectContent>
-          </Select>
+        {/* Search bar */}
+        <div className="relative mb-4">
+          <RiSearchLine className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search invoices..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 w-48"
+          />
+        </div>
+
+        <div className="flex items-center gap-4">
+
 
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-40">
@@ -279,15 +270,13 @@ function InvoicesPageContent() {
             }}
             variant="outline"
             disabled={isRefreshing}
-            className="min-h-[44px] touch-manipulation"
+            size="icon"
+            className="min-h-[34px] min-w-[34px] touch-manipulation"
           >
             {isRefreshing ? (
-              <div className="flex items-center gap-2">
-                <Spinner variant="circle-filled" size={16} />
-                <span>Refreshing...</span>
-              </div>
+              <Spinner variant="circle-filled" size={16} />
             ) : (
-              'Refresh'
+              <RiRefreshLine className="h-4 w-4" />
             )}
           </Button>
           <Badge variant="outline" className="gap-2 ml-auto">
@@ -433,7 +422,7 @@ function InvoicesPageContent() {
                           <RiMoneyDollarCircleLine className="h-5 w-5" />
                           <span className="text-lg">${total.toFixed(2)}</span>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span>Subtotal:</span>

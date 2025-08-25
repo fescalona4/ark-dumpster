@@ -72,6 +72,7 @@ import {
   RiSearchLine,
   RiFilterLine,
   RiInformationLine,
+  RiRefreshLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -538,8 +539,8 @@ function QuotesPageContent() {
             </Select>
 
 
-            <Button onClick={fetchQuotes} variant="outline" size="sm">
-              Refresh
+            <Button onClick={fetchQuotes} variant="outline" size="icon" className="min-h-[34px] min-w-[34px]">
+              <RiRefreshLine className="h-4 w-4" />
             </Button>
 
             <Badge variant="outline" className="gap-2 ml-auto">
