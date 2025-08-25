@@ -57,6 +57,21 @@ import { Order } from '@/types/order';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+import { 
+  KanbanProvider, 
+  KanbanBoard, 
+  KanbanHeader, 
+  KanbanCards,
+  type DragEndEvent
+} from '@/components/ui/kanban';
+import { 
+  KANBAN_COLUMNS, 
+  transformOrdersForKanban, 
+  handleKanbanOrderMove,
+  type KanbanOrder 
+} from '@/lib/kanban-utils';
+import { OrderKanbanCard } from '@/components/admin/order-kanban-card';
+import { RiListCheck, RiDashboardLine } from '@remixicon/react';
 
 // Helper function to map order status to Status component status
 const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
@@ -103,6 +118,9 @@ function OrdersPageContent() {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // View toggle state
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Dialog state for dumpster assignment
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
@@ -326,6 +344,35 @@ function OrdersPageContent() {
   };
 
   /**
+   * Handle Kanban drag and drop
+   */
+  const handleKanbanDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const orderId = active.id as string;
+    const newColumn = over.id as string;
+    
+    // Use the utility function to handle the move
+    await handleKanbanOrderMove(orderId, newColumn, updateOrderStatus);
+  };
+
+  /**
+   * Transform orders for Kanban display
+   */
+  const kanbanOrders: KanbanOrder[] = transformOrdersForKanban(orders);
+
+  /**
+   * Handle order click in Kanban view
+   */
+  const handleKanbanOrderClick = (order: Order) => {
+    router.push(`/admin/orders/${order.id}`);
+  };
+
+  /**
    * Assigns a dumpster to an order
    */
   const assignDumpsterToOrder = async (orderId: string, dumpsterId: string | null) => {
@@ -484,48 +531,118 @@ function OrdersPageContent() {
       {/* Header section with stats and filters */}
       <div className="mb-8">
         <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Orders</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="on_way">On Way</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="on_way_pickup">On Way to Pickup</SelectItem>
-              <SelectItem value="picked_up">Picked Up</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* View Toggle */}
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              size="sm"
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('list')}
+              className="h-8 px-3"
+            >
+              <RiListCheck className="h-4 w-4 mr-1" />
+              List
+            </Button>
+            <Button
+              size="sm"
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+              onClick={() => setViewMode('kanban')}
+              className="h-8 px-3"
+            >
+              <RiDashboardLine className="h-4 w-4 mr-1" />
+              Kanban
+            </Button>
+          </div>
+
+          {/* Status Filter - only show for list view */}
+          {viewMode === 'list' && (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="scheduled">Scheduled</SelectItem>
+                <SelectItem value="on_way">On Way</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="on_way_pickup">On Way to Pickup</SelectItem>
+                <SelectItem value="picked_up">Picked Up</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+
           <Button onClick={fetchOrders} variant="outline">
             Refresh
           </Button>
           <Badge variant="outline" className="gap-2 ml-auto">
             <RiTruckLine className="h-4 w-4" />
-            {orders.length} Total Orders
+            {viewMode === 'kanban' ? kanbanOrders.length : orders.length} Total Orders
           </Badge>
         </div>
       </div>
 
       {/* Main content area */}
-      {orders.length === 0 ? (
+      {(viewMode === 'list' ? orders.length === 0 : kanbanOrders.length === 0) ? (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <RiTruckLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No orders found</h3>
               <p className="text-muted-foreground">
-                {statusFilter === 'all'
+                {viewMode === 'list' && statusFilter === 'all'
                   ? 'Orders will appear here when quotes are converted to orders.'
-                  : `No orders with status "${statusFilter}" found.`}
+                  : viewMode === 'list'
+                  ? `No orders with status "${statusFilter}" found.`
+                  : 'No orders available for Kanban view. Orders need to be in scheduled, on way, delivered, on way to pickup, or completed status.'}
               </p>
             </div>
           </CardContent>
         </Card>
+      ) : viewMode === 'kanban' ? (
+        /* Kanban View */
+        <div className="h-[calc(100vh-200px)]">
+          <KanbanProvider
+            columns={KANBAN_COLUMNS}
+            data={kanbanOrders as any} // Temporary type assertion to fix compatibility
+            onDragEnd={handleKanbanDragEnd}
+            className="h-full"
+          >
+            {(column) => (
+              <KanbanBoard 
+                id={column.id} 
+                key={column.id}
+                className={`${column.color || 'bg-slate-50 dark:bg-slate-950/20 border-slate-200 dark:border-slate-800'} min-h-96`}
+              >
+                <KanbanHeader className="bg-card dark:bg-card border-b border-border font-semibold text-sm py-3 px-4">
+                  <div className="flex items-center justify-between">
+                    <span>{column.name}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {kanbanOrders.filter(order => order.column === column.id).length}
+                    </Badge>
+                  </div>
+                </KanbanHeader>
+                <KanbanCards id={column.id}>
+                  {(order) => {
+                    // Find the full order data from kanbanOrders
+                    const fullOrder = kanbanOrders.find(o => o.id === order.id);
+                    return fullOrder ? (
+                      <OrderKanbanCard
+                        key={order.id}
+                        order={fullOrder}
+                        onClick={handleKanbanOrderClick}
+                        onStatusChange={updateOrderStatus}
+                      />
+                    ) : null;
+                  }}
+                </KanbanCards>
+              </KanbanBoard>
+            )}
+          </KanbanProvider>
+        </div>
       ) : (
+        /* List View */
         <div className="grid gap-6">
           {orders.map(order => (
             <Card key={order.id} className="relative">
