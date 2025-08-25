@@ -90,7 +90,7 @@ function OrderDetailContent() {
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Dialog state for dumpster assignment
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
   const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
@@ -268,9 +268,9 @@ function OrderDetailContent() {
     if (!order) return;
 
     // Check if dumpster is assigned
-    const hasAssignedDumpster = order.dumpster_id || 
+    const hasAssignedDumpster = order.dumpster_id ||
       dumpsters.some(d => d.current_order_id === order.id);
-    
+
     if (!hasAssignedDumpster) {
       // Open dumpster assignment dialog
       setSelectedOrderForDumpster(order);
@@ -297,7 +297,7 @@ function OrderDetailContent() {
    */
   const assignDumpsterAndProceed = async (orderId: string, dumpsterId: string) => {
     if (!order) return;
-    
+
     await assignDumpsterToOrder(dumpsterId);
     await updateOrderStatus('on_way');
     setDumpsterDialogOpen(false);
@@ -372,7 +372,7 @@ function OrderDetailContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header with back button */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"

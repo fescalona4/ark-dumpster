@@ -203,10 +203,6 @@ const Contacts = () => {
           type: 'success',
           title,
           description,
-          action: {
-            label: 'Call Us',
-            onClick: () => window.open('tel:7275641794', '_self')
-          }
         });
 
         // Log detailed info for development

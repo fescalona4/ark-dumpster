@@ -235,7 +235,7 @@ function CreateQuoteContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header section */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="flex items-center justify-between">
           <div></div>
           <Badge variant="outline" className="gap-2">

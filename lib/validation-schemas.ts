@@ -63,7 +63,7 @@ const zipCodeSchema = z
 
 // Dumpster size validation
 const dumpsterSizeSchema = z
-  .enum(['10-yard', '15-yard', '20-yard', '30-yard'], {
+  .enum(['15', '20'], {
     message: 'Invalid dumpster size',
   })
   .optional()
@@ -78,7 +78,7 @@ const dateSchema = z
 
 // Time needed validation
 const timeNeededSchema = z
-  .enum(['1-3 days', '4-7 days', '1-2 weeks', '2+ weeks'], {
+  .enum(['1-day', '2-6-days', '1-week', '2-weeks'], {
     message: 'Invalid time duration',
   })
   .optional()

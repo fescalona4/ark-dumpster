@@ -507,7 +507,7 @@ function QuotesPageContent() {
     <div className="p-2 md:p-6">
 
       {/* Header section with stats and filters */}
-      <div className="mb-8">
+      <div className="mb-4">
         {/* Enhanced filtering and search */}
         <div className="space-y-4">
           {/* Search bar */}

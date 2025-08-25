@@ -541,7 +541,7 @@ function OrdersPageContent() {
   return (
     <div className="p-2 md:p-6">
       {/* Header section with stats and filters */}
-      <div className="mb-8">
+      <div className="mb-4">
         <div className="flex items-center gap-4">
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
