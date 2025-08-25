@@ -74,7 +74,7 @@ export default function AdminDashboard() {
   const [dumpsterStats, setDumpsterStats] = useState<DumpsterStats>({
     total: 0,
     available: 0,
-    assigned: 0,
+    in_use: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     <CountingNumber 
-                      number={dumpsterStats.assigned}
+                      number={dumpsterStats.in_use}
                       transition={{ stiffness: 90, damping: 50 }}
                       inView={true}
                     />
