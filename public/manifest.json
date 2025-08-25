@@ -1,0 +1,105 @@
+{
+  "name": "ARK Dumpster Admin",
+  "short_name": "ARK Admin",
+  "description": "ARK Dumpster Rentals Admin Dashboard - Manage orders, quotes, and dumpsters on the go",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/admin",
+  "lang": "en-US",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/ark-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/ark-logo.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/ark-logo.svg", 
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pwa-screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile dashboard view"
+    },
+    {
+      "src": "/pwa-screenshot-tablet.png",
+      "sizes": "1024x768",
+      "type": "image/png", 
+      "form_factor": "wide",
+      "label": "Tablet dashboard view"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Orders",
+      "short_name": "Orders",
+      "description": "View and manage delivery orders",
+      "url": "/admin/orders",
+      "icons": [
+        {
+          "src": "/ark-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Quotes",
+      "short_name": "Quotes", 
+      "description": "Manage customer quotes",
+      "url": "/admin/quotes",
+      "icons": [
+        {
+          "src": "/ark-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dumpsters",
+      "short_name": "Dumpsters",
+      "description": "Track dumpster locations and status",
+      "url": "/admin/dumpsters",
+      "icons": [
+        {
+          "src": "/ark-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "New Order",
+      "short_name": "New Order",
+      "description": "Create a new delivery order",
+      "url": "/admin/orders/create",
+      "icons": [
+        {
+          "src": "/ark-logo.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "dir": "ltr",
+  "iarc_rating_id": "",
+  "protocol_handlers": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}
