@@ -5,7 +5,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 // Content Security Policy configuration
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-eval' 'unsafe-inline' ${isDevelopment ? "'unsafe-eval'" : ''} https://maps.googleapis.com https://maps.gstatic.com https://va.vercel-scripts.com;
+  script-src 'self' 'unsafe-eval' 'unsafe-inline' ${isDevelopment ? "'unsafe-eval'" : ''} https://maps.googleapis.com https://maps.gstatic.com https://va.vercel-scripts.com https://vercel.live;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   img-src 'self' blob: data: https://*.supabase.co https://framerusercontent.com https://maps.googleapis.com https://maps.gstatic.com;
   font-src 'self' https://fonts.gstatic.com;
@@ -14,7 +14,7 @@ const cspHeader = `
   form-action 'self';
   frame-ancestors 'none';
   upgrade-insecure-requests;
-  connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com ${isDevelopment ? 'http://localhost:*' : ''};
+  connect-src 'self' https://*.supabase.co https://api.resend.com https://maps.googleapis.com https://ipapi.co https://ip-api.com https://vitals.vercel-insights.com https://vercel.live ${isDevelopment ? 'http://localhost:*' : ''};
 `;
 
 const nextConfig: NextConfig = {
