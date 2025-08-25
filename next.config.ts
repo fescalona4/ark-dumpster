@@ -54,10 +54,10 @@ const nextConfig: NextConfig = {
         // Apply security headers to all routes
         source: '/(.*)',
         headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: cspHeader.replace(/\s{2,}/g, ' ').trim()
-          },
+          // {
+          //   key: 'Content-Security-Policy',
+          //   value: cspHeader.replace(/\s{2,}/g, ' ').trim()
+          // },
           {
             key: 'X-Frame-Options',
             value: 'DENY'
