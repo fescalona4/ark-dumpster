@@ -18,22 +18,11 @@ export async function POST(
     const body = await request.json();
     const supabase = createServerSupabaseClient();
 
-    console.log('Creating Square invoice for order ID:', orderId);
-
-    // Debug: Check if the orders table has any data at all
-    const { count, error: countError } = await supabase
-      .from('orders')
-      .select('*', { count: 'exact', head: true });
-
-    console.log('Total orders count:', count, 'error:', countError);
-
-    // First, let's try to see what data we can get
+    // Fetch the order
     const { data: orders, error: listError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderId);
-
-    console.log('Orders query result:', { orders, listError });
 
     if (listError) {
       console.error('Database error listing orders:', listError);

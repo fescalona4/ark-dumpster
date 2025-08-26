@@ -172,6 +172,11 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 404) {
+          toast.error('Order not found. Please refresh the page and try again.');
+          onUpdate?.(); // Trigger refresh of orders
+          return;
+        }
         throw new Error(data.error || 'Failed to create invoice');
       }
 

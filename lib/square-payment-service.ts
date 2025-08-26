@@ -51,31 +51,31 @@ export interface SquareInvoiceRequest {
 export async function createSquareInvoiceWithPayment(request: SquareInvoiceRequest): Promise<SquareInvoiceResponse> {
   try {
     const { order, dueDate } = request;
-    
+
     console.log('Creating Square invoice with payment for order:', order.order_number);
-    
+
     // Step 1: Create payment record
     const paymentResult = await createPaymentFromOrder(
-      order, 
-      PaymentMethod.SQUARE_INVOICE, 
+      order,
+      PaymentMethod.SQUARE_INVOICE,
       dueDate
     );
-    
+
     if (!paymentResult.success || !paymentResult.payment) {
       return {
         success: false,
         error: paymentResult.error || 'Failed to create payment record',
       };
     }
-    
+
     const payment = paymentResult.payment;
-    
+
     // Step 2: Create Square invoice (mock for development)
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
       const mockSquareInvoiceId = `sq_invoice_${Date.now()}`;
       const mockCustomerId = `sq_customer_${order.id}`;
-      const mockPublicUrl = `http://localhost:3001/dev/mock-square-invoice/${mockSquareInvoiceId}`;
-      
+      const mockPublicUrl = `http://localhost:3000/dev/mock-square-invoice/${mockSquareInvoiceId}`;
+
       // Update payment with Square data
       await updateSquarePaymentData(payment.id, {
         square_invoice_id: mockSquareInvoiceId,
@@ -84,7 +84,7 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
         public_payment_url: mockPublicUrl,
         invoice_url: mockPublicUrl,
       });
-      
+
       // Update payment with customer info
       await updatePayment(payment.id, {
         status: PaymentStatus.DRAFT,
@@ -94,7 +94,7 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
           customer_phone: order.phone?.toString(),
         }
       });
-      
+
       return {
         success: true,
         invoice: {
@@ -113,10 +113,10 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
         },
       };
     }
-    
+
     // TODO: Implement actual Square API integration here
     // This would use the actual Square SDK to create the invoice
-    
+
     return {
       success: false,
       error: 'Square API not configured for production',
@@ -138,18 +138,18 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
 export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<SquareInvoiceResponse> {
   try {
     console.log('Sending Square invoice for payment:', paymentId);
-    
+
     // Mock sending for development
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
       const result = await markPaymentAsSent(paymentId);
-      
+
       if (!result.success) {
         return {
           success: false,
           error: result.error || 'Failed to mark payment as sent',
         };
       }
-      
+
       return {
         success: true,
         invoice: {
@@ -160,9 +160,9 @@ export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<S
         payment: result.payment,
       };
     }
-    
+
     // TODO: Implement actual Square API sending
-    
+
     return {
       success: false,
       error: 'Square API not configured for production',
@@ -182,19 +182,19 @@ export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<S
 export async function getSquareInvoiceStatus(squareInvoiceId: string): Promise<SquareInvoiceResponse> {
   try {
     console.log('Getting Square invoice status:', squareInvoiceId);
-    
+
     // Get payment record
     const paymentResult = await getPaymentBySquareInvoiceId(squareInvoiceId);
-    
+
     if (!paymentResult.success || !paymentResult.payment) {
       return {
         success: false,
         error: 'Payment not found for Square invoice ID',
       };
     }
-    
+
     const payment = paymentResult.payment;
-    
+
     // Mock status check for development
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
       return {
@@ -207,9 +207,9 @@ export async function getSquareInvoiceStatus(squareInvoiceId: string): Promise<S
         payment,
       };
     }
-    
+
     // TODO: Implement actual Square API status check
-    
+
     return {
       success: false,
       error: 'Square API not configured for production',
@@ -233,17 +233,17 @@ export async function cancelSquareInvoiceWithPayment(
 ): Promise<SquareInvoiceResponse> {
   try {
     console.log('Canceling Square invoice for payment:', paymentId);
-    
+
     // Cancel payment record
     const result = await cancelPayment(paymentId, reason);
-    
+
     if (!result.success) {
       return {
         success: false,
         error: result.error || 'Failed to cancel payment',
       };
     }
-    
+
     // Mock Square cancellation for development
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
       return {
@@ -255,9 +255,9 @@ export async function cancelSquareInvoiceWithPayment(
         payment: result.payment,
       };
     }
-    
+
     // TODO: Implement actual Square API cancellation
-    
+
     return {
       success: false,
       error: 'Square API not configured for production',
@@ -282,43 +282,43 @@ export async function handleSquareWebhookEvent(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('Handling Square webhook event:', eventType);
-    
+
     // Log the webhook event
     await logPaymentWebhookEvent(eventType, eventId, 'SQUARE', payload);
-    
+
     const squareInvoiceId = payload.data?.object?.invoice?.id;
-    
+
     if (!squareInvoiceId) {
       console.log('No Square invoice ID found in webhook payload');
       return { success: true };
     }
-    
+
     // Get payment record
     const paymentResult = await getPaymentBySquareInvoiceId(squareInvoiceId);
-    
+
     if (!paymentResult.success || !paymentResult.payment) {
       console.log('No payment found for Square invoice ID:', squareInvoiceId);
       return { success: true };
     }
-    
+
     const payment = paymentResult.payment;
     const invoice = payload.data?.object?.invoice;
-    
+
     // Handle different webhook events
     switch (eventType) {
       case 'invoice.sent':
         await markPaymentAsSent(payment.id, invoice.publicUrl);
         break;
-        
+
       case 'invoice.viewed':
         await markPaymentAsViewed(payment.id);
         break;
-        
+
       case 'invoice.payment_made':
         const paidAmount = invoice.paymentRequests?.[0]?.totalCompletedAmountMoney?.amount;
         if (paidAmount) {
           const dollarAmount = centsToDollars(parseInt(paidAmount));
-          
+
           // Record the transaction
           await recordPaymentTransaction(
             payment.id,
@@ -327,31 +327,31 @@ export async function handleSquareWebhookEvent(
             payload.data?.object?.payment?.id,
             { webhook_event_id: eventId }
           );
-          
+
           // Update payment status based on amount paid
           const totalAmount = centsToDollars(payment.total_amount);
           let status = PaymentStatus.PARTIALLY_PAID;
-          
+
           if (dollarAmount >= totalAmount) {
             status = PaymentStatus.PAID;
           }
-          
+
           await updatePayment(payment.id, {
             status,
             paid_amount: dollarAmount,
           });
         }
         break;
-        
+
       case 'invoice.canceled':
         await cancelPayment(payment.id, 'Canceled via Square');
         break;
-        
+
       case 'invoice.updated':
         // Update payment status to match Square status
         const squareStatus = invoice.status;
         let paymentStatus = payment.status;
-        
+
         switch (squareStatus) {
           case 'SENT':
             paymentStatus = PaymentStatus.SENT;
@@ -366,16 +366,16 @@ export async function handleSquareWebhookEvent(
             paymentStatus = PaymentStatus.CANCELED;
             break;
         }
-        
+
         if (paymentStatus !== payment.status) {
           await updatePayment(payment.id, { status: paymentStatus });
         }
         break;
-        
+
       default:
         console.log('Unhandled webhook event type:', eventType);
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error handling Square webhook event:', error);
@@ -410,6 +410,6 @@ export function getPaymentStatusInfo(status: PaymentStatus) {
     [PaymentStatus.REFUNDED]: { color: 'gray', label: 'Refunded', icon: '↩️' },
     [PaymentStatus.FAILED]: { color: 'red', label: 'Failed', icon: '💥' },
   };
-  
+
   return statusMap[status] || statusMap[PaymentStatus.DRAFT];
 }
