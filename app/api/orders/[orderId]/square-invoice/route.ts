@@ -6,7 +6,7 @@ import {
   cancelSquareInvoiceWithPayment,
 } from '@/lib/square-payment-service';
 import { getOrderPayments } from '@/lib/payment-service';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 
 // POST - Create Square invoice from order
 export async function POST(

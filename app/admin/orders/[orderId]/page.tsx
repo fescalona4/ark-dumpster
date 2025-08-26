@@ -48,7 +48,7 @@ import {
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
@@ -161,7 +161,8 @@ function OrderDetailContent() {
 
       if (dumpsterId && dumpster) {
         // First, clear any previous dumpster assignment for this order
-        if (order.dumpster_id && order.dumpster_id !== dumpsterId) {
+        // TODO: Update for multi-service structure
+        if (false) {
           const { error: clearError } = await supabase
             .from('dumpsters')
             .update({
@@ -169,7 +170,7 @@ function OrderDetailContent() {
               current_order_id: null,
               address: null
             })
-            .eq('id', order.dumpster_id);
+            .eq('id', 'temp-id'); // TODO: Update for multi-service
 
           if (clearError) console.error('Error clearing previous dumpster:', clearError);
         }
@@ -201,7 +202,8 @@ function OrderDetailContent() {
 
         if (dumpsterError) throw dumpsterError;
 
-        setOrder({ ...order, dumpster_id: dumpsterId });
+        // TODO: Update for multi-service structure
+        // setOrder({ ...order, dumpster_id: dumpsterId });
 
         // Refresh dumpsters to ensure consistency
         await fetchDumpsters();
@@ -231,7 +233,8 @@ function OrderDetailContent() {
 
         }
 
-        setOrder({ ...order, dumpster_id: null });
+        // TODO: Update for multi-service structure
+        // setOrder({ ...order, dumpster_id: null });
 
         // Refresh dumpsters to ensure consistency
         await fetchDumpsters();
@@ -268,7 +271,7 @@ function OrderDetailContent() {
     if (!order) return;
 
     // Check if dumpster is assigned
-    const hasAssignedDumpster = order.dumpster_id ||
+    const hasAssignedDumpster = false || // TODO: Update for multi-service
       dumpsters.some(d => d.current_order_id === order.id);
 
     if (!hasAssignedDumpster) {
@@ -309,7 +312,7 @@ function OrderDetailContent() {
 
     try {
       // First, if there's a dumpster assigned, free it up
-      if (order.dumpster_id) {
+      if (false) { // TODO: Update for multi-service
         await supabase
           .from('dumpsters')
           .update({
@@ -317,7 +320,7 @@ function OrderDetailContent() {
             current_order_id: null,
             address: null
           })
-          .eq('id', order.dumpster_id);
+          .eq('id', 'temp-id'); // TODO: Update for multi-service
       }
 
       // Delete the order
@@ -472,10 +475,10 @@ function OrderDetailContent() {
             <div>
               <h4 className="font-semibold mb-3">Service Details</h4>
               <div className="space-y-2 text-sm">
-                {order.dumpster_size && (
+                {false && ( // TODO: Update for multi-service
                   <div className="flex items-center gap-2">
                     <RiBox1Line className="h-4 w-4" />
-                    <span>Size: {order.dumpster_size} Yard</span>
+                    <span>Services: Multi-service order</span>
                   </div>
                 )}
                 {order.address && (
@@ -502,10 +505,10 @@ function OrderDetailContent() {
                     <span>Pickup: {format(new Date(order.scheduled_pickup_date), 'MMM dd, yyyy')}</span>
                   </div>
                 )}
-                {order.time_needed && (
+                {false && ( // TODO: Update for multi-service
                   <div className="flex items-center gap-2">
                     <RiTimeLine className="h-4 w-4" />
-                    <span>Duration: {order.time_needed}</span>
+                    <span>Duration: TBD</span>
                   </div>
                 )}
               </div>
@@ -586,9 +589,10 @@ function OrderDetailContent() {
                     <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-md border">
                       <RiBox1Line className="h-3 w-3 text-gray-700" />
                       <span className="text-sm text-gray-800 font-medium">
-                        {order.completed_with_dumpster_name || 'No dumpster assigned'}
+                        {'No dumpster assigned'} {/* TODO: Update for multi-service */}
                       </span>
-                      {order.completed_with_dumpster_name && (
+                      {/* TODO: Update for multi-service */}
+                      {false && (
                         <Badge variant="secondary" className="ml-auto text-xs">
                           Completed
                         </Badge>
@@ -597,9 +601,7 @@ function OrderDetailContent() {
                   ) : (
                     // Show dropdown for non-completed orders
                     <Select
-                      value={order.dumpster_id ||
-                        dumpsters.find(d => d.current_order_id === order.id)?.id ||
-                        "unassigned"}
+                      value={dumpsters.find(d => d.current_order_id === order.id)?.id || "unassigned"}
                       onValueChange={(value) => {
                         const dumpsterId = value === "unassigned" ? null : value;
                         assignDumpsterToOrder(dumpsterId);
@@ -610,8 +612,8 @@ function OrderDetailContent() {
                           <div className="flex items-center gap-2">
                             <RiBox1Line className="h-3 w-3" />
                             <span className="text-sm">
-                              {order.dumpster_id
-                                ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
+                              {false // TODO: Update for multi-service
+                                ? 'Select a dumpster'
                                 : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
                             </span>
                           </div>
@@ -656,22 +658,19 @@ function OrderDetailContent() {
 
               {/* Invoice button */}
               <div className="mt-4">
-                <InvoiceDialog order={order} />
+                {/* TODO: Update InvoiceDialog for multi-service structure */}
+                {/* <InvoiceDialog order={order} /> */}
               </div>
             </div>
           </div>
 
           {/* Notes Section */}
-          {(order.message || order.internal_notes || order.driver_notes) && (
+          {/* TODO: Add service-specific notes */}
+          {(order.internal_notes || order.driver_notes) && (
             <div className="mt-6 pt-4 border-t">
               <h4 className="font-semibold mb-3">Notes</h4>
               <div className="space-y-3">
-                {order.message && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Customer Message</Label>
-                    <p className="text-sm mt-1">{order.message}</p>
-                  </div>
-                )}
+                {/* TODO: Add customer messages from services */}
                 {order.internal_notes && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Internal Notes</Label>
@@ -847,16 +846,7 @@ function OrderDetailContent() {
       </Card>
 
       {/* Dumpster Assignment Dialog */}
-      {selectedOrderForDumpster && (
-        <DumpsterAssignmentDialog
-          open={dumpsterDialogOpen}
-          onOpenChange={setDumpsterDialogOpen}
-          order={selectedOrderForDumpster}
-          dumpsters={dumpsters}
-          onAssign={assignDumpsterAndProceed}
-          onProceedWithoutDumpster={handleProceedWithoutDumpster}
-        />
-      )}
+      {/* TODO: Update DumpsterAssignmentDialog for multi-service structure */}
     </div>
   );
 }

@@ -16,6 +16,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { convertQuoteToOrder } from '@/lib/order-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
@@ -77,7 +78,7 @@ import {
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import AuthGuard from '@/components/providers/auth-guard';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 
 /**
  * Quote interface defining the structure of a quote object
@@ -343,7 +344,7 @@ function QuotesPageContent() {
   };
 
   /**
-   * Converts a quote to an order
+   * Converts a quote to an order using the new multi-service system
    * Creates a new order record and updates the quote status to 'accepted'
    * Generates an order number and copies all relevant quote data
    */
@@ -357,78 +358,21 @@ function QuotesPageContent() {
 
       // Get current edit form data if any
       const currentEditData = editForms[quoteId];
-      const currentDropoffTime = currentEditData?.dropoff_time || quote.dropoff_time;
       const currentDropoffDate = currentEditData?.dropoff_date || quote.dropoff_date;
 
       // Validate required fields for order creation
-      if (!currentDropoffTime) {
-        alert('Dropoff time is required to create an order. Please set a dropoff time first.');
-        return;
-      }
-
       if (!currentDropoffDate) {
         alert('Dropoff date is required to create an order. Please set a dropoff date first.');
         return;
       }
 
-      // Generate order number
-      const { data: orderNumData, error: orderNumError } = await supabase
-        .rpc('generate_order_number');
+      // Use the new convertQuoteToOrder function
+      const { order: orderResult, services } = await convertQuoteToOrder(quoteId);
 
-      if (orderNumError) {
-        console.error('Error generating order number:', orderNumError);
-        alert('Failed to generate order number');
-        return;
-      }
-
-      // Create order from quote data (use current edit data if available)
-      const orderData = {
-        quote_id: quote.id,
-        first_name: currentEditData?.first_name || quote.first_name,
-        last_name: currentEditData?.last_name || quote.last_name,
-        email: currentEditData?.email || quote.email,
-        phone: currentEditData?.phone || quote.phone,
-        address: currentEditData?.address || quote.address,
-        address2: currentEditData?.address2 || quote.address2,
-        city: currentEditData?.city || quote.city,
-        state: currentEditData?.state || quote.state,
-        zip_code: currentEditData?.zip_code || quote.zip_code,
-        dumpster_size: currentEditData?.dumpster_size || quote.dumpster_size,
-        dropoff_date: currentDropoffDate,
-        dropoff_time: currentDropoffTime,
-        time_needed: currentEditData?.time_needed || quote.time_needed,
-        message: currentEditData?.message || quote.message,
-        order_number: orderNumData,
-        status: 'scheduled' as const,
-        priority: currentEditData?.priority || quote.priority,
-        quoted_price: currentEditData?.quoted_price || quote.quoted_price,
-        assigned_to: currentEditData?.assigned_to || quote.assigned_to || 'Ariel',
-        internal_notes: currentEditData?.quote_notes || quote.quote_notes,
-      };
-
-      // Insert order
-      const { data: orderResult, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Error creating order:', orderError);
-        alert('Failed to create order');
-        return;
-      }
-
-      // Update quote status to accepted
-      const { error: quoteUpdateError } = await supabase
-        .from('quotes')
-        .update({ status: 'accepted' })
-        .eq('id', quoteId);
-
-      if (quoteUpdateError) {
-        console.error('Error updating quote status:', quoteUpdateError);
-        // Still show success since order was created
-      }
+      console.log('Order created successfully:', {
+        order: orderResult,
+        services: services.length
+      });
 
       // Refresh quotes to show updated status
       await fetchQuotes();
@@ -437,8 +381,8 @@ function QuotesPageContent() {
       setCreatedOrder(orderResult);
       setOrderConfirmationOpen(true);
     } catch (err) {
-      console.error('Unexpected error creating order:', err);
-      alert('Failed to create order');
+      console.error('Error creating order:', err);
+      alert(err instanceof Error ? err.message : 'Failed to create order');
     }
   };
 
@@ -1093,21 +1037,7 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* Order Confirmation Dialog */}
-      <OrderConfirmationDialog
-        order={createdOrder}
-        open={orderConfirmationOpen}
-        onOpenChange={setOrderConfirmationOpen}
-        onViewOrder={() => {
-          setOrderConfirmationOpen(false);
-          // Navigate to the specific order
-          if (createdOrder?.id) {
-            router.push(`/admin/orders/${createdOrder.id}`);
-          } else {
-            router.push('/admin/orders');
-          }
-        }}
-      />
+      {/* TODO: Update OrderConfirmationDialog for multi-service structure */}
     </div>
   );
 }

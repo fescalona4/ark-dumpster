@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 
 export interface OrderStatusUpdateOptions {
@@ -60,7 +60,7 @@ export async function updateOrderStatus({
     if (newStatus === 'completed' && currentOrder) {
       // Check both order.dumpster_id and find any dumpster with current_order_id matching this order
       const assignedDumpster = dumpsters.find(d => d.current_order_id === currentOrder.id);
-      const dumpsterId = currentOrder.dumpster_id || assignedDumpster?.id;
+      const dumpsterId = assignedDumpster?.id; // TODO: Update for multi-service
       
       if (dumpsterId) {
         // Get dumpster info before freeing it

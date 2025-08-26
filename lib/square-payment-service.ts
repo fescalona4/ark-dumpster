@@ -3,8 +3,7 @@
  * Integrates Square invoice functionality with the Payment table system
  */
 
-import { Order } from '@/types/order';
-import { Payment, PaymentMethod, PaymentStatus } from '@/types/payment';
+import { Order, Payment, PaymentMethod, PaymentStatus } from '@/types/database';
 import {
   createPaymentFromOrder,
   updatePayment,
@@ -57,18 +56,18 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
     // Step 1: Create payment record
     const paymentResult = await createPaymentFromOrder(
       order,
-      PaymentMethod.SQUARE_INVOICE,
+      'SQUARE_INVOICE',
       dueDate
     );
 
-    if (!paymentResult.success || !paymentResult.payment) {
+    if (!paymentResult.success || !paymentResult.data) {
       return {
         success: false,
         error: paymentResult.error || 'Failed to create payment record',
       };
     }
 
-    const payment = paymentResult.payment;
+    const payment = paymentResult.data;
 
     // Step 2: Create Square invoice (mock for development)
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
@@ -87,7 +86,7 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
 
       // Update payment with customer info
       await updatePayment(payment.id, {
-        status: PaymentStatus.DRAFT,
+        status: 'DRAFT',
         metadata: {
           ...payment.metadata,
           customer_email: order.email,
@@ -153,11 +152,11 @@ export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<S
       return {
         success: true,
         invoice: {
-          id: result.payment?.square_invoice_id || 'mock_invoice',
+          id: result.data?.square_invoice_id || 'mock_invoice',
           status: 'SENT',
-          publicUrl: result.payment?.public_payment_url || undefined,
+          publicUrl: result.data?.public_payment_url || undefined,
         },
-        payment: result.payment,
+        payment: result.data,
       };
     }
 
@@ -186,14 +185,14 @@ export async function getSquareInvoiceStatus(squareInvoiceId: string): Promise<S
     // Get payment record
     const paymentResult = await getPaymentBySquareInvoiceId(squareInvoiceId);
 
-    if (!paymentResult.success || !paymentResult.payment) {
+    if (!paymentResult.success || !paymentResult.data) {
       return {
         success: false,
         error: 'Payment not found for Square invoice ID',
       };
     }
 
-    const payment = paymentResult.payment;
+    const payment = paymentResult.data;
 
     // Mock status check for development
     if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
@@ -249,10 +248,10 @@ export async function cancelSquareInvoiceWithPayment(
       return {
         success: true,
         invoice: {
-          id: result.payment?.square_invoice_id || 'mock_invoice',
+          id: result.data?.square_invoice_id || 'mock_invoice',
           status: 'CANCELED',
         },
-        payment: result.payment,
+        payment: result.data,
       };
     }
 
@@ -261,7 +260,7 @@ export async function cancelSquareInvoiceWithPayment(
     return {
       success: false,
       error: 'Square API not configured for production',
-      payment: result.payment,
+      payment: result.data,
     };
   } catch (error) {
     console.error('Error canceling Square invoice:', error);
@@ -296,12 +295,12 @@ export async function handleSquareWebhookEvent(
     // Get payment record
     const paymentResult = await getPaymentBySquareInvoiceId(squareInvoiceId);
 
-    if (!paymentResult.success || !paymentResult.payment) {
+    if (!paymentResult.success || !paymentResult.data) {
       console.log('No payment found for Square invoice ID:', squareInvoiceId);
       return { success: true };
     }
 
-    const payment = paymentResult.payment;
+    const payment = paymentResult.data;
     const invoice = payload.data?.object?.invoice;
 
     // Handle different webhook events
@@ -330,14 +329,14 @@ export async function handleSquareWebhookEvent(
 
           // Update payment status based on amount paid
           const totalAmount = centsToDollars(payment.total_amount);
-          let status = PaymentStatus.PARTIALLY_PAID;
+          let status = 'PARTIALLY_PAID';
 
           if (dollarAmount >= totalAmount) {
-            status = PaymentStatus.PAID;
+            status = 'PAID';
           }
 
           await updatePayment(payment.id, {
-            status,
+            status: status as PaymentStatus,
             paid_amount: dollarAmount,
           });
         }
@@ -354,16 +353,16 @@ export async function handleSquareWebhookEvent(
 
         switch (squareStatus) {
           case 'SENT':
-            paymentStatus = PaymentStatus.SENT;
+            paymentStatus = 'SENT';
             break;
           case 'VIEWED':
-            paymentStatus = PaymentStatus.VIEWED;
+            paymentStatus = 'VIEWED';
             break;
           case 'PAID':
-            paymentStatus = PaymentStatus.PAID;
+            paymentStatus = 'PAID';
             break;
           case 'CANCELED':
-            paymentStatus = PaymentStatus.CANCELED;
+            paymentStatus = 'CANCELED';
             break;
         }
 
@@ -399,17 +398,17 @@ export function formatPaymentAmount(payment: Payment): string {
  */
 export function getPaymentStatusInfo(status: PaymentStatus) {
   const statusMap = {
-    [PaymentStatus.DRAFT]: { color: 'gray', label: 'Draft', icon: '📄' },
-    [PaymentStatus.PENDING]: { color: 'yellow', label: 'Pending', icon: '⏳' },
-    [PaymentStatus.SENT]: { color: 'blue', label: 'Sent', icon: '📧' },
-    [PaymentStatus.VIEWED]: { color: 'purple', label: 'Viewed', icon: '👁️' },
-    [PaymentStatus.PARTIALLY_PAID]: { color: 'orange', label: 'Partially Paid', icon: '💰' },
-    [PaymentStatus.PAID]: { color: 'green', label: 'Paid', icon: '✅' },
-    [PaymentStatus.OVERDUE]: { color: 'red', label: 'Overdue', icon: '⚠️' },
-    [PaymentStatus.CANCELED]: { color: 'red', label: 'Canceled', icon: '❌' },
-    [PaymentStatus.REFUNDED]: { color: 'gray', label: 'Refunded', icon: '↩️' },
-    [PaymentStatus.FAILED]: { color: 'red', label: 'Failed', icon: '💥' },
+    'DRAFT': { color: 'gray', label: 'Draft', icon: '📄' },
+    'PENDING': { color: 'yellow', label: 'Pending', icon: '⏳' },
+    'SENT': { color: 'blue', label: 'Sent', icon: '📧' },
+    'VIEWED': { color: 'purple', label: 'Viewed', icon: '👁️' },
+    'PARTIALLY_PAID': { color: 'orange', label: 'Partially Paid', icon: '💰' },
+    'PAID': { color: 'green', label: 'Paid', icon: '✅' },
+    'OVERDUE': { color: 'red', label: 'Overdue', icon: '⚠️' },
+    'CANCELED': { color: 'red', label: 'Canceled', icon: '❌' },
+    'REFUNDED': { color: 'gray', label: 'Refunded', icon: '↩️' },
+    'FAILED': { color: 'red', label: 'Failed', icon: '💥' },
   };
 
-  return statusMap[status] || statusMap[PaymentStatus.DRAFT];
+  return statusMap[status] || statusMap['DRAFT'];
 }

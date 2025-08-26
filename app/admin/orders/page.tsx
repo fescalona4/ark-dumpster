@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getOrdersWithServiceSummary, getOrderWithServices } from '@/lib/order-service';
 import { geocodeAddress } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
 import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import { updateOrderStatus as updateOrderStatusShared, getStatusIcon } from '@/components/order-management/order-status-manager';
@@ -136,7 +137,7 @@ function OrdersPageContent() {
   }, []);
 
   /**
-   * Fetches orders from the database with optional filtering
+   * Fetches orders from the database with optional filtering using new service summary
    */
   const fetchOrders = useCallback(async (showRefreshIndicator = false) => {
     try {
@@ -145,22 +146,12 @@ function OrdersPageContent() {
       } else {
         setLoading(true);
       }
-      let query = supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      // Use the new service to get orders with service summaries
+      const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
+      const ordersData = await getOrdersWithServiceSummary(filters);
 
-      const { data, error } = await query;
-
-      if (error) {
-        throw error;
-      }
-
-      setOrders(data || []);
+      setOrders(ordersData || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch orders');
@@ -303,14 +294,14 @@ function OrdersPageContent() {
     try {
       // First, if there's a dumpster assigned, free it up
       const order = orders.find(o => o.id === orderId);
-      if (order?.dumpster_id) {
+      if (false) { // TODO: Update for multi-service
         await supabase
           .from('dumpsters')
           .update({
             status: 'available',
             current_order_id: null
           })
-          .eq('id', order.dumpster_id);
+          .eq('id', 'temp-id'); // TODO: Update for multi-service
       }
 
       // Delete the order
@@ -329,9 +320,9 @@ function OrdersPageContent() {
       setOrders(orders.filter(order => order.id !== orderId));
 
       // Update dumpsters state if needed
-      if (order?.dumpster_id) {
+      if (false) { // TODO: Update for multi-service
         setDumpsters(dumpsters.map(d =>
-          d.id === order.dumpster_id
+          d.id === 'temp-id' // TODO: Update for multi-service
             ? { ...d, status: 'available' as const, current_order_id: undefined }
             : d
         ));
@@ -348,7 +339,7 @@ function OrdersPageContent() {
    */
   const handleOnMyWayClick = async (order: Order) => {
     // Check if dumpster is assigned
-    const hasAssignedDumpster = order.dumpster_id ||
+    const hasAssignedDumpster = 'temp-id' // TODO: Update for multi-service ||
       dumpsters.some(d => d.current_order_id === order.id);
 
     if (!hasAssignedDumpster) {
@@ -687,11 +678,11 @@ function OrdersPageContent() {
                               className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleQuickCall(order.phone!);
+                                handleQuickCall(order.phone ? parseInt(order.phone) : 0);
                               }}
-                              aria-label={`Call ${order.first_name} ${order.last_name} at ${formatPhoneNumber(order.phone)}`}
+                              aria-label={`Call ${order.first_name} ${order.last_name} at ${formatPhoneNumber(order.phone ? parseInt(order.phone) : 0)}`}
                             >
-                              {formatPhoneNumber(order.phone)}
+                              {formatPhoneNumber(order.phone ? parseInt(order.phone) : 0)}
                             </a>
                           </div>
                         )}
@@ -715,12 +706,33 @@ function OrdersPageContent() {
                 <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                   {/* Service Details */}
                   <div className="bg-muted/30 p-3 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-base">Service Details</h4>
+                    <h4 className="font-semibold mb-2 text-base flex items-center gap-2">
+                      Service Details
+                      {order.has_multiple_services && (
+                        <Badge variant="secondary" className="text-xs">
+                          {order.service_count} Services
+                        </Badge>
+                      )}
+                    </h4>
                     <div className="space-y-2 text-sm">
-                      {order.dumpster_size && (
-                        <div className="flex items-center gap-2">
+                      {order.services_summary ? (
+                        <div className="flex items-start gap-2">
+                          <RiBox1Line className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium">Services:</div>
+                            <div className="text-muted-foreground">{order.services_summary}</div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-muted-foreground">
                           <RiBox1Line className="h-4 w-4" />
-                          <span>Size: {order.dumpster_size} Yard</span>
+                          <span>No services configured</span>
+                        </div>
+                      )}
+                      {order.total_service_amount > 0 && (
+                        <div className="flex items-center gap-2">
+                          <RiMoneyDollarCircleLine className="h-4 w-4 text-green-600" />
+                          <span>Total: ${order.total_service_amount.toFixed(2)}</span>
                         </div>
                       )}
                       {order.address && (
@@ -819,27 +831,32 @@ function OrdersPageContent() {
                       {/* Dumpster Assignment */}
                       <div className="space-y-2">
                         <Label htmlFor={`dumpster-${order.id}`} className="text-sm font-semibold">
-                          {order.status === 'completed' ? 'Dumpster Used' : 'Assigned Dumpster'}
+                          {order.status === 'completed' ? 'Dumpsters Used' : 'Assigned Dumpsters'}
                         </Label>
                         {order.status === 'completed' ? (
                           // Show read-only dumpster info for completed orders
-                          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border min-h-[44px]">
-                            <RiBox1Line className="h-3 w-3 text-gray-700" />
-                            <span className="text-sm text-gray-800 font-medium">
-                              {order.completed_with_dumpster_name || 'No dumpster assigned'}
-                            </span>
-                            {order.completed_with_dumpster_name && (
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                Completed
-                              </Badge>
+                          <div className="p-3 bg-muted rounded-lg border min-h-[44px]">
+                            {order.assigned_dumpsters ? (
+                              <div className="flex items-center gap-2">
+                                <RiBox1Line className="h-3 w-3 text-gray-700" />
+                                <span className="text-sm text-gray-800 font-medium">
+                                  {order.assigned_dumpsters}
+                                </span>
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  Completed
+                                </Badge>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-gray-500">
+                                <RiBox1Line className="h-3 w-3" />
+                                <span className="text-sm">No dumpsters assigned</span>
+                              </div>
                             )}
                           </div>
                         ) : (
                           // Show dropdown for non-completed orders
                           <Select
-                            value={order.dumpster_id ||
-                              dumpsters.find(d => d.current_order_id === order.id)?.id ||
-                              "unassigned"}
+                            value={dumpsters.find(d => d.current_order_id === order.id)?.id || "unassigned"}
                             onValueChange={(value) => {
                               const dumpsterId = value === "unassigned" ? null : value;
                               assignDumpsterToOrder(order.id, dumpsterId);
@@ -854,9 +871,7 @@ function OrdersPageContent() {
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-3 w-3" />
                                   <span className="text-sm">
-                                    {order.dumpster_id
-                                      ? dumpsters.find(d => d.id === order.dumpster_id)?.name || 'Select a dumpster'
-                                      : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
+                                    {dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
                                   </span>
                                 </div>
                               </SelectValue>
@@ -896,11 +911,9 @@ function OrdersPageContent() {
 
                     {/* Invoice buttons */}
                     <div className="mt-4 space-y-3">
-                      <InvoiceDialog order={order} />
-                      <PaymentManager 
-                        order={order} 
-                        onUpdate={() => fetchOrders()} 
-                      />
+                      {/* TODO: Update for multi-service structure */}
+                      {/* <InvoiceDialog order={order} /> */}
+                      {/* <PaymentManager order={order} onUpdate={() => fetchOrders()} /> */}
                     </div>
                   </div>
                 </div>
@@ -1021,16 +1034,7 @@ function OrdersPageContent() {
       )}
 
       {/* Dumpster Assignment Dialog */}
-      {selectedOrderForDumpster && (
-        <DumpsterAssignmentDialog
-          open={dumpsterDialogOpen}
-          onOpenChange={setDumpsterDialogOpen}
-          order={selectedOrderForDumpster}
-          dumpsters={dumpsters}
-          onAssign={assignDumpsterAndProceed}
-          onProceedWithoutDumpster={handleProceedWithoutDumpster}
-        />
-      )}
+      {/* TODO: Update DumpsterAssignmentDialog for multi-service structure */}
     </div>
   );
 }

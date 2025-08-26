@@ -3,29 +3,212 @@
  * Handles all payment and invoice operations using the new Payment table structure
  */
 
-import { Order } from '@/types/order';
 import { 
+  Order, 
   Payment, 
-  PaymentTransaction, 
-  PaymentLineItem,
-  CreatePaymentRequest,
-  UpdatePaymentRequest,
-  PaymentResponse,
-  PaymentListResponse,
-  PaymentFilters,
+  PaymentLineItem, 
   PaymentStatus,
   PaymentMethod,
-  PaymentType 
-} from '@/types/payment';
+  PaymentType,
+  OrderService,
+  FullOrder
+} from '@/types/database';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { supabase } from '@/lib/supabase';
+
+// =============================================================================
+// INTERFACES
+// =============================================================================
+
+export interface CreatePaymentRequest {
+  order_id: string;
+  type: PaymentType;
+  method: PaymentMethod;
+  subtotal_amount: number;
+  tax_amount?: number;
+  description?: string;
+  due_date?: string;
+  delivery_method?: 'EMAIL' | 'SMS' | 'MANUAL';
+  customer_email?: string;
+  customer_phone?: string;
+  metadata?: Record<string, any>;
+  line_items?: CreateLineItemRequest[];
+}
+
+export interface CreateLineItemRequest {
+  name: string;
+  description?: string;
+  quantity: number;
+  unit_price: number; // In dollars (will be converted to cents)
+  tax_rate?: number;
+  category?: string;
+  sku?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface PaymentResponse {
+  success: boolean;
+  data?: Payment;
+  error?: string;
+}
+
+export interface PaymentWithLineItems extends Payment {
+  line_items: PaymentLineItem[];
+  order: Order;
+}
+
+export interface PaymentFilters {
+  status?: PaymentStatus[];
+  method?: PaymentMethod[];
+  type?: PaymentType[];
+  order_id?: string;
+  date_from?: string;
+  date_to?: string;
+  amount_min?: number;
+  amount_max?: number;
+  search?: string;
+}
+
+export interface UpdatePaymentRequest {
+  status?: PaymentStatus;
+  paid_amount?: number;
+  notes?: string;
+  due_date?: string;
+  square_invoice_id?: string;
+  square_payment_id?: string;
+  invoice_url?: string;
+  public_payment_url?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface PaymentListResponse {
+  success: boolean;
+  payments: Payment[];
+  total: number;
+  page: number;
+  limit: number;
+  has_more: boolean;
+  error?: string;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  payment_id: string;
+  type: 'CHARGE' | 'REFUND' | 'ADJUSTMENT' | 'FEE';
+  amount: number;
+  currency: string;
+  status: string;
+  external_transaction_id?: string;
+  processed_at: string;
+  metadata?: Record<string, any>;
+}
+
+// =============================================================================
+// PAYMENT CREATION
+// =============================================================================
 
 /**
- * Create a new payment record
+ * Creates a payment automatically from order services
+ */
+export async function createPaymentFromOrderServices(
+  orderId: string,
+  paymentMethod: PaymentMethod = 'SQUARE_INVOICE',
+  paymentType: PaymentType = 'INVOICE'
+): Promise<PaymentResponse> {
+  try {
+    // Get the order with all its services
+    const { data: orderServices, error: servicesError } = await supabase
+      .from('order_services')
+      .select(`
+        *,
+        service:services (
+          *,
+          category:service_categories (*)
+        )
+      `)
+      .eq('order_id', orderId);
+
+    if (servicesError) {
+      return { success: false, error: `Failed to fetch order services: ${servicesError.message}` };
+    }
+
+    if (!orderServices || orderServices.length === 0) {
+      return { success: false, error: 'No services found for this order' };
+    }
+
+    // Get order details
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      return { success: false, error: 'Order not found' };
+    }
+
+    // Calculate totals
+    let subtotalCents = 0;
+    let taxCents = 0;
+
+    const lineItems: CreateLineItemRequest[] = orderServices.map((orderService: any) => {
+      const itemSubtotal = orderService.total_price;
+      const itemTax = orderService.service.is_taxable 
+        ? Math.round(itemSubtotal * (orderService.service.tax_rate || 0))
+        : 0;
+
+      subtotalCents += Math.round(itemSubtotal * 100);
+      taxCents += itemTax;
+
+      return {
+        name: orderService.service.display_name,
+        description: `${orderService.service.display_name} - Order ${order.order_number}`,
+        quantity: orderService.quantity,
+        unit_price: orderService.unit_price,
+        tax_rate: orderService.service.tax_rate,
+        category: orderService.service.category?.name,
+        sku: orderService.service.sku,
+        metadata: {
+          order_service_id: orderService.id,
+          service_id: orderService.service_id,
+          service_date: orderService.service_date
+        }
+      };
+    });
+
+    const paymentRequest: CreatePaymentRequest = {
+      order_id: orderId,
+      type: paymentType,
+      method: paymentMethod,
+      subtotal_amount: subtotalCents / 100,
+      tax_amount: taxCents / 100,
+      description: `Invoice for Order ${order.order_number}`,
+      customer_email: order.email,
+      customer_phone: order.phone,
+      delivery_method: 'EMAIL',
+      line_items: lineItems,
+      metadata: {
+        order_number: order.order_number,
+        service_count: orderServices.length,
+        created_from: 'order_services'
+      }
+    };
+
+    return await createPayment(paymentRequest);
+  } catch (error) {
+    console.error('Error creating payment from order services:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to create payment' 
+    };
+  }
+}
+
+/**
+ * Create a new payment record with line items
  */
 export async function createPayment(request: CreatePaymentRequest): Promise<PaymentResponse> {
   try {
-    const supabase = createServerSupabaseClient();
-    
     // Convert amounts to cents for storage
     const subtotalCents = Math.round(request.subtotal_amount * 100);
     const taxCents = Math.round((request.tax_amount || 0) * 100);
@@ -41,21 +224,23 @@ export async function createPayment(request: CreatePaymentRequest): Promise<Paym
       description: request.description,
       due_date: request.due_date,
       delivery_method: request.delivery_method,
+      customer_email: request.customer_email,
+      customer_phone: request.customer_phone,
       metadata: request.metadata,
       status: 'DRAFT' as PaymentStatus,
     };
     
-    const { data: payment, error } = await supabase
+    // Create the payment record
+    const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert(paymentData)
-      .select('*')
+      .select()
       .single();
-    
-    if (error) {
-      console.error('Error creating payment:', error);
-      return { success: false, error: error.message };
+
+    if (paymentError) {
+      return { success: false, error: `Failed to create payment: ${paymentError.message}` };
     }
-    
+
     // Create line items if provided
     if (request.line_items && request.line_items.length > 0) {
       const lineItemsData = request.line_items.map(item => ({
@@ -64,26 +249,32 @@ export async function createPayment(request: CreatePaymentRequest): Promise<Paym
         description: item.description,
         quantity: item.quantity,
         unit_price: Math.round(item.unit_price * 100), // Convert to cents
-        total_price: Math.round(item.unit_price * item.quantity * 100),
+        total_price: Math.round(item.quantity * item.unit_price * 100),
         tax_rate: item.tax_rate,
+        tax_amount: item.tax_rate ? Math.round(item.quantity * item.unit_price * item.tax_rate * 100) : null,
         category: item.category,
         sku: item.sku,
-        metadata: item.metadata,
+        metadata: item.metadata
       }));
-      
+
       const { error: lineItemsError } = await supabase
         .from('payment_line_items')
         .insert(lineItemsData);
-        
+
       if (lineItemsError) {
-        console.error('Error creating line items:', lineItemsError);
+        // Payment was created but line items failed - should we rollback?
+        console.error('Failed to create line items:', lineItemsError);
+        return { success: false, error: `Payment created but line items failed: ${lineItemsError.message}` };
       }
     }
-    
-    return { success: true, payment };
+
+    return { success: true, data: payment };
   } catch (error) {
-    console.error('Error in createPayment:', error);
-    return { success: false, error: 'Failed to create payment' };
+    console.error('Error creating payment:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to create payment' 
+    };
   }
 }
 
@@ -110,7 +301,7 @@ export async function getPayment(paymentId: string): Promise<PaymentResponse> {
       return { success: false, error: error.message };
     }
     
-    return { success: true, payment };
+    return { success: true, data: payment };
   } catch (error) {
     console.error('Error in getPayment:', error);
     return { success: false, error: 'Failed to fetch payment' };
@@ -139,7 +330,7 @@ export async function getPaymentBySquareInvoiceId(squareInvoiceId: string): Prom
       return { success: false, error: error.message };
     }
     
-    return { success: true, payment };
+    return { success: true, data: payment };
   } catch (error) {
     console.error('Error in getPaymentBySquareInvoiceId:', error);
     return { success: false, error: 'Failed to fetch payment' };
@@ -171,7 +362,7 @@ export async function updatePayment(paymentId: string, updates: UpdatePaymentReq
       return { success: false, error: error.message };
     }
     
-    return { success: true, payment };
+    return { success: true, data: payment };
   } catch (error) {
     console.error('Error in updatePayment:', error);
     return { success: false, error: 'Failed to update payment' };
@@ -304,61 +495,54 @@ export async function getOrderPayments(orderId: string): Promise<PaymentListResp
 }
 
 /**
- * Create payment from order (for Square invoice integration)
+ * Create payment from order (legacy function - use createPaymentFromOrderServices instead)
  */
 export async function createPaymentFromOrder(
   order: Order,
-  method: PaymentMethod = PaymentMethod.SQUARE_INVOICE,
+  method: PaymentMethod = 'SQUARE_INVOICE',
   dueDate?: Date
 ): Promise<PaymentResponse> {
   try {
+    // Try to use the new multi-service approach first
+    const serviceResult = await createPaymentFromOrderServices(order.id, method, 'INVOICE');
+    if (serviceResult.success) {
+      return serviceResult;
+    }
+    
+    // Fallback to legacy single-service approach
     const subtotal = order.final_price || order.quoted_price || 0;
     const taxRate = 0.08; // 8% tax rate
     const taxAmount = subtotal * taxRate;
     
     const paymentRequest: CreatePaymentRequest = {
       order_id: order.id,
-      type: PaymentType.INVOICE,
+      type: 'INVOICE',
       method: method,
       subtotal_amount: subtotal,
       tax_amount: taxAmount,
-      description: `Invoice for Order ${order.order_number} - ${order.dumpster_size || 'Standard'} Yard Dumpster`,
+      description: `Invoice for Order ${order.order_number}`,
       due_date: dueDate?.toISOString(),
       delivery_method: 'EMAIL',
+      customer_email: order.email,
+      customer_phone: order.phone || undefined,
       line_items: [
         {
-          name: `Dumpster Rental - ${order.dumpster_size || 'Standard'} Yard`,
-          description: `Delivery to ${order.address}`,
+          name: `Order ${order.order_number}`,
+          description: `Service for ${order.first_name} ${order.last_name}`,
           quantity: 1,
           unit_price: subtotal,
-          total_price: subtotal,
-          category: 'Dumpster Rental',
+          category: 'Service',
         }
       ],
       metadata: {
         order_number: order.order_number,
         customer_name: `${order.first_name} ${order.last_name || ''}`.trim(),
         delivery_address: order.address,
-        scheduled_delivery: order.scheduled_delivery_date,
-        scheduled_pickup: order.scheduled_pickup_date,
+        created_from: 'legacy_order'
       }
     };
     
-    const result = await createPayment(paymentRequest);
-    
-    if (result.success && result.payment) {
-      // Update payment with customer information
-      await updatePayment(result.payment.id, {
-        status: PaymentStatus.DRAFT,
-        metadata: {
-          ...result.payment.metadata,
-          customer_email: order.email,
-          customer_phone: order.phone?.toString(),
-        }
-      });
-    }
-    
-    return result;
+    return await createPayment(paymentRequest);
   } catch (error) {
     console.error('Error creating payment from order:', error);
     return { success: false, error: 'Failed to create payment from order' };
@@ -429,7 +613,7 @@ export async function recordPaymentTransaction(
 export async function cancelPayment(paymentId: string, reason?: string): Promise<PaymentResponse> {
   try {
     const result = await updatePayment(paymentId, {
-      status: PaymentStatus.CANCELED,
+      status: 'CANCELED',
       notes: reason ? `Canceled: ${reason}` : 'Payment canceled',
     });
     
@@ -457,7 +641,7 @@ export async function markPaymentAsSent(
 ): Promise<PaymentResponse> {
   try {
     const updateData: any = {
-      status: PaymentStatus.SENT,
+      status: 'SENT',
     };
     
     if (publicUrl) {
@@ -487,7 +671,7 @@ export async function markPaymentAsSent(
 export async function markPaymentAsViewed(paymentId: string): Promise<PaymentResponse> {
   try {
     const result = await updatePayment(paymentId, {
-      status: PaymentStatus.VIEWED,
+      status: 'VIEWED',
     });
     
     if (result.success) {
@@ -534,7 +718,7 @@ export async function updateSquarePaymentData(
       return { success: false, error: error.message };
     }
     
-    return { success: true, payment };
+    return { success: true, data: payment };
   } catch (error) {
     console.error('Error in updateSquarePaymentData:', error);
     return { success: false, error: 'Failed to update Square payment data' };
@@ -591,4 +775,161 @@ export function centsToDollars(cents: number): number {
  */
 export function dollarsToCents(dollars: number): number {
   return Math.round(dollars * 100);
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Format payment amount for display
+ */
+export function formatPaymentAmount(amountInCents: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amountInCents / 100);
+}
+
+/**
+ * Get payment status information for UI display
+ */
+export function getPaymentStatusInfo(status: PaymentStatus): {
+  label: string;
+  color: string;
+  description: string;
+} {
+  switch (status) {
+    case 'DRAFT':
+      return {
+        label: 'Draft',
+        color: 'gray',
+        description: 'Payment is being prepared'
+      };
+    case 'SENT':
+      return {
+        label: 'Sent',
+        color: 'blue',
+        description: 'Payment sent to customer'
+      };
+    case 'VIEWED':
+      return {
+        label: 'Viewed',
+        color: 'yellow',
+        description: 'Customer has viewed the payment'
+      };
+    case 'PAID':
+      return {
+        label: 'Paid',
+        color: 'green',
+        description: 'Payment completed successfully'
+      };
+    case 'PARTIALLY_PAID':
+      return {
+        label: 'Partially Paid',
+        color: 'orange',
+        description: 'Payment partially completed'
+      };
+    case 'OVERDUE':
+      return {
+        label: 'Overdue',
+        color: 'red',
+        description: 'Payment is past due date'
+      };
+    case 'CANCELED':
+      return {
+        label: 'Canceled',
+        color: 'red',
+        description: 'Payment has been canceled'
+      };
+    case 'REFUNDED':
+      return {
+        label: 'Refunded',
+        color: 'purple',
+        description: 'Payment has been refunded'
+      };
+    case 'FAILED':
+      return {
+        label: 'Failed',
+        color: 'red',
+        description: 'Payment processing failed'
+      };
+    default:
+      return {
+        label: 'Unknown',
+        color: 'gray',
+        description: 'Unknown payment status'
+      };
+  }
+}
+
+/**
+ * Calculate payment balance due
+ */
+export function calculateBalanceDue(totalAmount: number, paidAmount: number = 0): number {
+  return Math.max(0, totalAmount - paidAmount);
+}
+
+/**
+ * Check if payment is overdue
+ */
+export function isPaymentOverdue(dueDate: string | null, status: PaymentStatus): boolean {
+  if (!dueDate || ['PAID', 'CANCELED', 'REFUNDED'].includes(status)) {
+    return false;
+  }
+  return new Date(dueDate) < new Date();
+}
+
+/**
+ * Get payment method display info
+ */
+export function getPaymentMethodInfo(method: PaymentMethod): {
+  label: string;
+  icon: string;
+  description: string;
+} {
+  switch (method) {
+    case 'SQUARE_INVOICE':
+      return {
+        label: 'Square Invoice',
+        icon: 'credit-card',
+        description: 'Square Invoice payment'
+      };
+    case 'SQUARE_POS':
+      return {
+        label: 'Square POS',
+        icon: 'credit-card',
+        description: 'Square POS payment'
+      };
+    case 'CASH':
+      return {
+        label: 'Cash',
+        icon: 'dollar-sign',
+        description: 'Cash payment'
+      };
+    case 'CHECK':
+      return {
+        label: 'Check',
+        icon: 'file-text',
+        description: 'Check payment'
+      };
+    case 'BANK_TRANSFER':
+      return {
+        label: 'Bank Transfer',
+        icon: 'building',
+        description: 'Bank transfer payment'
+      };
+    case 'OTHER':
+      return {
+        label: 'Other',
+        icon: 'more-horizontal',
+        description: 'Other payment method'
+      };
+    default:
+      return {
+        label: 'Unknown',
+        icon: 'help-circle',
+        description: 'Unknown payment method'
+      };
+  }
 }
