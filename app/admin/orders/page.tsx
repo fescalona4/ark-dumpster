@@ -53,6 +53,7 @@ import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
+import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/types/order';
 import { Dumpster } from '@/types/dumpster';
@@ -893,9 +894,13 @@ function OrdersPageContent() {
                       </div>
                     </div>
 
-                    {/* Invoice button */}
-                    <div className="mt-4">
+                    {/* Invoice buttons */}
+                    <div className="mt-4 space-y-3">
                       <InvoiceDialog order={order} />
+                      <PaymentManager 
+                        order={order} 
+                        onUpdate={() => fetchOrders()} 
+                      />
                     </div>
                   </div>
                 </div>

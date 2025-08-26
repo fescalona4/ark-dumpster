@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
-import Invoice from '@/components/invoices/invoice';
+import { Payment } from '@/types/payment';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,8 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { RiFileTextLine, RiPrinterLine, RiExternalLinkLine } from '@remixicon/react';
-import Link from 'next/link';
+import { RiFileTextLine, RiExternalLinkLine, RiLoader4Line, RiReceiptLine } from '@remixicon/react';
 
 interface InvoiceDialogProps {
   order: Order;
@@ -21,114 +20,122 @@ interface InvoiceDialogProps {
 
 export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
   const [open, setOpen] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handlePrint = () => {
-    const printContent = document.getElementById(`invoice-content-${order.id}`);
-    if (printContent) {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Invoice - ${order.order_number}</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; }
-                @media print { body { margin: 0; font-size: 10px; } }
-                .bg-white { background-color: white; }
-                .bg-gray-50 { background-color: #f9fafb; }
-                .bg-gray-100 { background-color: #f3f4f6; }
-                .text-gray-900 { color: #111827; }
-                .text-gray-600 { color: #4b5563; }
-                .text-gray-500 { color: #6b7280; }
-                .text-gray-700 { color: #374151; }
-                .text-blue-600 { color: #2563eb; }
-                .font-bold { font-weight: bold; }
-                .font-semibold { font-weight: 600; }
-                .font-medium { font-weight: 500; }
-                .text-3xl { font-size: 1.5rem; }
-                .text-2xl { font-size: 1.25rem; }
-                .text-lg { font-size: 1rem; }
-                .text-sm { font-size: 0.8rem; }
-                .mb-2 { margin-bottom: 0.5rem; }
-                .mb-4 { margin-bottom: 1rem; }
-                .mb-8 { margin-bottom: 1.5rem; }
-                .mt-2 { margin-top: 0.5rem; }
-                .p-4 { padding: 0.75rem; }
-                .p-8 { padding: 1.5rem; }
-                .px-4 { padding-left: 0.75rem; padding-right: 0.75rem; }
-                .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-                .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-                .pt-4 { padding-top: 0.75rem; }
-                .rounded-lg { border-radius: 0.5rem; }
-                .border { border: 1px solid #d1d5db; }
-                .border-b { border-bottom: 1px solid #d1d5db; }
-                .border-t { border-top: 1px solid #d1d5db; }
-                .border-t-2 { border-top: 2px solid #9ca3af; }
-                .border-gray-200 { border-color: #e5e7eb; }
-                .border-gray-300 { border-color: #d1d5db; }
-                .border-gray-400 { border-color: #9ca3af; }
-                .border-collapse { border-collapse: collapse; }
-                .w-full { width: 100%; }
-                .w-64 { width: 12rem; }
-                .max-w-4xl { max-width: 100%; }
-                .mx-auto { margin-left: auto; margin-right: auto; }
-                .flex { display: flex; }
-                .justify-between { justify-content: space-between; }
-                .justify-end { justify-content: flex-end; }
-                .items-start { align-items: flex-start; }
-                .text-left { text-align: left; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-                table { width: 100%; }
-                th, td { padding: 0.5rem 0.75rem; }
-              </style>
-            </head>
-            <body>
-              ${printContent.innerHTML}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
+  // Fetch payments when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchPayments();
+    }
+  }, [open, order.id]);
+
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/orders/${order.id}/payments`);
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setPayments(data.payments || []);
       }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Get the Square invoice payment (if any)
+  const squarePayment = payments.find(p => p.method === 'SQUARE_INVOICE' && p.public_payment_url);
+
+  const handleViewSquareInvoice = () => {
+    if (squarePayment?.public_payment_url) {
+      window.open(squarePayment.public_payment_url, '_blank');
+    }
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children || (
+{children || (
           <Button
             variant="outline"
             size="sm"
             className="min-h-[44px] px-4 touch-manipulation bg-blue-50 hover:bg-blue-100 border-blue-200"
           >
-            <RiFileTextLine className="h-4 w-4 mr-2" />
-            View Invoice
+            <RiReceiptLine className="h-4 w-4 mr-2" />
+            View Square Invoice
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="!max-w-[90vw] !w-[90vw] max-h-[95vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between pr-12">
-            <span>Invoice for Order {order.order_number}</span>
-            <div className="flex items-center space-x-2">
-              <Button onClick={handlePrint} size="sm" variant="outline" className="min-h-[44px] touch-manipulation">
-                <RiPrinterLine className="h-4 w-4 mr-2" />
-                Print
-              </Button>
-              <Link href={`/admin/orders/${order.id}/invoice`} target="_blank">
-                <Button size="sm" variant="outline" className="min-h-[44px] touch-manipulation">
-                  <RiExternalLinkLine className="h-4 w-4 mr-2" />
-                  Full Page
-                </Button>
-              </Link>
-            </div>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Square Invoice for Order {order.order_number}</span>
+            {loading && (
+              <RiLoader4Line className="h-4 w-4 animate-spin" />
+            )}
           </DialogTitle>
         </DialogHeader>
-        <div id={`invoice-content-${order.id}`} className="mt-4">
-          <Invoice order={order} className="" />
+        
+        <div className="mt-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <RiLoader4Line className="h-8 w-8 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-600">Loading payment information...</span>
+            </div>
+          ) : squarePayment ? (
+            /* Square Invoice Available */
+            <div className="text-center space-y-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mx-auto mb-4">
+                  <RiReceiptLine className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-green-900 mb-2">Square Invoice Ready</h3>
+                <div className="space-y-1 text-sm text-green-700 mb-4">
+                  <p><strong>Payment ID:</strong> {squarePayment.payment_number}</p>
+                  <p><strong>Status:</strong> {squarePayment.status.replace('_', ' ')}</p>
+                  {squarePayment.total_amount && (
+                    <p><strong>Amount:</strong> ${(squarePayment.total_amount / 100).toFixed(2)}</p>
+                  )}
+                  {squarePayment.due_date && (
+                    <p><strong>Due Date:</strong> {new Date(squarePayment.due_date).toLocaleDateString()}</p>
+                  )}
+                </div>
+                <Button 
+                  onClick={handleViewSquareInvoice} 
+                  size="lg" 
+                  className="bg-blue-600 hover:bg-blue-700 px-8"
+                >
+                  <RiExternalLinkLine className="h-5 w-5 mr-2" />
+                  Open Square Invoice
+                </Button>
+              </div>
+              
+              <p className="text-sm text-gray-500">
+                This will open the professional Square invoice in a new tab where customers can view details and make payments.
+              </p>
+            </div>
+          ) : (
+            /* No Square Invoice Found */
+            <div className="text-center py-12">
+              <div className="flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4">
+                <RiReceiptLine className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Square Invoice Found</h3>
+              <p className="text-gray-600 mb-6">
+                Create a Square invoice for this order to enable professional invoicing and online payments.
+              </p>
+              <Button 
+                onClick={() => setOpen(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
