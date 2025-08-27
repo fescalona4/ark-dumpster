@@ -56,7 +56,8 @@
       "Bash(lsof:*)",
       "WebSearch",
       "WebFetch(domain:developer.squareup.com)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__playwright__browser_fill_form"
     ],
     "deny": [],
     "ask": []

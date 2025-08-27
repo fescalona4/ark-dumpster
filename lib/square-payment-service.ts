@@ -17,6 +17,8 @@ import {
   logPaymentWebhookEvent,
   centsToDollars,
 } from '@/lib/payment-service';
+import { getOrderWithServices } from '@/lib/order-service';
+import { supabase } from '@/lib/supabase';
 import { SquareClient, SquareEnvironment, SquareError } from 'square';
 
 // Initialize Square client
@@ -53,6 +55,7 @@ export interface SquareInvoiceRequest {
     label: string;
     value: string;
   }>;
+  supabaseClient?: any; // Optional authenticated supabase client
 }
 
 /**
@@ -62,7 +65,10 @@ export async function createSquareInvoiceWithPayment(
   request: SquareInvoiceRequest
 ): Promise<SquareInvoiceResponse> {
   try {
-    const { order, dueDate } = request;
+    const { order, dueDate, supabaseClient } = request;
+    
+    // Use provided client or fall back to default
+    const client = supabaseClient || supabase;
 
     console.log('Creating Square invoice with payment for order:', order.order_number);
 
@@ -97,29 +103,99 @@ export async function createSquareInvoiceWithPayment(
       customerId = '';
     }
 
-    // Step 3: Create Square Order first
+    // Step 3: Fetch order with services to create itemized invoice
+    console.log('Fetching order with services for order ID:', order.id);
+    
+    // Fetch services directly from order_services with join to services table
+    const { data: orderServices, error: servicesError } = await client
+      .from('order_services')
+      .select(`
+        *,
+        service:services (
+          id,
+          name,
+          display_name,
+          description,
+          base_price,
+          tax_rate,
+          is_taxable
+        )
+      `)
+      .eq('order_id', order.id);
+      
+    console.log('Order services query result:', {
+      data: orderServices,
+      error: servicesError,
+      orderServices: orderServices?.length || 0
+    });
+      
+    if (servicesError) {
+      console.error('Error fetching order services:', servicesError);
+      throw new Error(`Failed to fetch order services: ${servicesError.message}`);
+    }
+    
+    if (!orderServices || orderServices.length === 0) {
+      console.error('No services found for order:', order.id);
+      
+      // Add additional debugging - check if services exist at all
+      const { data: allOrderServices, error: debugError } = await client
+        .from('order_services')
+        .select('*')
+        .eq('order_id', order.id);
+      
+      console.log('Debug - Raw order services:', {
+        data: allOrderServices,
+        error: debugError,
+        count: allOrderServices?.length || 0
+      });
+      
+      throw new Error('No services found for this order');
+    }
+    
+    console.log(`Found ${orderServices.length} services for order ${order.order_number}:`, orderServices.map(s => s.service?.display_name || s.service?.name));
+
+    // Step 4: Create Square Order with itemized line items
     let squareOrderId: string;
     
     try {
-      console.log('Creating Square Order...');
-      const orderRequest = {
-        locationId: process.env.SQUARE_LOCATION_ID,
-        lineItems: [{
-          name: `Dumpster Rental Service`,
-          note: order.internal_notes || 'Dumpster rental service',
-          quantity: '1',
+      console.log('Creating Square Order with itemized services...');
+      
+      // Create line items for each service
+      const lineItems = orderServices.map((orderService, index) => {
+        const serviceName = orderService.service?.display_name || orderService.service?.name || `Service ${index + 1}`;
+        const serviceDescription = orderService.service?.description || orderService.notes || '';
+        
+        const lineItem = {
+          name: serviceName,
+          note: serviceDescription,
+          quantity: orderService.quantity.toString(),
           itemType: 'ITEM',
           basePriceMoney: {
-            amount: BigInt(Math.round(centsToDollars(payment.total_amount) * 100)),
+            amount: BigInt(Math.round(orderService.unit_price * 100)),
             currency: 'USD',
           },
-        }],
+        };
+        
+        console.log(`Line item ${index + 1}:`, JSON.stringify(lineItem, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value, 2));
+        
+        return lineItem;
+      });
+      
+      console.log(`Created ${lineItems.length} line items for Square order`);
+
+      const orderRequest = {
+        idempotencyKey: `order_${order.id}_${Date.now()}`,
+        order: {
+          locationId: process.env.SQUARE_LOCATION_ID,
+          lineItems,
+        },
       };
 
       console.log('Order request:', JSON.stringify(orderRequest, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value, 2));
 
-      const orderResponse = await squareClient.orders.create({ order: orderRequest as any });
+      const orderResponse = await squareClient.orders.create(orderRequest as any);
       console.log('Order response:', orderResponse);
       
       const createdOrder = (orderResponse as any).order;
@@ -135,34 +211,37 @@ export async function createSquareInvoiceWithPayment(
       throw error;
     }
 
-    // Step 4: Create Square invoice with the order ID
+    // Step 5: Create Square invoice with the order ID
     try {
       console.log('Creating Square Invoice with order ID:', squareOrderId);
       
       const invoiceRequest = {
-        locationId: process.env.SQUARE_LOCATION_ID,
-        orderId: squareOrderId,
-        primaryRecipient: {
-          customerId: customerId || undefined,
-        },
-        paymentRequests: [{
-          requestType: 'BALANCE' as any,
-          dueDate: dueDate?.toISOString().split('T')[0],
-        }],
-        deliveryMethod: request.paymentRequestMethod || 'EMAIL',
-        invoiceNumber: `ARK-${order.order_number}-${Date.now()}`,
-        title: `ARK Dumpster Service - Order ${order.order_number}`,
-        description: order.internal_notes || `Dumpster rental service for ${order.first_name} ${order.last_name || ''}`.trim(),
-        customFields: request.customFields,
-        acceptedPaymentMethods: {
-          card: true,
-          bankAccount: false,
-          buyNowPayLater: false,
-          squareGiftCard: false,
+        idempotencyKey: `invoice_${order.id}_${Date.now()}`,
+        invoice: {
+          locationId: process.env.SQUARE_LOCATION_ID,
+          orderId: squareOrderId,
+          primaryRecipient: {
+            customerId: customerId || undefined,
+          },
+          paymentRequests: [{
+            requestType: 'BALANCE' as any,
+            dueDate: dueDate?.toISOString().split('T')[0],
+          }],
+          deliveryMethod: request.paymentRequestMethod || 'EMAIL',
+          invoiceNumber: `ARK-${order.order_number}-${Date.now()}`,
+          title: `ARK Dumpster Service - Order ${order.order_number}`,
+          description: order.internal_notes || `Dumpster rental service for ${order.first_name} ${order.last_name || ''}`.trim(),
+          customFields: request.customFields,
+          acceptedPaymentMethods: {
+            card: true,
+            bankAccount: false,
+            buyNowPayLater: false,
+            squareGiftCard: false,
+          },
         },
       };
 
-      const invoiceResponse = await invoicesApi.create({ invoice: invoiceRequest as any });
+      const invoiceResponse = await invoicesApi.create(invoiceRequest as any);
       
       if ((invoiceResponse as any).invoice) {
         const invoice = (invoiceResponse as any).invoice;
@@ -185,6 +264,20 @@ export async function createSquareInvoiceWithPayment(
             customer_phone: order.phone?.toString(),
           },
         });
+
+        // Update order with Square invoice information for legacy compatibility
+        const { createServerSupabaseClient } = await import('@/lib/supabase-server');
+        const supabase = createServerSupabaseClient();
+        await supabase
+          .from('orders')
+          .update({
+            square_invoice_id: invoice.id,
+            square_customer_id: customerId,
+            square_payment_status: 'DRAFT',
+            payment_link: invoice.publicUrl,
+            square_invoice_amount: centsToDollars(payment.total_amount),
+          })
+          .eq('id', order.id);
 
         return {
           success: true,
@@ -293,6 +386,20 @@ export async function sendSquareInvoiceWithPayment(
         // Mark payment as sent in our system
         const result = await markPaymentAsSent(paymentId, (sendResponse as any).invoice.publicUrl);
 
+        // Update order record for legacy compatibility
+        if (result.data?.order_id) {
+          const { createServerSupabaseClient } = await import('@/lib/supabase-server');
+          const supabase = createServerSupabaseClient();
+          await supabase
+            .from('orders')
+            .update({
+              square_payment_status: 'SENT',
+              payment_link: (sendResponse as any).invoice.publicUrl,
+              invoice_sent_at: new Date().toISOString(),
+            })
+            .eq('id', result.data.order_id);
+        }
+
         return {
           success: true,
           invoice: {
@@ -395,6 +502,30 @@ export async function getSquareInvoiceStatus(
         if (paymentStatus !== payment.status) {
           await updatePayment(payment.id, { status: paymentStatus as PaymentStatus });
         }
+
+        // Update order record for legacy compatibility
+        const { createServerSupabaseClient } = await import('@/lib/supabase-server');
+        const supabase = createServerSupabaseClient();
+        const orderUpdateData: any = {
+          square_payment_status: paymentStatus,
+          payment_link: invoice.publicUrl,
+        };
+
+        // Add timestamp fields based on status changes
+        if (paymentStatus === 'SENT' && payment.status !== 'SENT') {
+          orderUpdateData.invoice_sent_at = new Date().toISOString();
+        }
+        if (paymentStatus === 'VIEWED' && payment.status !== 'VIEWED') {
+          orderUpdateData.invoice_viewed_at = new Date().toISOString();
+        }
+        if (paymentStatus === 'PAID' && payment.status !== 'PAID') {
+          orderUpdateData.invoice_paid_at = new Date().toISOString();
+        }
+
+        await supabase
+          .from('orders')
+          .update(orderUpdateData)
+          .eq('id', payment.order_id);
 
         return {
           success: true,

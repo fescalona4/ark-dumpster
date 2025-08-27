@@ -67,6 +67,7 @@ export async function POST(
       paymentRequestMethod: body.paymentRequestMethod || 'EMAIL',
       message: body.message,
       customFields: body.customFields,
+      supabaseClient: supabase,
     });
 
     if (!invoiceResult.success) {
