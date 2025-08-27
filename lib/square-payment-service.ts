@@ -43,7 +43,7 @@ export interface SquareInvoiceResponse {
   };
   error?: string;
   message?: string;
-  payment?: Payment;
+  payment?: Payment | null;
 }
 
 export interface SquareInvoiceRequest {
@@ -155,7 +155,7 @@ export async function createSquareInvoiceWithPayment(
       throw new Error('No services found for this order');
     }
     
-    console.log(`Found ${orderServices.length} services for order ${order.order_number}:`, orderServices.map(s => s.service?.display_name || s.service?.name));
+    console.log(`Found ${orderServices.length} services for order ${order.order_number}:`, orderServices.map((s: any) => s.service?.display_name || s.service?.name));
 
     // Step 4: Create Square Order with itemized line items
     let squareOrderId: string;
@@ -164,7 +164,7 @@ export async function createSquareInvoiceWithPayment(
       console.log('Creating Square Order with itemized services...');
       
       // Create line items for each service
-      const lineItems = orderServices.map((orderService, index) => {
+      const lineItems = orderServices.map((orderService: any, index: number) => {
         const serviceName = orderService.service?.display_name || orderService.service?.name || `Service ${index + 1}`;
         // Use custom description from request, then saved invoice_description, then service description or notes
         const serviceDescription = request.serviceDescriptions?.[orderService.id] || 
@@ -636,7 +636,7 @@ export async function cancelSquareInvoiceWithPayment(
           typeof value === 'bigint' ? value.toString() : value, 2));
         
         // Try different response structures
-        const invoice = getInvoiceResponse?.result?.invoice || getInvoiceResponse?.invoice || (getInvoiceResponse as any)?.invoice;
+        const invoice = (getInvoiceResponse as any)?.result?.invoice || (getInvoiceResponse as any)?.invoice;
         const currentVersion = invoice?.version || 0;
         invoiceStatus = invoice?.status;
         
