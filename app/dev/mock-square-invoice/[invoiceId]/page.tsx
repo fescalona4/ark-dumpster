@@ -29,6 +29,7 @@ interface Payment {
   customer_email?: string;
   customer_phone?: string;
   description?: string;
+  due_date?: string;
   metadata?: any;
   line_items?: PaymentLineItem[];
   order?: {

@@ -27,7 +27,7 @@ export interface SelectedService {
   quantity: number;
   unit_price: number;
   total_price: number;
-  notes: string;
+  notes?: string;
 }
 
 export interface SaveQuoteResult {

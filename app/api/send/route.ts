@@ -94,9 +94,9 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       companyEmailResult = await sendCompanyNotificationEmail({
         customerDetails: fullFormData,
         quoteDetails: {
-          dropoffDate: fullFormData.dropoffDate || 'Not specified',
+          dropoffDate: fullFormData.serviceDate || 'Not specified',
           timeNeeded: fullFormData.timeNeeded || 'Not specified',
-          dumpsterSize: fullFormData.dumpsterSize || 'Not specified',
+          dumpsterSize: 'Not specified',
           message: fullFormData.message || '',
         },
         quoteId,

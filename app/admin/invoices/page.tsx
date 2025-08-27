@@ -35,7 +35,7 @@ import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
 import Link from 'next/link';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 
 /**
  * Admin Invoices Management Page
@@ -201,7 +201,7 @@ function InvoicesPageContent() {
   /**
    * Format phone number for display
    */
-  const formatPhoneNumber = (phone: number | null) => {
+  const formatPhoneNumber = (phone: string | null) => {
     if (!phone) return '';
     const phoneStr = phone.toString();
     if (phoneStr.length === 10) {
@@ -382,12 +382,6 @@ function InvoicesPageContent() {
                     <div className="bg-muted/30 p-3 rounded-lg">
                       <h4 className="font-semibold mb-2 text-base">Service Details</h4>
                       <div className="space-y-2 text-sm">
-                        {order.dumpster_size && (
-                          <div className="flex items-center gap-2">
-                            <RiBox1Line className="h-4 w-4" />
-                            <span>Size: {order.dumpster_size} Yard</span>
-                          </div>
-                        )}
                         {order.address && (
                           <div className="flex items-start gap-2">
                             <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
