@@ -814,7 +814,7 @@ function QuotesPageContent() {
                                 quoteServices[quote.id].filter(
                                   service =>
                                     !quote.dumpster_size ||
-                                    service.services?.display_name !==
+                                    service.service?.display_name !==
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                 ).length}{' '}
                               Total
@@ -849,7 +849,7 @@ function QuotesPageContent() {
                                   // Check if there's a priced service for this main service
                                   const mainService = quoteServices[quote.id]?.find(
                                     service =>
-                                      service.services?.display_name ===
+                                      service.service?.display_name ===
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                   );
 
@@ -877,7 +877,7 @@ function QuotesPageContent() {
                                   service =>
                                     // Filter out main service to avoid duplication
                                     !quote.dumpster_size ||
-                                    service.services?.display_name !==
+                                    service.service?.display_name !==
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                 )
                                 .map((service, index) => (
@@ -890,7 +890,7 @@ function QuotesPageContent() {
                                       <RiBox1Line className="h-4 w-4 flex-shrink-0" />
                                       <div>
                                         <span className="font-medium">
-                                          {service.services?.display_name}
+                                          {service.service?.display_name}
                                         </span>
                                         {service.quantity > 1 && (
                                           <span className="text-muted-foreground ml-1">
@@ -1330,8 +1330,8 @@ function QuotesPageContent() {
             unit_price: selectedService.unit_price.toString(),
             total_price: selectedService.total_price.toString(),
             services: {
-              display_name: selectedService.services?.display_name || '',
-              description: selectedService.services?.description || undefined,
+              display_name: selectedService.service?.display_name || '',
+              description: selectedService.service?.description || undefined,
             },
             is_main_service: (selectedService as any).is_main_service,
           }}

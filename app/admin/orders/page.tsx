@@ -883,7 +883,7 @@ function OrdersPageContent() {
                                   !order.services_summary
                                     .split(', ')
                                     .map(s => s.trim())
-                                    .includes(service.services?.display_name || '')
+                                    .includes(service.service?.display_name || '')
                               ).length}{' '}
                             Total
                           </Badge>
@@ -913,7 +913,7 @@ function OrdersPageContent() {
                                   // Check if there's a priced service for this main service
                                   const mainService = orderServices[order.id]?.find(
                                     orderService =>
-                                      orderService.services?.display_name === service.trim()
+                                      orderService.service?.display_name === service.trim()
                                   );
 
                                   if (mainService && mainService.total_price > 0) {
@@ -943,7 +943,7 @@ function OrdersPageContent() {
                                   !order.services_summary
                                     .split(', ')
                                     .map(s => s.trim())
-                                    .includes(service.services?.display_name || '')
+                                    .includes(service.service?.display_name || '')
                               )
                               .map((service, index) => (
                                 <button
@@ -955,7 +955,7 @@ function OrdersPageContent() {
                                     <RiBox1Line className="h-4 w-4 flex-shrink-0" />
                                     <div>
                                       <span className="font-medium">
-                                        {service.services?.display_name}
+                                        {service.service?.display_name}
                                       </span>
                                       {service.quantity > 1 && (
                                         <span className="text-muted-foreground ml-1">
@@ -1315,8 +1315,8 @@ function OrdersPageContent() {
             unit_price: selectedService.unit_price.toString(),
             total_price: selectedService.total_price.toString(),
             services: {
-              display_name: selectedService.services?.display_name || '',
-              description: selectedService.services?.description || undefined,
+              display_name: selectedService.service?.display_name || '',
+              description: selectedService.service?.description || undefined,
             },
           }}
           isOpen={serviceEditDialogOpen}
