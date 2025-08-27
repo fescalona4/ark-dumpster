@@ -345,7 +345,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus required />
                 </PopoverContent>
               </Popover>
               <p className="text-xs text-gray-500">Default: Tomorrow</p>
@@ -388,6 +388,19 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                 Tax will be calculated automatically based on Square settings and service
                 configuration
               </p>
+              {order.payment_link && (
+                <div className="mt-2 pt-2 border-t border-blue-200">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(order.payment_link!, '_blank')}
+                    className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    View Current Invoice
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 

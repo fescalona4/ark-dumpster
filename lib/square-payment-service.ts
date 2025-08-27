@@ -260,7 +260,7 @@ export async function sendSquareInvoiceWithPayment(
     
     try {
       // First get current invoice to get version
-      const currentInvoice = await invoicesApi.get({ invoiceId: payment.square_invoice_id });
+      const currentInvoice = await invoicesApi.get({ invoiceId: payment.square_invoice_id! });
       
       // Handle BigInt values in JSON serialization
       const invoiceForLogging = JSON.stringify(currentInvoice, (key, value) =>

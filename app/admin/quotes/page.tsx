@@ -53,6 +53,7 @@ import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
 import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
 import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
+import { OrderConfirmationDialog } from '@/components/dialogs/order-confirmation-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   RiDeleteBin2Line,
@@ -1333,7 +1334,17 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* TODO: Update OrderConfirmationDialog for multi-service structure */}
+      {/* Order Confirmation Dialog */}
+      <OrderConfirmationDialog
+        order={createdOrder}
+        open={orderConfirmationOpen}
+        onOpenChange={setOrderConfirmationOpen}
+        onViewOrder={() => {
+          setOrderConfirmationOpen(false);
+          // Navigate to orders page to view the created order
+          window.location.href = '/admin/orders';
+        }}
+      />
 
       {/* Service Edit Dialog */}
       {selectedService && (

@@ -197,7 +197,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       onUpdate?.();
 
       // Reset form
-      setDueDate(undefined);
+      setDueDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
       setPaymentMethod('EMAIL');
       setCustomMessage('');
     } catch (error) {
@@ -457,32 +457,33 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2">
-                {selectedPayment.public_payment_url && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => window.open(selectedPayment.public_payment_url!, '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Invoice Page
-                  </Button>
-                )}
-
-                {selectedPayment.status === PaymentStatus.DRAFT && (
-                  <Button
-                    className="w-full justify-start"
-                    onClick={handleSendInvoice}
-                    disabled={isSending}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    {isSending ? 'Sending...' : 'Send Invoice to Customer'}
-                  </Button>
-                )}
-
+              <div className="grid grid-cols-2 gap-2">
+                {/* View Invoice - First */}
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="justify-start"
+                  onClick={() => {
+                    const url = selectedPayment.public_payment_url || selectedPayment.invoice_url;
+                    if (url) {
+                      window.open(url, '_blank');
+                    } else if (selectedPayment.square_invoice_id) {
+                      // For draft invoices, open Square Dashboard
+                      const squareUrl = process.env.NODE_ENV === 'development' 
+                        ? `https://squareupsandbox.com/dashboard/invoices/${selectedPayment.square_invoice_id}`
+                        : `https://squareup.com/dashboard/invoices/${selectedPayment.square_invoice_id}`;
+                      window.open(squareUrl, '_blank');
+                    }
+                  }}
+                  disabled={!selectedPayment.public_payment_url && !selectedPayment.invoice_url && !selectedPayment.square_invoice_id}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Invoice
+                </Button>
+
+                {/* Refresh Status - Second */}
+                <Button
+                  variant="outline"
+                  className="justify-start"
                   onClick={handleRefreshStatus}
                   disabled={isRefreshing}
                 >
@@ -490,10 +491,23 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   Refresh Status
                 </Button>
 
+                {/* Send Invoice - Third (only for DRAFT status) */}
+                {selectedPayment.status === PaymentStatus.DRAFT && (
+                  <Button
+                    className="justify-start"
+                    onClick={handleSendInvoice}
+                    disabled={isSending}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {isSending ? 'Sending...' : 'Send to Customer'}
+                  </Button>
+                )}
+
+                {/* Cancel Invoice - Fourth (for non-paid/non-canceled) */}
                 {![PaymentStatus.PAID, PaymentStatus.CANCELED].includes(selectedPayment.status) && (
                   <Button
                     variant="destructive"
-                    className="w-full justify-start"
+                    className="justify-start"
                     onClick={handleCancelInvoice}
                     disabled={isCanceling}
                   >
@@ -552,7 +566,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus required />
                 </PopoverContent>
               </Popover>
               <p className="text-xs text-gray-500">Default: Tomorrow</p>
