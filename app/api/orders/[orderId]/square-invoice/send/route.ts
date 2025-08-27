@@ -9,6 +9,8 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
+    const body = await request.json();
+    const { deliveryMethod = 'EMAIL', message } = body;
 
     // Get payments for this order
     const paymentsResult = await getOrderPayments(orderId);
@@ -43,7 +45,7 @@ export async function POST(
     }
 
     // Send Square invoice
-    const sendResult = await sendSquareInvoiceWithPayment(squarePayment.id);
+    const sendResult = await sendSquareInvoiceWithPayment(squarePayment.id, deliveryMethod);
 
     if (!sendResult.success) {
       return NextResponse.json(

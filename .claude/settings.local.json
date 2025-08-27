@@ -57,7 +57,8 @@
       "WebSearch",
       "WebFetch(domain:developer.squareup.com)",
       "Bash(curl:*)",
-      "mcp__playwright__browser_fill_form"
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_handle_dialog"
     ],
     "deny": [],
     "ask": []

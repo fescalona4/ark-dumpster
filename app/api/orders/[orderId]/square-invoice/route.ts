@@ -66,6 +66,7 @@ export async function POST(
       dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
       paymentRequestMethod: body.paymentRequestMethod || 'EMAIL',
       message: body.message,
+      serviceDescriptions: body.serviceDescriptions,
       customFields: body.customFields,
       supabaseClient: supabase,
     });

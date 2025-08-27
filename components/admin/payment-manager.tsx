@@ -3,6 +3,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order } from '@/types/database';
 import { Payment, PaymentStatus, PaymentMethod } from '@/types/payment';
+
+interface OrderService {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  notes?: string;
+  invoice_description?: string;
+  service: {
+    id: string;
+    name: string;
+    display_name: string;
+    description?: string;
+  };
+}
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,8 +37,10 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { format } from 'date-fns';
 import {
   CalendarIcon,
@@ -45,6 +62,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { centsToDollars } from '@/lib/utils';
+import { SendInvoiceDialog } from '@/components/dialogs/send-invoice-dialog';
 
 interface PaymentManagerProps {
   order: Order;
@@ -55,7 +73,6 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -64,7 +81,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
-  const [customMessage, setCustomMessage] = useState('');
+  const [orderServices, setOrderServices] = useState<OrderService[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [serviceDescriptions, setServiceDescriptions] = useState<Record<string, string>>({});
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ email: '', invoiceId: '' });
+  const [enableCashAppPay, setEnableCashAppPay] = useState(true);
 
   const loadPayments = useCallback(async () => {
     try {
@@ -84,6 +106,74 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       setLoading(false);
     }
   }, [order.id]);
+
+  // Fetch order services
+  const fetchOrderServices = async () => {
+    if (!showCreateDialog && !showInvoiceDialog) return;
+
+    setIsLoadingServices(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}/services`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch order services');
+      }
+
+      const data = await response.json();
+      const services = data.services || [];
+      setOrderServices(services);
+
+      // Initialize service descriptions with saved invoice descriptions, then fall back to service descriptions
+      const descriptions: Record<string, string> = {};
+      services.forEach((service: OrderService) => {
+        descriptions[service.id] = service.invoice_description || service.service.description || '';
+      });
+      setServiceDescriptions(descriptions);
+    } catch (error) {
+      console.error('Error fetching order services:', error);
+      toast.error('Failed to load order services');
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  // Save service descriptions to database
+  const saveServiceDescriptions = async (descriptions: Record<string, string>) => {
+    try {
+      const response = await fetch(`/api/orders/${order.id}/services`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceDescriptions: descriptions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save descriptions');
+      }
+    } catch (error) {
+      console.error('Error saving service descriptions:', error);
+      toast.error('Failed to save descriptions');
+    }
+  };
+
+  // Load services when dialog opens
+  useEffect(() => {
+    if (showCreateDialog || showInvoiceDialog) {
+      fetchOrderServices();
+    }
+  }, [showCreateDialog, showInvoiceDialog]);
+
+  // Debounce saving descriptions
+  useEffect(() => {
+    if (Object.keys(serviceDescriptions).length === 0) return;
+
+    const timeoutId = setTimeout(() => {
+      saveServiceDescriptions(serviceDescriptions);
+    }, 1000); // Save after 1 second of no changes
+
+    return () => clearTimeout(timeoutId);
+  }, [serviceDescriptions]);
 
   // Load payments for this order
   useEffect(() => {
@@ -175,7 +265,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
         body: JSON.stringify({
           dueDate: dueDate?.toISOString(),
           paymentRequestMethod: paymentMethod,
-          message: customMessage || undefined,
+          serviceDescriptions: serviceDescriptions,
+          enableCashAppPay: enableCashAppPay,
         }),
       });
 
@@ -199,39 +290,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       // Reset form
       setDueDate(new Date(Date.now() + 24 * 60 * 60 * 1000));
       setPaymentMethod('EMAIL');
-      setCustomMessage('');
+      setEnableCashAppPay(true);
     } catch (error) {
       console.error('Error creating invoice:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create invoice');
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  // Send Square invoice
-  const handleSendInvoice = async () => {
-    if (!selectedPayment) return;
-
-    setIsSending(true);
-    try {
-      const response = await fetch(`/api/orders/${order.id}/square-invoice/send`, {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invoice');
-      }
-
-      toast.success('Invoice sent to customer successfully!');
-      await loadPayments();
-      onUpdate?.();
-    } catch (error) {
-      console.error('Error sending invoice:', error);
-      toast.error('Failed to send invoice');
-    } finally {
-      setIsSending(false);
     }
   };
 
@@ -328,6 +392,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const openInvoiceDialog = (payment: Payment) => {
     setSelectedPayment(payment);
     setShowInvoiceDialog(true);
+    // Fetch services when opening the dialog
+    fetchOrderServices();
   };
 
   if (loading) {
@@ -383,7 +449,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
         </div>
       )}
 
-      {/* Invoice Options Dialog */}
+      {/* Invoice Options Dialog - This dialog appears when clicking on an invoice/payment item */}
+      {/* Updated to use SendInvoiceDialog component for "Send to Customer" functionality */}
       <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -468,7 +535,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                       window.open(url, '_blank');
                     } else if (selectedPayment.square_invoice_id) {
                       // For draft invoices, open Square Dashboard
-                      const squareUrl = process.env.NODE_ENV === 'development' 
+                      const squareUrl = process.env.NODE_ENV === 'development'
                         ? `https://squareupsandbox.com/dashboard/invoices/${selectedPayment.square_invoice_id}`
                         : `https://squareup.com/dashboard/invoices/${selectedPayment.square_invoice_id}`;
                       window.open(squareUrl, '_blank');
@@ -493,14 +560,28 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
 
                 {/* Send Invoice - Third (only for DRAFT status) */}
                 {selectedPayment.status === PaymentStatus.DRAFT && (
-                  <Button
-                    className="justify-start"
-                    onClick={handleSendInvoice}
-                    disabled={isSending}
+                  <SendInvoiceDialog
+                    orderId={order.id}
+                    orderNumber={order.order_number}
+                    customerEmail={order.email}
+                    customerPhone={order.phone?.toString()}
+                    onSuccess={() => {
+                      // Show success dialog with customer email and invoice details
+                      setSuccessMessage({
+                        email: order.email,
+                        invoiceId: selectedPayment.square_invoice_id || 'N/A'
+                      });
+                      setShowSuccessDialog(true);
+                      onUpdate?.();
+                    }}
                   >
-                    <Send className="h-4 w-4 mr-2" />
-                    {isSending ? 'Sending...' : 'Send to Customer'}
-                  </Button>
+                    <Button
+                      className="justify-start w-full"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Send to Customer
+                    </Button>
+                  </SendInvoiceDialog>
                 )}
 
                 {/* Cancel Invoice - Fourth (for non-paid/non-canceled) */}
@@ -528,6 +609,45 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   </Button>
                 )}
               </div>
+
+              {/* Invoice Items */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">Invoice Items</Label>
+                {isLoadingServices ? (
+                  <div className="flex items-center justify-center py-4 text-muted-foreground">
+                    Loading services...
+                  </div>
+                ) : orderServices.length > 0 ? (
+                  <div className="space-y-3">
+                    {orderServices.map((orderService) => (
+                      <div key={orderService.id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                              {orderService.service.display_name || orderService.service.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                              {orderService.invoice_description || orderService.service.description}
+                            </p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Qty: {orderService.quantity}
+                            </div>
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">
+                              ${Math.round(orderService.total_price)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-600 dark:text-gray-400 text-sm">
+                    No services found for this order
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -543,21 +663,21 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Create Square Invoice</DialogTitle>
+            <DialogTitle>Create Square Invoice 123</DialogTitle>
             <DialogDescription>
-              Configure the invoice settings for order {order.order_number}
+              Configure your invoice for order {order.order_number}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Due Date</Label>
+              <Label className="text-gray-900 dark:text-gray-100 font-medium">Due Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      'w-full justify-start text-left font-normal',
+                      'justify-start text-left font-normal',
                       !dueDate && 'text-muted-foreground'
                     )}
                   >
@@ -569,37 +689,83 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus required />
                 </PopoverContent>
               </Popover>
-              <p className="text-xs text-gray-500">Default: Tomorrow</p>
+              <p className="text-xs text-muted-foreground">Default: Tomorrow</p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Delivery Method</Label>
-              <Select
-                value={paymentMethod}
-                onValueChange={(value: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY') =>
-                  setPaymentMethod(value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EMAIL">Email Invoice</SelectItem>
-                  <SelectItem value="SMS">SMS (Text Message)</SelectItem>
-                  <SelectItem value="SHARE_MANUALLY">Share Manually</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Custom Message (Optional)</Label>
-              <Textarea
-                placeholder="Add a message to the invoice..."
-                value={customMessage}
-                onChange={e => setCustomMessage(e.target.value)}
-                rows={3}
+            {/* Cash App Pay Toggle */}
+            <div className="flex items-center justify-between py-2">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Enable Cash App Pay
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Allow customers to pay using Cash App
+                </p>
+              </div>
+              <Switch
+                checked={enableCashAppPay}
+                onCheckedChange={setEnableCashAppPay}
               />
-              <p className="text-xs text-gray-500">This message will appear on the invoice</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-foreground">Invoice Items</Label>
+              {isLoadingServices ? (
+                <div className="flex items-center justify-center py-4 text-muted-foreground">
+                  Loading services...
+                </div>
+              ) : orderServices.length > 0 ? (
+                <div className="space-y-3">
+                  {orderServices.map((orderService) => (
+                    <div key={orderService.id} className="border border-neutral-200 dark:border-neutral-700 rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                            {orderService.service.display_name}
+                          </h4>
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 text-right ml-4">
+                          Qty: {orderService.quantity} × ${orderService.unit_price} = ${orderService.total_price}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`desc-${orderService.id}`} className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Description for Invoice
+                        </Label>
+                        <Textarea
+                          id={`desc-${orderService.id}`}
+                          value={serviceDescriptions[orderService.id] || ''}
+                          onChange={(e) => {
+                            setServiceDescriptions(prev => ({
+                              ...prev,
+                              [orderService.id]: e.target.value
+                            }));
+                          }}
+                          placeholder="Enter description for this item on the invoice..."
+                          rows={2}
+                          className="text-sm border-neutral-300 dark:border-neutral-600 focus:border-neutral-500 focus:ring-neutral-500 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500 dark:placeholder:text-neutral-400"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-600 dark:text-gray-400 text-sm">
+                  No services found for this order
+                </div>
+              )}
+            </div>
+
+            {/* Order Total */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex justify-between items-center">
+                <Label className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                  Order Total:
+                </Label>
+                <span className="text-sm font-light text-gray-700 dark:text-gray-300">
+                  {orderServices.map(service => `$${service.total_price}`).join(' + ')} = <span className="text-xl font-semibold">${orderServices.reduce((total, service) => total + service.total_price, 0)}</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -609,6 +775,53 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
             </Button>
             <Button onClick={handleCreateInvoice} disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create Invoice'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Confirmation Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-500" />
+              </div>
+              <div>
+                <DialogTitle>Invoice Sent Successfully</DialogTitle>
+                <DialogDescription className="mt-1">
+                  The invoice has been sent to the customer
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Invoice ID
+                </Label>
+                <p className="text-sm text-neutral-900 dark:text-neutral-100 font-mono">
+                  {successMessage.invoiceId}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Sent to
+                </Label>
+                <p className="text-sm text-neutral-900 dark:text-neutral-100">
+                  {successMessage.email}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowSuccessDialog(false)}
+              className="w-full"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -37,6 +38,22 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { SendInvoiceDialog } from '@/components/dialogs/send-invoice-dialog';
+
+interface OrderService {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  notes?: string;
+  invoice_description?: string;
+  service: {
+    id: string;
+    name: string;
+    display_name: string;
+    description?: string;
+  };
+}
 
 interface SquareInvoiceManagerProps {
   order: Order & {
@@ -53,13 +70,82 @@ interface SquareInvoiceManagerProps {
 
 export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerProps) {
   const [isCreating, setIsCreating] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
   const [customMessage, setCustomMessage] = useState('');
+  const [orderServices, setOrderServices] = useState<OrderService[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [serviceDescriptions, setServiceDescriptions] = useState<Record<string, string>>({});
+
+  // Fetch order services
+  const fetchOrderServices = async () => {
+    if (!showCreateDialog) return;
+
+    setIsLoadingServices(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}/services`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch order services');
+      }
+
+      const data = await response.json();
+      const services = data.services || [];
+      setOrderServices(services);
+
+      // Initialize service descriptions with saved invoice descriptions, then fall back to service descriptions
+      const descriptions: Record<string, string> = {};
+      services.forEach((service: OrderService) => {
+        descriptions[service.id] = service.invoice_description || service.service.description || '';
+      });
+      setServiceDescriptions(descriptions);
+    } catch (error) {
+      console.error('Error fetching order services:', error);
+      toast.error('Failed to load order services');
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  // Load services when dialog opens
+  useEffect(() => {
+    if (showCreateDialog) {
+      fetchOrderServices();
+    }
+  }, [showCreateDialog]);
+
+  // Save service descriptions to database
+  const saveServiceDescriptions = async (descriptions: Record<string, string>) => {
+    try {
+      const response = await fetch(`/api/orders/${order.id}/services`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceDescriptions: descriptions,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save descriptions');
+      }
+    } catch (error) {
+      console.error('Error saving service descriptions:', error);
+      toast.error('Failed to save descriptions');
+    }
+  };
+
+  // Debounce saving descriptions
+  useEffect(() => {
+    if (Object.keys(serviceDescriptions).length === 0) return;
+
+    const timeoutId = setTimeout(() => {
+      saveServiceDescriptions(serviceDescriptions);
+    }, 1000); // Save after 1 second of no changes
+
+    return () => clearTimeout(timeoutId);
+  }, [serviceDescriptions]);
 
   // Get status badge color
   const getStatusColor = (status?: string | null) => {
@@ -109,8 +195,8 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dueDate: dueDate?.toISOString(),
-          paymentRequestMethod: paymentMethod,
           message: customMessage,
+          serviceDescriptions: serviceDescriptions,
           customFields: [
             { label: 'Order Number', value: order.order_number },
             { label: 'Service', value: `${order.dumpster_size || 'Standard'} Yard Dumpster` },
@@ -135,29 +221,6 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
     }
   };
 
-  // Send Square invoice
-  const handleSendInvoice = async () => {
-    setIsSending(true);
-    try {
-      const response = await fetch(`/api/orders/${order.id}/square-invoice/send`, {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invoice');
-      }
-
-      toast.success('Invoice sent to customer successfully!');
-      onUpdate?.();
-    } catch (error) {
-      console.error('Error sending invoice:', error);
-      toast.error('Failed to send invoice');
-    } finally {
-      setIsSending(false);
-    }
-  };
 
   // Refresh invoice status
   const handleRefreshStatus = async () => {
@@ -278,9 +341,18 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
             )}
 
             {order.square_payment_status === 'DRAFT' && (
-              <Button size="sm" onClick={handleSendInvoice} disabled={isSending} className="flex-1">
-                {isSending ? 'Sending...' : 'Send Invoice'}
-              </Button>
+              <SendInvoiceDialog
+                orderId={order.id}
+                orderNumber={order.order_number}
+                customerEmail={order.email}
+                customerPhone={order.phone?.toString()}
+                onSuccess={onUpdate}
+              >
+                <Button size="sm" className="flex-1">
+                  <Send className="h-4 w-4 mr-1" />
+                  Send Invoice
+                </Button>
+              </SendInvoiceDialog>
             )}
 
             <Button
@@ -318,11 +390,11 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
         </div>
       )}
 
-      {/* Create Invoice Dialog */}
+      {/* Create Invoice Dialog OLD - Is this being used?? */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Create Square Invoice</DialogTitle>
+            <DialogTitle>Create Square Invoice OLD</DialogTitle>
             <DialogDescription>
               Configure the invoice settings for order {order.order_number}
             </DialogDescription>
@@ -351,24 +423,6 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
               <p className="text-xs text-gray-500">Default: Tomorrow</p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Delivery Method</Label>
-              <Select
-                value={paymentMethod}
-                onValueChange={(value: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY') =>
-                  setPaymentMethod(value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EMAIL">Email Invoice</SelectItem>
-                  <SelectItem value="SMS">SMS (Text Message)</SelectItem>
-                  <SelectItem value="SHARE_MANUALLY">Share Link Manually</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
             <div className="space-y-2">
               <Label>Custom Message (Optional)</Label>
@@ -378,6 +432,54 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                 placeholder="Add a message to include with the invoice..."
                 rows={3}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Invoice Items</Label>
+              {isLoadingServices ? (
+                <div className="flex items-center justify-center py-4 text-gray-500">
+                  Loading services...
+                </div>
+              ) : orderServices.length > 0 ? (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {orderServices.map((orderService) => (
+                    <div key={orderService.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-sm">
+                            {orderService.service.display_name}
+                          </h4>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Qty: {orderService.quantity} × ${orderService.unit_price} = ${orderService.total_price}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`desc-${orderService.id}`} className="text-xs text-gray-600">
+                          Description for Invoice
+                        </Label>
+                        <Textarea
+                          id={`desc-${orderService.id}`}
+                          value={serviceDescriptions[orderService.id] || ''}
+                          onChange={(e) => {
+                            setServiceDescriptions(prev => ({
+                              ...prev,
+                              [orderService.id]: e.target.value
+                            }));
+                          }}
+                          placeholder="Enter description for this item on the invoice..."
+                          rows={2}
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500 text-sm">
+                  No services found for this order
+                </div>
+              )}
             </div>
 
             <div className="bg-blue-50 p-3 rounded-md">

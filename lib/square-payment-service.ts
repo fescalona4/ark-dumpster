@@ -51,6 +51,7 @@ export interface SquareInvoiceRequest {
   dueDate?: Date;
   paymentRequestMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
   message?: string;
+  serviceDescriptions?: Record<string, string>; // Custom descriptions for services
   customFields?: Array<{
     label: string;
     value: string;
@@ -163,7 +164,11 @@ export async function createSquareInvoiceWithPayment(
       // Create line items for each service
       const lineItems = orderServices.map((orderService, index) => {
         const serviceName = orderService.service?.display_name || orderService.service?.name || `Service ${index + 1}`;
-        const serviceDescription = orderService.service?.description || orderService.notes || '';
+        // Use custom description from request, then saved invoice_description, then service description or notes
+        const serviceDescription = request.serviceDescriptions?.[orderService.id] || 
+                                 orderService.invoice_description ||
+                                 orderService.service?.description || 
+                                 orderService.notes || '';
         
         const lineItem = {
           name: serviceName,
@@ -227,7 +232,6 @@ export async function createSquareInvoiceWithPayment(
             requestType: 'BALANCE' as any,
             dueDate: dueDate?.toISOString().split('T')[0],
           }],
-          deliveryMethod: request.paymentRequestMethod || 'EMAIL',
           invoiceNumber: `ARK-${order.order_number}-${Date.now()}`,
           title: `ARK Dumpster Service - Order ${order.order_number}`,
           description: order.internal_notes || `Dumpster rental service for ${order.first_name} ${order.last_name || ''}`.trim(),
@@ -334,7 +338,8 @@ export async function createSquareInvoiceWithPayment(
  * Send Square invoice
  */
 export async function sendSquareInvoiceWithPayment(
-  paymentId: string
+  paymentId: string,
+  deliveryMethod: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY' = 'EMAIL'
 ): Promise<SquareInvoiceResponse> {
   try {
     console.log('Sending Square invoice for payment:', paymentId);
@@ -379,7 +384,7 @@ export async function sendSquareInvoiceWithPayment(
       const sendResponse = await invoicesApi.publish({
         invoiceId: payment.square_invoice_id,
         version: invoice.version,
-        requestMethod: 'EMAIL' as any,
+        requestMethod: deliveryMethod as any,
       } as any);
 
       if ((sendResponse as any).invoice) {
@@ -595,10 +600,17 @@ export async function cancelSquareInvoiceWithPayment(
 
     if (result.data?.square_invoice_id) {
       try {
-        // Cancel the invoice in Square
+        // First, get the current invoice to get the latest version
+        const getInvoiceResponse = await invoicesApi.get(result.data.square_invoice_id);
+        const currentVersion = getInvoiceResponse?.result?.invoice?.version || 0;
+        
+        console.log('Current invoice response:', JSON.stringify(getInvoiceResponse?.result, null, 2));
+        console.log('Using invoice version:', currentVersion);
+        
+        // Cancel the invoice in Square with the latest version
         const cancelResponse = await invoicesApi.cancel({
           invoiceId: result.data.square_invoice_id,
-          version: result.data.metadata?.square_version as number || 0,
+          version: currentVersion,
         } as any);
 
         return {
