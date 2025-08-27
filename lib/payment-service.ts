@@ -116,12 +116,15 @@ export async function createPaymentFromOrderServices(
   paymentType: PaymentType = 'INVOICE'
 ): Promise<PaymentResponse> {
   try {
-    // Get the order with all its services
+    // Use server-side Supabase client for proper authentication
+    const supabase = createServerSupabaseClient();
+    
+    // Get the order with all its services (using same pattern as UI)
     const { data: orderServices, error: servicesError } = await supabase
       .from('order_services')
       .select(`
         *,
-        service:services (
+        services!inner (
           *,
           category:service_categories (*)
         )
@@ -129,14 +132,20 @@ export async function createPaymentFromOrderServices(
       .eq('order_id', orderId);
 
     if (servicesError) {
+      console.error('Error fetching order services:', servicesError);
       return { success: false, error: `Failed to fetch order services: ${servicesError.message}` };
     }
 
+    console.log(`Found ${orderServices?.length || 0} services for order ${orderId}:`, orderServices);
+
     if (!orderServices || orderServices.length === 0) {
-      return { success: false, error: 'No services found for this order' };
+      return { 
+        success: false, 
+        error: 'No services found in order_services table. Orders must have services configured to create invoices.' 
+      };
     }
 
-    // Get order details
+    // Get order details (using same supabase instance)
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -153,21 +162,21 @@ export async function createPaymentFromOrderServices(
 
     const lineItems: CreateLineItemRequest[] = orderServices.map((orderService: any) => {
       const itemSubtotal = orderService.total_price;
-      const itemTax = orderService.service.is_taxable 
-        ? Math.round(itemSubtotal * (orderService.service.tax_rate || 0))
+      const itemTax = orderService.services.is_taxable 
+        ? Math.round(itemSubtotal * (orderService.services.tax_rate || 0))
         : 0;
 
       subtotalCents += Math.round(itemSubtotal * 100);
       taxCents += itemTax;
 
       return {
-        name: orderService.service.display_name,
-        description: `${orderService.service.display_name} - Order ${order.order_number}`,
+        name: orderService.services.display_name,
+        description: `${orderService.services.display_name} - Order ${order.order_number}`,
         quantity: orderService.quantity,
         unit_price: orderService.unit_price,
-        tax_rate: orderService.service.tax_rate,
-        category: orderService.service.category?.name,
-        sku: orderService.service.sku,
+        tax_rate: orderService.services.tax_rate,
+        category: orderService.services.category?.name,
+        sku: orderService.services.sku,
         metadata: {
           order_service_id: orderService.id,
           service_id: orderService.service_id,
@@ -209,6 +218,9 @@ export async function createPaymentFromOrderServices(
  */
 export async function createPayment(request: CreatePaymentRequest): Promise<PaymentResponse> {
   try {
+    // Use server-side Supabase client
+    const supabase = createServerSupabaseClient();
+    
     // Convert amounts to cents for storage
     const subtotalCents = Math.round(request.subtotal_amount * 100);
     const taxCents = Math.round((request.tax_amount || 0) * 100);
@@ -495,7 +507,7 @@ export async function getOrderPayments(orderId: string): Promise<PaymentListResp
 }
 
 /**
- * Create payment from order (legacy function - use createPaymentFromOrderServices instead)
+ * Create payment from order using multi-service approach
  */
 export async function createPaymentFromOrder(
   order: Order,
@@ -503,49 +515,24 @@ export async function createPaymentFromOrder(
   dueDate?: Date
 ): Promise<PaymentResponse> {
   try {
-    // Try to use the new multi-service approach first
+    // Only use the multi-service approach - no legacy fallback
     const serviceResult = await createPaymentFromOrderServices(order.id, method, 'INVOICE');
+    
     if (serviceResult.success) {
       return serviceResult;
     }
     
-    // Fallback to legacy single-service approach
-    const subtotal = order.final_price || order.quoted_price || 0;
-    const taxRate = 0.08; // 8% tax rate
-    const taxAmount = subtotal * taxRate;
-    
-    const paymentRequest: CreatePaymentRequest = {
-      order_id: order.id,
-      type: 'INVOICE',
-      method: method,
-      subtotal_amount: subtotal,
-      tax_amount: taxAmount,
-      description: `Invoice for Order ${order.order_number}`,
-      due_date: dueDate?.toISOString(),
-      delivery_method: 'EMAIL',
-      customer_email: order.email,
-      customer_phone: order.phone || undefined,
-      line_items: [
-        {
-          name: `Order ${order.order_number}`,
-          description: `Service for ${order.first_name} ${order.last_name}`,
-          quantity: 1,
-          unit_price: subtotal,
-          category: 'Service',
-        }
-      ],
-      metadata: {
-        order_number: order.order_number,
-        customer_name: `${order.first_name} ${order.last_name || ''}`.trim(),
-        delivery_address: order.address,
-        created_from: 'legacy_order'
-      }
+    // If no services found, return a clear error
+    return {
+      success: false,
+      error: `Order ${order.order_number} has no services configured. All orders must have services in the order_services table to create invoices.`
     };
-    
-    return await createPayment(paymentRequest);
   } catch (error) {
     console.error('Error creating payment from order:', error);
-    return { success: false, error: 'Failed to create payment from order' };
+    return { 
+      success: false, 
+      error: `Failed to create payment for order ${order.order_number}. Please ensure the order has services configured.`
+    };
   }
 }
 
@@ -629,6 +616,62 @@ export async function cancelPayment(paymentId: string, reason?: string): Promise
   } catch (error) {
     console.error('Error in cancelPayment:', error);
     return { success: false, error: 'Failed to cancel payment' };
+  }
+}
+
+/**
+ * Delete a payment and its line items
+ */
+export async function deletePayment(
+  paymentId: string
+): Promise<PaymentResponse> {
+  try {
+    const supabase = createServerSupabaseClient();
+    
+    // First check if payment exists and is in a deletable state
+    const { data: payment, error: fetchError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('id', paymentId)
+      .single();
+
+    if (fetchError || !payment) {
+      return { success: false, error: 'Payment not found' };
+    }
+
+    // Only allow deletion of canceled or failed payments
+    if (!['CANCELED', 'FAILED'].includes(payment.status)) {
+      return { 
+        success: false, 
+        error: `Cannot delete payment with status ${payment.status}. Only canceled or failed payments can be deleted.` 
+      };
+    }
+
+    // Delete payment line items first (due to foreign key constraint)
+    const { error: lineItemsError } = await supabase
+      .from('payment_line_items')
+      .delete()
+      .eq('payment_id', paymentId);
+
+    if (lineItemsError) {
+      console.error('Error deleting payment line items:', lineItemsError);
+      // Continue with payment deletion even if line items fail
+    }
+
+    // Delete the payment
+    const { error: deleteError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('id', paymentId);
+
+    if (deleteError) {
+      return { success: false, error: `Failed to delete payment: ${deleteError.message}` };
+    }
+
+    return { success: true, data: payment };
+  } catch (error) {
+    console.error('Error deleting payment:', error);
+    return { success: false, error: 'Failed to delete payment' };
   }
 }
 

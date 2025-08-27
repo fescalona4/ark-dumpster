@@ -201,7 +201,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
     <div className="space-y-4">
       {/* Invoice Status Card */}
       {order.square_invoice_id ? (
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
@@ -375,10 +375,10 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
 
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-800">
-                <strong>Invoice Amount:</strong> ${(order.final_price || order.quoted_price || 0).toFixed(2)}
+                <strong>Invoice Amount:</strong> Will be calculated from order services
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Tax will be calculated automatically based on Square settings
+                Tax will be calculated automatically based on Square settings and service configuration
               </p>
             </div>
           </div>

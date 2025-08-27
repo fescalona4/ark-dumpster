@@ -52,13 +52,12 @@ import {
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
-import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
 import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
 import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
 import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
-import { Order } from '@/types/database';
+import { Order, OrderWithServices, OrderViewData } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import { updateOrderStatus as updateOrderStatusShared, getStatusIcon } from '@/components/order-management/order-status-manager';
@@ -82,6 +81,17 @@ const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' |
 };
 
 /**
+ * Convert OrderViewData to Order for compatibility with status update functions
+ */
+const convertViewDataToOrder = (viewData: OrderViewData): Order => {
+  const { order_status, ...rest } = viewData;
+  return {
+    ...rest,
+    status: order_status, // Map order_status back to status
+  } as Order;
+};
+
+/**
  * Main admin orders page component
  * Wraps the content in AuthGuard for authentication
  */
@@ -101,7 +111,7 @@ function OrdersPageContent() {
   const router = useRouter();
 
   // Core data state
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderViewData[]>([]);
   const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +126,7 @@ function OrdersPageContent() {
 
   // Dialog state for dumpster assignment
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
-  const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
+  const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<OrderViewData | null>(null);
 
   // Order services state
   const [orderServices, setOrderServices] = useState<{ [orderId: string]: any[] }>({});
@@ -160,7 +170,7 @@ function OrdersPageContent() {
       const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
       const ordersData = await getOrdersWithServiceSummary(filters);
 
-      setOrders(ordersData || []);
+      setOrders((ordersData || []) as unknown as OrderViewData[]);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch orders');
@@ -325,8 +335,11 @@ function OrdersPageContent() {
    * Updates the status of an order using shared logic
    */
   const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
-    const currentOrder = orders.find(o => o.id === orderId);
-    if (!currentOrder) return;
+    const currentOrderView = orders.find(o => o.id === orderId);
+    if (!currentOrderView) return;
+
+    // Convert OrderViewData to Order for the shared function
+    const currentOrder = convertViewDataToOrder(currentOrderView);
 
     const result = await updateOrderStatusShared({
       orderId,
@@ -435,7 +448,7 @@ function OrdersPageContent() {
   /**
    * Handles "On My Way" button click with dumpster assignment check
    */
-  const handleOnMyWayClick = async (order: Order) => {
+  const handleOnMyWayClick = async (order: OrderViewData) => {
     // Check if dumpster is assigned
     const hasAssignedDumpster = 'temp-id' // TODO: Update for multi-service ||
       dumpsters.some(d => d.current_order_id === order.id);
@@ -1080,9 +1093,7 @@ function OrdersPageContent() {
 
                     {/* Invoice buttons */}
                     <div className="mt-4 space-y-3">
-                      {/* TODO: Update for multi-service structure */}
-                      {/* <InvoiceDialog order={order} /> */}
-                      {/* <PaymentManager order={order} onUpdate={() => fetchOrders()} /> */}
+                      <PaymentManager order={convertViewDataToOrder(order)} onUpdate={() => fetchOrders()} />
                     </div>
                   </div>
                 </div>

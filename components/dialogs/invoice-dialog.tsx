@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Order } from '@/types/order';
+import { Order } from '@/types/database';
 import { Payment } from '@/types/payment';
 import { Button } from '@/components/ui/button';
 import {

@@ -51,9 +51,8 @@ import AuthGuard from '@/components/providers/auth-guard';
 import { Order } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
-import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
-import { SquareInvoiceManager } from '@/components/admin/square-invoice-manager';
+import { PaymentManager } from '@/components/admin/payment-manager';
 
 // Helper function to map order status to Status component status
 const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
@@ -661,10 +660,9 @@ function OrderDetailContent() {
             </div>
           </div>
 
-          {/* Square Invoice Manager */}
+          {/* Payment Manager */}
           <div className="mt-6 pt-4 border-t">
-            <h4 className="font-semibold mb-3">Payment & Invoicing</h4>
-            <SquareInvoiceManager order={order} onUpdate={fetchOrder} />
+            <PaymentManager order={order} onUpdate={fetchOrder} />
           </div>
 
           {/* Notes Section */}

@@ -931,6 +931,20 @@ export type DumpsterAssignmentData = {
 export type OrderWithServices = Database['public']['Views']['order_summary_with_services']['Row'];
 
 /**
+ * Order view interface for the orders page (matches actual view structure)
+ */
+export interface OrderViewData extends Omit<Order, 'status' | 'primary_service_type' | 'services_summary'> {
+  order_status: OrderStatus; // The view uses 'order_status' instead of 'status'
+  // Additional view fields
+  services_summary?: string | null;
+  service_count: number;
+  total_service_amount: number;
+  has_multiple_services: boolean;
+  primary_service_type?: string | null;
+  assigned_dumpsters: number;
+}
+
+/**
  * Service catalog with pricing rules
  */
 export type ServiceWithPricing = Service & {

@@ -36,6 +36,7 @@ interface Service {
   dumpster_size: string | null;
   category_name: string;
   is_active: boolean;
+  sort_order: number;
 }
 
 interface ServiceCategory {
