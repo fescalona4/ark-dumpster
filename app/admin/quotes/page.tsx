@@ -987,60 +987,32 @@ function QuotesPageContent() {
                         </Tooltip>
                       </div>
                       <div className="space-y-3 text-sm">
-                        {/* Status and Priority Assignment - 2 Column Layout */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Status</Label>
-                            <Select
-                              value={editForms[quote.id]?.status || quote.status}
-                              onValueChange={value =>
-                                setEditForms(prev => ({
-                                  ...prev,
-                                  [quote.id]: {
-                                    ...prev[quote.id],
-                                    status: value as Quote['status'],
-                                  },
-                                }))
-                              }
-                            >
-                              <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="quoted">Quoted</SelectItem>
-                                <SelectItem value="accepted">Accepted</SelectItem>
-                                <SelectItem value="declined">Declined</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="text-sm font-semibold">Priority</Label>
-                            <Select
-                              value={editForms[quote.id]?.priority || quote.priority}
-                              onValueChange={value =>
-                                setEditForms(prev => ({
-                                  ...prev,
-                                  [quote.id]: {
-                                    ...prev[quote.id],
-                                    priority: value as Quote['priority'],
-                                  },
-                                }))
-                              }
-                            >
-                              <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="normal">Normal</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                        {/* Status Assignment */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">Status</Label>
+                          <Select
+                            value={editForms[quote.id]?.status || quote.status}
+                            onValueChange={value =>
+                              setEditForms(prev => ({
+                                ...prev,
+                                [quote.id]: {
+                                  ...prev[quote.id],
+                                  status: value as Quote['status'],
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="quoted">Quoted</SelectItem>
+                              <SelectItem value="accepted">Accepted</SelectItem>
+                              <SelectItem value="declined">Declined</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
 
                         {/* Team Assignment */}

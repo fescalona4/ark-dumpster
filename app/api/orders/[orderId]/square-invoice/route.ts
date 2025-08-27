@@ -195,7 +195,7 @@ export async function DELETE(
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Failed to cancel Square invoice', details: result.error },
+        { error: 'Failed to process Square invoice', details: result.error },
         { status: 500 }
       );
     }
@@ -207,10 +207,10 @@ export async function DELETE(
       message: 'Square invoice canceled successfully',
     });
   } catch (error) {
-    console.error('Error canceling Square invoice:', error);
+    console.error('Error processing Square invoice:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to cancel Square invoice', 
+        error: 'Failed to process Square invoice', 
         details: error instanceof Error ? error.message : 'Unknown error' 
       },
       { status: 500 }

@@ -65,6 +65,8 @@ export interface SquareInvoiceRequest {
 export async function createSquareInvoiceWithPayment(
   request: SquareInvoiceRequest
 ): Promise<SquareInvoiceResponse> {
+  let payment: any = null;
+  
   try {
     const { order, dueDate, supabaseClient } = request;
     
@@ -83,7 +85,7 @@ export async function createSquareInvoiceWithPayment(
       };
     }
 
-    const payment = paymentResult.data;
+    payment = paymentResult.data;
 
     // Step 2: Create Square customer if needed
     let customerId: string;
@@ -232,6 +234,7 @@ export async function createSquareInvoiceWithPayment(
             requestType: 'BALANCE' as any,
             dueDate: dueDate?.toISOString().split('T')[0],
           }],
+          deliveryMethod: request.paymentRequestMethod || 'EMAIL',
           invoiceNumber: `ARK-${order.order_number}-${Date.now()}`,
           title: `ARK Dumpster Service - Order ${order.order_number}`,
           description: order.internal_notes || `Dumpster rental service for ${order.first_name} ${order.last_name || ''}`.trim(),
@@ -241,6 +244,7 @@ export async function createSquareInvoiceWithPayment(
             bankAccount: false,
             buyNowPayLater: false,
             squareGiftCard: false,
+            cashAppPay: true,
           },
         },
       };
@@ -304,11 +308,17 @@ export async function createSquareInvoiceWithPayment(
     } catch (error) {
       console.error('Error creating Square invoice:', error);
       
+      // Clean up the payment record since Square invoice creation failed
+      try {
+        await cancelPayment(payment.id, 'Square invoice creation failed');
+      } catch (cleanupError) {
+        console.error('Error cleaning up payment after Square invoice failure:', cleanupError);
+      }
+      
       if (error instanceof SquareError) {
         return {
           success: false,
           error: `Square API Error: ${error.message}`,
-          payment,
         };
       }
       
@@ -316,17 +326,32 @@ export async function createSquareInvoiceWithPayment(
       return {
         success: false,
         error: `Failed to create Square invoice: ${errorMessage}`,
-        payment,
       };
+    }
+
+    // Clean up the payment record since we reached here without success
+    try {
+      await cancelPayment(payment.id, 'Square invoice creation failed');
+    } catch (cleanupError) {
+      console.error('Error cleaning up payment after Square invoice failure:', cleanupError);
     }
 
     return {
       success: false,
       error: 'Unknown error creating Square invoice',
-      payment,
     };
   } catch (error) {
     console.error('Error creating Square invoice with payment:', error);
+    
+    // If we have a payment record, clean it up
+    if (payment) {
+      try {
+        await cancelPayment(payment.id, 'Square invoice creation failed');
+      } catch (cleanupError) {
+        console.error('Error cleaning up payment after Square invoice failure:', cleanupError);
+      }
+    }
+    
     return {
       success: false,
       error: 'Failed to create Square invoice',
@@ -588,68 +613,170 @@ export async function cancelSquareInvoiceWithPayment(
   try {
     console.log('Canceling Square invoice for payment:', paymentId);
 
-    // Cancel payment record
-    const result = await cancelPayment(paymentId, reason);
-
-    if (!result.success) {
+    // First, get the payment to access the Square invoice ID
+    const paymentResult = await getPayment(paymentId);
+    
+    if (!paymentResult.success || !paymentResult.data) {
       return {
         success: false,
-        error: result.error || 'Failed to cancel payment',
+        error: 'Payment not found',
       };
     }
 
-    if (result.data?.square_invoice_id) {
-      try {
-        // First, get the current invoice to get the latest version
-        const getInvoiceResponse = await invoicesApi.get(result.data.square_invoice_id);
-        const currentVersion = getInvoiceResponse?.result?.invoice?.version || 0;
-        
-        console.log('Current invoice response:', JSON.stringify(getInvoiceResponse?.result, null, 2));
-        console.log('Using invoice version:', currentVersion);
-        
-        // Cancel the invoice in Square with the latest version
-        const cancelResponse = await invoicesApi.cancel({
-          invoiceId: result.data.square_invoice_id,
-          version: currentVersion,
-        } as any);
+    const payment = paymentResult.data;
+    let invoiceStatus: string | undefined;
 
-        return {
-          success: true,
-          invoice: {
-            id: result.data.square_invoice_id,
-            status: 'CANCELED',
-          },
-          payment: result.data,
-        };
+    // If there's a Square invoice ID, try to cancel it first
+    if (payment.square_invoice_id) {
+      try {
+        // First, get the current invoice to get the latest version and status
+        const getInvoiceResponse = await invoicesApi.get({ invoiceId: payment.square_invoice_id });
+        
+        console.log('Full getInvoiceResponse:', JSON.stringify(getInvoiceResponse, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value, 2));
+        
+        // Try different response structures
+        const invoice = getInvoiceResponse?.result?.invoice || getInvoiceResponse?.invoice || (getInvoiceResponse as any)?.invoice;
+        const currentVersion = invoice?.version || 0;
+        invoiceStatus = invoice?.status;
+        
+        console.log('Parsed invoice object:', JSON.stringify(invoice, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value, 2));
+        console.log('Using invoice version:', currentVersion);
+        console.log('Invoice status:', invoiceStatus);
+        
+        // Use appropriate Square API method based on invoice status
+        console.log('Invoice status check:', {
+          invoiceStatus,
+          isDraft: invoiceStatus === 'DRAFT',
+          paymentId: payment.id,
+          squareInvoiceId: payment.square_invoice_id
+        });
+        
+        if (invoiceStatus === 'DRAFT') {
+          // Draft invoices must be deleted
+          console.log('Deleting draft invoice...');
+          
+          // Use the delete method that exists in the Square SDK
+          const deleteResponse = await invoicesApi.delete({ 
+            invoiceId: payment.square_invoice_id,
+            version: currentVersion
+          });
+          
+          console.log('Square draft invoice deleted successfully');
+        } else {
+          // Published invoices can be cancelled
+          console.log('Cancelling published invoice with status:', invoiceStatus);
+          console.log('Cancel request params:', {
+            invoiceId: payment.square_invoice_id,
+            version: currentVersion,
+          });
+          
+          const cancelResponse = await invoicesApi.cancel({
+            invoiceId: payment.square_invoice_id,
+            version: currentVersion,
+          } as any);
+          
+          console.log('Square invoice cancelled successfully');
+        }
       } catch (error) {
         console.error('Error canceling Square invoice:', error);
         
         if (error instanceof SquareError) {
+          // If invoice not found (404), treat as if it was already deleted
+          if (error.statusCode === 404) {
+            console.log('Square invoice not found (404), treating as already deleted');
+            
+            // Delete the payment record since the Square invoice doesn't exist
+            const { deletePayment } = await import('@/lib/payment-service');
+            const cancelResult = await cancelPayment(paymentId, reason);
+            const deleteResult = await deletePayment(paymentId);
+            
+            return {
+              success: true,
+              invoice: {
+                id: payment.square_invoice_id,
+                status: 'DELETED',
+              },
+              payment: null, // Payment record was deleted
+              message: 'Square invoice not found - payment record deleted',
+            };
+          }
+          
           return {
             success: false,
             error: `Square API Error: ${error.message}`,
-            payment: result.data,
+            payment,
           };
         }
         
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.warn(`Failed to cancel Square invoice: ${errorMessage}`);
+        return {
+          success: false,
+          error: `Failed to process Square invoice: ${errorMessage}`,
+          payment,
+        };
       }
     }
 
-    return {
-      success: true, // Still successful locally even if Square fails
-      invoice: {
-        id: result.data?.square_invoice_id || '',
-        status: 'CANCELED',
-      },
-      payment: result.data,
-    };
+    // Handle payment record based on what we did with Square invoice
+    if (payment.square_invoice_id && invoiceStatus === 'DRAFT') {
+      // For DRAFT invoices that were deleted, remove the payment record entirely
+      const { deletePayment } = await import('@/lib/payment-service');
+      
+      // First cancel it so it can be deleted
+      const cancelResult = await cancelPayment(paymentId, reason);
+      if (!cancelResult.success) {
+        return {
+          success: false,
+          error: cancelResult.error || 'Failed to cancel payment before deletion',
+        };
+      }
+      
+      // Then delete the payment record since the invoice no longer exists
+      const deleteResult = await deletePayment(paymentId);
+      if (!deleteResult.success) {
+        return {
+          success: false,
+          error: deleteResult.error || 'Failed to delete payment record',
+        };
+      }
+
+      return {
+        success: true,
+        invoice: {
+          id: payment.square_invoice_id,
+          status: 'DELETED',
+        },
+        payment: null, // Payment record was deleted
+        message: 'Draft invoice deleted successfully',
+      };
+    } else {
+      // For published invoices or invoices without Square ID, just cancel the payment
+      const result = await cancelPayment(paymentId, reason);
+
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Failed to cancel payment',
+        };
+      }
+
+      return {
+        success: true,
+        invoice: {
+          id: payment.square_invoice_id || '',
+          status: 'CANCELED',
+        },
+        payment: result.data,
+        message: 'Invoice cancelled successfully',
+      };
+    }
   } catch (error) {
-    console.error('Error canceling Square invoice:', error);
+    console.error('Error processing Square invoice:', error);
     return {
       success: false,
-      error: 'Failed to cancel Square invoice',
+      error: 'Failed to process Square invoice',
     };
   }
 }

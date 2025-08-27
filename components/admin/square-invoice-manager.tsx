@@ -245,7 +245,10 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
 
   // Cancel Square invoice
   const handleCancelInvoice = async () => {
-    if (!confirm('Are you sure you want to cancel this invoice?')) return;
+    const action = order.square_payment_status === 'DRAFT' ? 'delete' : 'cancel';
+    const actionText = order.square_payment_status === 'DRAFT' ? 'delete' : 'cancel';
+    
+    if (!confirm(`Are you sure you want to ${actionText} this invoice?`)) return;
 
     setIsCanceling(true);
     try {
@@ -256,14 +259,14 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to cancel invoice');
+        throw new Error(data.error || `Failed to ${actionText} invoice`);
       }
 
-      toast.success('Invoice canceled successfully');
+      toast.success(`Invoice ${actionText}d successfully`);
       onUpdate?.();
     } catch (error) {
-      console.error('Error canceling invoice:', error);
-      toast.error('Failed to cancel invoice');
+      console.error(`Error ${actionText}ing invoice:`, error);
+      toast.error(`Failed to ${actionText} invoice`);
     } finally {
       setIsCanceling(false);
     }
@@ -372,7 +375,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                   onClick={handleCancelInvoice}
                   disabled={isCanceling}
                 >
-                  Cancel
+                  {order.square_payment_status === 'DRAFT' ? 'Delete' : 'Cancel'}
                 </Button>
               )}
           </div>

@@ -78,7 +78,9 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'cancel' | 'delete' | null>(null);
   const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
   const [orderServices, setOrderServices] = useState<OrderService[]>([]);
@@ -323,15 +325,25 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
     }
   };
 
+  // Show confirmation dialog for cancel/delete
+  const showCancelConfirmation = () => {
+    if (!selectedPayment) return;
+    
+    const action = selectedPayment.status === PaymentStatus.DRAFT ? 'delete' : 'cancel';
+    setConfirmAction(action);
+    setShowConfirmDialog(true);
+  };
+
   // Cancel Square invoice
   const handleCancelInvoice = async () => {
-    if (!selectedPayment) return;
-    if (!confirm('Are you sure you want to cancel this invoice?')) return;
+    if (!selectedPayment || !confirmAction) return;
 
     setIsCanceling(true);
+    setShowConfirmDialog(false);
+    
     try {
       const response = await fetch(
-        `/api/orders/${order.id}/square-invoice?reason=Canceled by admin`,
+        `/api/orders/${order.id}/square-invoice?reason=${confirmAction === 'delete' ? 'Deleted' : 'Canceled'} by admin`,
         {
           method: 'DELETE',
         }
@@ -340,18 +352,19 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to cancel invoice');
+        throw new Error(data.error || `Failed to ${confirmAction} invoice`);
       }
 
-      toast.success('Invoice canceled successfully');
+      toast.success(data.message || `Invoice ${confirmAction}d successfully`);
       setShowInvoiceDialog(false);
       await loadPayments();
       onUpdate?.();
     } catch (error) {
-      console.error('Error canceling invoice:', error);
-      toast.error('Failed to cancel invoice');
+      console.error(`Error ${confirmAction}ing invoice:`, error);
+      toast.error(`Failed to ${confirmAction} invoice`);
     } finally {
       setIsCanceling(false);
+      setConfirmAction(null);
     }
   };
 
@@ -589,11 +602,14 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   <Button
                     variant="destructive"
                     className="justify-start"
-                    onClick={handleCancelInvoice}
+                    onClick={showCancelConfirmation}
                     disabled={isCanceling}
                   >
                     <X className="h-4 w-4 mr-2" />
-                    {isCanceling ? 'Canceling...' : 'Cancel Invoice'}
+                    {isCanceling 
+                      ? (selectedPayment.status === PaymentStatus.DRAFT ? 'Deleting...' : 'Canceling...') 
+                      : (selectedPayment.status === PaymentStatus.DRAFT ? 'Delete Invoice' : 'Cancel Invoice')
+                    }
                   </Button>
                 )}
 
@@ -775,6 +791,77 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
             </Button>
             <Button onClick={handleCreateInvoice} disabled={isCreating}>
               {isCreating ? 'Creating...' : 'Create Invoice'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog for Cancel/Delete */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-500" />
+              </div>
+              <div>
+                <DialogTitle>
+                  {confirmAction === 'delete' ? 'Delete Invoice' : 'Cancel Invoice'}
+                </DialogTitle>
+                <DialogDescription className="mt-1">
+                  {confirmAction === 'delete' 
+                    ? 'This will permanently delete the draft invoice. This action cannot be undone.'
+                    : 'This will cancel the invoice and it will no longer be payable by the customer.'
+                  }
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          {selectedPayment && (
+            <div className="py-4">
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Invoice</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedPayment.payment_number}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Amount</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {formatCurrency(selectedPayment.total_amount)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Status</span>
+                  <Badge className={cn('text-xs', getStatusColor(selectedPayment.status))}>
+                    {selectedPayment.status.replace('_', ' ')}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowConfirmDialog(false);
+                setConfirmAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancelInvoice}
+              disabled={isCanceling}
+            >
+              {isCanceling 
+                ? (confirmAction === 'delete' ? 'Deleting...' : 'Canceling...')
+                : (confirmAction === 'delete' ? 'Delete Invoice' : 'Cancel Invoice')
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
