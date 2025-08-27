@@ -179,7 +179,13 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Failed to parse response as JSON:', jsonError);
+        throw new Error('Server returned invalid response. Please check server logs.');
+      }
 
       if (!response.ok) {
         throw new Error(data.error || data.details || 'Failed to create invoice');

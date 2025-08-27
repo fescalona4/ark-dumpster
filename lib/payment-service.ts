@@ -131,8 +131,11 @@ export async function createPaymentFromOrderServices(
       .eq('order_id', orderId);
 
     if (servicesError) {
-      console.error('Error fetching order services:', servicesError);
-      return { success: false, error: `Failed to fetch order services: ${servicesError.message}` };
+      console.error('Error fetching order services for order', orderId, ':', servicesError);
+      return { 
+        success: false, 
+        error: `Failed to fetch order services: ${servicesError.message}. Please check if the order exists and has services configured.` 
+      };
     }
 
     console.log(

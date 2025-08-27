@@ -85,7 +85,10 @@ export async function POST(
   } catch (error) {
     console.error('Error creating Square invoice:', error);
     return NextResponse.json(
-      { error: 'Failed to create Square invoice', details: error },
+      { 
+        error: 'Failed to create Square invoice', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }
@@ -135,7 +138,10 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching Square invoice:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch Square invoice', details: error },
+      { 
+        error: 'Failed to fetch Square invoice', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }
@@ -201,7 +207,10 @@ export async function DELETE(
   } catch (error) {
     console.error('Error canceling Square invoice:', error);
     return NextResponse.json(
-      { error: 'Failed to cancel Square invoice', details: error },
+      { 
+        error: 'Failed to cancel Square invoice', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
       { status: 500 }
     );
   }

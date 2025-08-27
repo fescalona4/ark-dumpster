@@ -142,7 +142,7 @@ function OrdersPageContent() {
 
   // Order services state
   const [orderServices, setOrderServices] = useState<{
-    [orderId: string]: OrderServiceWithRelations[];
+    [orderId: string]: any[];
   }>({});
 
   // Service edit dialog state
@@ -217,7 +217,7 @@ function OrdersPageContent() {
           quantity,
           unit_price,
           total_price,
-          services!inner(
+          services(
             display_name,
             description
           )
@@ -234,12 +234,12 @@ function OrdersPageContent() {
       }
 
       // Group services by order_id
-      const servicesByOrder: { [orderId: string]: OrderServiceWithRelations[] } = {};
-      (data || []).forEach(service => {
+      const servicesByOrder: { [orderId: string]: any[] } = {};
+      (data || []).forEach((service: any) => {
         if (!servicesByOrder[service.order_id]) {
           servicesByOrder[service.order_id] = [];
         }
-        servicesByOrder[service.order_id].push(service as unknown as OrderServiceWithRelations);
+        servicesByOrder[service.order_id].push(service);
       });
 
       setOrderServices(servicesByOrder);
@@ -263,8 +263,23 @@ function OrdersPageContent() {
   /**
    * Handles service click to open edit dialog
    */
-  const handleServiceClick = (service: OrderServiceWithRelations) => {
-    setSelectedService(service);
+  const handleServiceClick = (service: any) => {
+    // Convert to OrderServiceWithRelations for dialog
+    const serviceForDialog = {
+      id: service.id || 'order-service',
+      order_id: service.order_id,
+      quantity: service.quantity,
+      unit_price: service.unit_price,
+      total_price: service.total_price,
+      service: {
+        display_name: service.services?.display_name,
+        description: service.services?.description,
+        category: {} as any,
+      } as any,
+      dumpster_assignments: [],
+    } as unknown as OrderServiceWithRelations;
+    
+    setSelectedService(serviceForDialog);
     setServiceEditDialogOpen(true);
   };
 
@@ -883,7 +898,7 @@ function OrdersPageContent() {
                                   !order.services_summary
                                     .split(', ')
                                     .map(s => s.trim())
-                                    .includes(service.service?.display_name || '')
+                                    .includes(service.services?.display_name || '')
                               ).length}{' '}
                             Total
                           </Badge>
@@ -913,7 +928,7 @@ function OrdersPageContent() {
                                   // Check if there's a priced service for this main service
                                   const mainService = orderServices[order.id]?.find(
                                     orderService =>
-                                      orderService.service?.display_name === service.trim()
+                                      orderService.services?.display_name === service.trim()
                                   );
 
                                   if (mainService && mainService.total_price > 0) {
@@ -943,7 +958,7 @@ function OrdersPageContent() {
                                   !order.services_summary
                                     .split(', ')
                                     .map(s => s.trim())
-                                    .includes(service.service?.display_name || '')
+                                    .includes(service.services?.display_name || '')
                               )
                               .map((service, index) => (
                                 <button
@@ -955,7 +970,7 @@ function OrdersPageContent() {
                                     <RiBox1Line className="h-4 w-4 flex-shrink-0" />
                                     <div>
                                       <span className="font-medium">
-                                        {service.service?.display_name}
+                                        {service.services?.display_name}
                                       </span>
                                       {service.quantity > 1 && (
                                         <span className="text-muted-foreground ml-1">

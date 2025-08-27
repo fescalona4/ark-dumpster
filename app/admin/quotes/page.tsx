@@ -145,7 +145,7 @@ function QuotesPageContent() {
 
   // Quote services state
   const [quoteServices, setQuoteServices] = useState<{
-    [quoteId: string]: OrderServiceWithRelations[];
+    [quoteId: string]: any[];
   }>({});
 
   // Service edit dialog state
@@ -259,7 +259,7 @@ function QuotesPageContent() {
           quantity,
           unit_price,
           total_price,
-          services!inner(
+          services(
             display_name,
             description
           )
@@ -276,12 +276,12 @@ function QuotesPageContent() {
       }
 
       // Group services by quote_id
-      const servicesByQuote: { [quoteId: string]: OrderServiceWithRelations[] } = {};
-      (data || []).forEach(service => {
+      const servicesByQuote: { [quoteId: string]: any[] } = {};
+      (data || []).forEach((service: any) => {
         if (!servicesByQuote[service.quote_id]) {
           servicesByQuote[service.quote_id] = [];
         }
-        servicesByQuote[service.quote_id].push(service as unknown as OrderServiceWithRelations);
+        servicesByQuote[service.quote_id].push(service);
       });
 
       setQuoteServices(servicesByQuote);
@@ -397,8 +397,23 @@ function QuotesPageContent() {
   /**
    * Handles service click to open edit dialog
    */
-  const handleServiceClick = (service: OrderServiceWithRelations) => {
-    setSelectedService(service);
+  const handleServiceClick = (service: any) => {
+    // Convert to OrderServiceWithRelations for dialog
+    const serviceForDialog = {
+      id: 'quote-service', // Will be set properly in dialog
+      order_id: service.quote_id,
+      quantity: service.quantity,
+      unit_price: service.unit_price,
+      total_price: service.total_price,
+      service: {
+        display_name: service.services.display_name,
+        description: service.services.description,
+        category: {} as any, // Will be filled by dialog if needed
+      } as any,
+      dumpster_assignments: [],
+    } as unknown as OrderServiceWithRelations;
+    
+    setSelectedService(serviceForDialog);
     setServiceEditDialogOpen(true);
   };
 
@@ -814,7 +829,7 @@ function QuotesPageContent() {
                                 quoteServices[quote.id].filter(
                                   service =>
                                     !quote.dumpster_size ||
-                                    service.service?.display_name !==
+                                    service.services?.display_name !==
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                 ).length}{' '}
                               Total
@@ -849,7 +864,7 @@ function QuotesPageContent() {
                                   // Check if there's a priced service for this main service
                                   const mainService = quoteServices[quote.id]?.find(
                                     service =>
-                                      service.service?.display_name ===
+                                      service.services?.display_name ===
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                   );
 
@@ -877,7 +892,7 @@ function QuotesPageContent() {
                                   service =>
                                     // Filter out main service to avoid duplication
                                     !quote.dumpster_size ||
-                                    service.service?.display_name !==
+                                    service.services?.display_name !==
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                 )
                                 .map((service, index) => (
@@ -890,7 +905,7 @@ function QuotesPageContent() {
                                       <RiBox1Line className="h-4 w-4 flex-shrink-0" />
                                       <div>
                                         <span className="font-medium">
-                                          {service.service?.display_name}
+                                          {service.services?.display_name}
                                         </span>
                                         {service.quantity > 1 && (
                                           <span className="text-muted-foreground ml-1">
