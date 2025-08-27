@@ -129,7 +129,6 @@ export async function updateOrderStatus({
  */
 export function getStatusColor(status: string): string {
   const colors: { [key: string]: string } = {
-    pending: 'bg-yellow-100 text-yellow-800',
     scheduled: 'bg-blue-100 text-blue-800',
     on_way: 'bg-purple-100 text-purple-800',
     delivered: 'bg-green-100 text-green-800',
@@ -145,7 +144,6 @@ export function getStatusColor(status: string): string {
  */
 export function getStatusIcon(status: string): string {
   const icons: { [key: string]: string } = {
-    pending: '⏳',
     scheduled: '📅',
     on_way: '🚛',
     delivered: '✅',

@@ -11,7 +11,6 @@ export type QuoteStatus = 'pending' | 'quoted' | 'accepted' | 'declined' | 'comp
 export type QuotePriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export type OrderStatus = 
-  | 'pending' 
   | 'confirmed' 
   | 'scheduled' 
   | 'on_way' 

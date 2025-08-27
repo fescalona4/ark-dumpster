@@ -46,7 +46,7 @@ export async function createOrderWithServices(orderData: OrderCreateData): Promi
       city: orderData.city || null,
       state: orderData.state || null,
       zip_code: orderData.zipCode || null,
-      status: 'pending' as const,
+      status: 'scheduled' as const,
       priority: orderData.priority || 'normal',
       assigned_to: orderData.assignedTo || 'Ariel',
       scheduled_delivery_date: orderData.scheduledDeliveryDate || null,
@@ -124,7 +124,7 @@ export async function createOrderServices(orderId: string, services: ServiceSele
       service_date: serviceSelection.service_date || null,
       notes: serviceSelection.notes || null,
       metadata: serviceSelection.metadata || null,
-      status: 'pending' as const,
+      status: 'confirmed' as const,
     };
 
     const { data: orderService, error: orderServiceError } = await supabase
@@ -170,7 +170,7 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
     const { data: service, error: serviceError } = await supabase
       .from('services')
       .select('id')
-      .eq('dumpster_size', quote.dumpster_size)
+      .eq('dumpster_size', `${quote.dumpster_size}-yard`)
       .eq('is_active', true)
       .limit(1)
       .single();

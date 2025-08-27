@@ -643,7 +643,7 @@ function OrdersPageContent() {
                   <StatusIndicator />
                   <StatusLabel className="ml-2">
                     <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
-                    {order.status.replace('_', ' ').toUpperCase()}
+                    {order.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                   </StatusLabel>
                 </Status>
               </div>

@@ -53,6 +53,7 @@ import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+import { SquareInvoiceManager } from '@/components/admin/square-invoice-manager';
 
 // Helper function to map order status to Status component status
 const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
@@ -62,7 +63,6 @@ const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' |
       return 'online';
     case 'cancelled':
       return 'offline';
-    case 'pending':
     case 'scheduled':
       return 'degraded';
     case 'on_way':
@@ -126,6 +126,8 @@ function OrderDetailContent() {
 
       if (error) throw error;
 
+      console.log('Order data received:', data);
+      console.log('Order status:', data?.status);
       setOrder(data);
     } catch (err) {
       console.error('Error fetching order:', err);
@@ -434,7 +436,7 @@ function OrderDetailContent() {
             <StatusIndicator />
             <StatusLabel className="ml-2">
               <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
-              {order.status.replace('_', ' ').toUpperCase()}
+              {order.status ? order.status.replace('_', ' ').toUpperCase() : 'UNKNOWN'}
             </StatusLabel>
           </Status>
         </div>
@@ -656,12 +658,13 @@ function OrderDetailContent() {
                 )}
               </div>
 
-              {/* Invoice button */}
-              <div className="mt-4">
-                {/* TODO: Update InvoiceDialog for multi-service structure */}
-                {/* <InvoiceDialog order={order} /> */}
-              </div>
             </div>
+          </div>
+
+          {/* Square Invoice Manager */}
+          <div className="mt-6 pt-4 border-t">
+            <h4 className="font-semibold mb-3">Payment & Invoicing</h4>
+            <SquareInvoiceManager order={order} onUpdate={fetchOrder} />
           </div>
 
           {/* Notes Section */}
@@ -692,15 +695,6 @@ function OrderDetailContent() {
             <h5 className="font-medium text-sm mb-3">Actions</h5>
             <div className="flex flex-wrap gap-2">
               {/* Status-specific buttons */}
-              {order.status === 'pending' && (
-                <Button
-                  onClick={() => updateOrderStatus('scheduled')}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  size="sm"
-                >
-                  📅 Schedule Order
-                </Button>
-              )}
               {order.status === 'scheduled' && (
                 <>
                   <AlertDialog>

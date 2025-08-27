@@ -26,16 +26,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { 
-  CalendarIcon, 
-  CreditCard, 
-  Send, 
-  RefreshCw, 
-  X, 
-  FileText, 
-  CheckCircle, 
-  Clock, 
-  Eye, 
+import {
+  CalendarIcon,
+  CreditCard,
+  Send,
+  RefreshCw,
+  X,
+  FileText,
+  CheckCircle,
+  Clock,
+  Eye,
   DollarSign,
   AlertCircle,
   ExternalLink
@@ -70,11 +70,11 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       setLoading(true);
       const response = await fetch(`/api/orders/${order.id}/payments`);
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to load payments');
       }
-      
+
       setPayments(data.payments || []);
     } catch (error) {
       console.error('Error loading payments:', error);
@@ -85,8 +85,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   };
 
   // Get the active Square invoice payment
-  const activeSquarePayment = payments.find(p => 
-    p.method === PaymentMethod.SQUARE_INVOICE && 
+  const activeSquarePayment = payments.find(p =>
+    p.method === PaymentMethod.SQUARE_INVOICE &&
     [PaymentStatus.DRAFT, PaymentStatus.PENDING, PaymentStatus.SENT, PaymentStatus.VIEWED, PaymentStatus.PARTIALLY_PAID].includes(p.status)
   );
 
@@ -195,7 +195,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   // Send Square invoice
   const handleSendInvoice = async () => {
     if (!activeSquarePayment) return;
-    
+
     setIsSending(true);
     try {
       const response = await fetch(`/api/orders/${order.id}/square-invoice/send`, {
@@ -222,7 +222,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   // Refresh invoice status
   const handleRefreshStatus = async () => {
     if (!activeSquarePayment) return;
-    
+
     setIsRefreshing(true);
     try {
       const response = await fetch(`/api/orders/${order.id}/square-invoice`);
@@ -286,24 +286,10 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
     <div className="space-y-4">
       {/* Create Invoice Button - Show when no active payments */}
       {canCreateNewInvoice && (
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <div className="text-center">
-            <CreditCard className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-            <h3 className="font-semibold text-blue-700 mb-1">
-              {payments.length > 0 ? 'Create New Invoice' : 'Create Square Invoice'}
-            </h3>
-            <p className="text-sm text-blue-600 mb-3">
-              {payments.length > 0 
-                ? 'Previous invoice was canceled. Create a new invoice for this order.' 
-                : 'Create a Square invoice to enable online payments for this order'
-              }
-            </p>
-            <Button onClick={() => setShowCreateDialog(true)} className="bg-blue-600 hover:bg-blue-700">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Create Square Invoice
-            </Button>
-          </div>
-        </div>
+        <Button onClick={() => setShowCreateDialog(true)} className="bg-blue-600 hover:bg-blue-700">
+          <CreditCard className="h-4 w-4 mr-2" />
+          Create Square Invoice
+        </Button>
       )}
 
       {/* Payment Status Cards */}
@@ -332,7 +318,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   <span className="text-gray-600">Amount:</span>
                   <span className="font-semibold">{formatCurrency(payment.total_amount)}</span>
                 </div>
-                
+
                 {payment.paid_amount > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Paid:</span>
@@ -386,17 +372,17 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   </Button>
                 )}
 
-                {payment.method === PaymentMethod.SQUARE_INVOICE && 
-                 payment.status === PaymentStatus.DRAFT && (
-                  <Button
-                    size="sm"
-                    onClick={handleSendInvoice}
-                    disabled={isSending}
-                    className="flex-1"
-                  >
-                    {isSending ? 'Sending...' : 'Send Invoice'}
-                  </Button>
-                )}
+                {payment.method === PaymentMethod.SQUARE_INVOICE &&
+                  payment.status === PaymentStatus.DRAFT && (
+                    <Button
+                      size="sm"
+                      onClick={handleSendInvoice}
+                      disabled={isSending}
+                      className="flex-1"
+                    >
+                      {isSending ? 'Sending...' : 'Send Invoice'}
+                    </Button>
+                  )}
 
                 <Button
                   size="sm"
@@ -408,16 +394,16 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                 </Button>
 
                 {payment.method === PaymentMethod.SQUARE_INVOICE &&
-                 ![PaymentStatus.PAID, PaymentStatus.CANCELED].includes(payment.status) && (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={handleCancelInvoice}
-                    disabled={isCanceling}
-                  >
-                    Cancel
-                  </Button>
-                )}
+                  ![PaymentStatus.PAID, PaymentStatus.CANCELED].includes(payment.status) && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleCancelInvoice}
+                      disabled={isCanceling}
+                    >
+                      Cancel
+                    </Button>
+                  )}
               </div>
             </div>
           ))}
