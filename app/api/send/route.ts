@@ -41,7 +41,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       );
     }
 
-    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData } = validation.data;
+    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData, selectedServices } = validation.data;
 
     // Determine if company emails should be sent
     const sendCompanyEmails = process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS !== 'false';
@@ -54,7 +54,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
         console.log('Saving quote to database');
       }
       
-      dbResult = await saveQuoteToDatabase(fullFormData);
+      dbResult = await saveQuoteToDatabase(fullFormData, selectedServices);
 
       if (!dbResult.success) {
         if (isDevelopment) {

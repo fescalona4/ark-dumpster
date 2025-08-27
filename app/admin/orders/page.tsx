@@ -54,6 +54,8 @@ import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
 import InvoiceDialog from '@/components/dialogs/invoice-dialog';
 import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
+import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
+import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
 import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
 import { Order } from '@/types/database';
@@ -116,6 +118,13 @@ function OrdersPageContent() {
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
   const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
 
+  // Order services state
+  const [orderServices, setOrderServices] = useState<{ [orderId: string]: any[] }>({});
+
+  // Service edit dialog state
+  const [selectedService, setSelectedService] = useState<any | null>(null);
+  const [serviceEditDialogOpen, setServiceEditDialogOpen] = useState(false);
+
   /**
    * Fetches dumpsters from the database
    */
@@ -166,6 +175,95 @@ function OrdersPageContent() {
     fetchOrders();
     fetchDumpsters();
   }, [fetchOrders, fetchDumpsters]);
+
+  // Fetch order services for all orders
+  const fetchOrderServices = useCallback(async () => {
+    if (orders.length === 0) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('order_services')
+        .select(`
+          order_id,
+          quantity,
+          unit_price,
+          total_price,
+          services!inner(
+            display_name,
+            description
+          )
+        `)
+        .in('order_id', orders.map(o => o.id));
+
+      if (error) {
+        console.error('Error fetching order services:', error);
+        return;
+      }
+
+      // Group services by order_id
+      const servicesByOrder: { [orderId: string]: any[] } = {};
+      (data || []).forEach(service => {
+        if (!servicesByOrder[service.order_id]) {
+          servicesByOrder[service.order_id] = [];
+        }
+        servicesByOrder[service.order_id].push(service);
+      });
+
+      setOrderServices(servicesByOrder);
+    } catch (error) {
+      console.error('Error fetching order services:', error);
+    }
+  }, [orders]);
+
+  useEffect(() => {
+    fetchOrderServices();
+  }, [fetchOrderServices]);
+
+  /**
+   * Handles when services are added to an order
+   */
+  const handleServicesAdded = async (orderId: string, services: any[]) => {
+    // Refresh order services for this specific order
+    await fetchOrderServices();
+  };
+
+  /**
+   * Handles service click to open edit dialog
+   */
+  const handleServiceClick = (service: any) => {
+    setSelectedService(service);
+    setServiceEditDialogOpen(true);
+  };
+
+  /**
+   * Handles service updates from the edit dialog
+   */
+  const handleServiceUpdate = async () => {
+    await fetchOrderServices();
+    await fetchOrders(); // Refresh orders to update totals
+  };
+
+  /**
+   * Handles main service click (services from summary)
+   */
+  const handleMainServiceClick = (orderId: string, serviceName: string, index: number) => {
+    // Create a mock service object for main services
+    const mockService = {
+      id: `main-${orderId}-${index}`, // Special ID for main services
+      order_id: orderId,
+      quantity: 1,
+      unit_price: "0.00", // Main services typically don't have separate pricing
+      total_price: "0.00",
+      services: {
+        display_name: serviceName,
+        description: "Main service from order"
+      },
+      is_main_service: true // Flag to identify this as a main service
+    };
+    
+    setSelectedService(mockService);
+    setServiceEditDialogOpen(true);
+  };
 
   // Pull-to-refresh functionality for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -238,10 +336,10 @@ function OrdersPageContent() {
     });
 
     if (result.success) {
-      // Update local state - order
+      // Update local state - order (map status to order_status for view compatibility)
       setOrders(orders.map(order =>
         order.id === orderId
-          ? { ...order, ...result.updatedOrder }
+          ? { ...order, ...result.updatedOrder, order_status: result.updatedOrder?.status || order.order_status }
           : order
       ));
 
@@ -639,11 +737,11 @@ function OrdersPageContent() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Status status={mapOrderStatusToStatusType(order.status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
+                <Status status={mapOrderStatusToStatusType(order.order_status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
                   <StatusIndicator />
                   <StatusLabel className="ml-2">
-                    <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
-                    {order.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
+                    <span className="mr-2 text-lg">{getStatusIcon(order.order_status)}</span>
+                    {order.order_status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                   </StatusLabel>
                 </Status>
               </div>
@@ -696,6 +794,26 @@ function OrdersPageContent() {
                             {order.email}
                           </a>
                         </div>
+                        {order.address && (
+                          <div className="flex items-start gap-2">
+                            <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
+                            <div className="flex-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleQuickNavigate(order.address!, order.city || undefined, order.state || undefined);
+                                }}
+                                className="text-left hover:underline font-medium text-blue-600 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                aria-label={`Navigate to ${order.address || ''}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
+                              >
+                                <div>{order.address}</div>
+                                {order.city && order.state && (
+                                  <div className="text-muted-foreground">{order.city}, {order.state}</div>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -706,22 +824,74 @@ function OrdersPageContent() {
                 <div className="space-y-4 md:grid md:grid-cols-2 md:gap-6 md:space-y-0">
                   {/* Service Details */}
                   <div className="bg-muted/30 p-3 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-base flex items-center gap-2">
-                      Service Details
-                      {order.has_multiple_services && (
-                        <Badge variant="secondary" className="text-xs">
-                          {order.service_count} Services
-                        </Badge>
-                      )}
-                    </h4>
+                    <div className="mb-2">
+                      <h4 className="font-semibold text-base flex items-center gap-2">
+                        Services
+                        {orderServices[order.id] && orderServices[order.id].length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {(order.services_summary ? order.services_summary.split(', ').length : 0) + orderServices[order.id].filter(service => 
+                              !order.services_summary || 
+                              !order.services_summary.split(', ').map(s => s.trim()).includes(service.services.display_name)
+                            ).length} Total
+                          </Badge>
+                        )}
+                      </h4>
+                    </div>
                     <div className="space-y-2 text-sm">
-                      {order.services_summary ? (
-                        <div className="flex items-start gap-2">
-                          <RiBox1Line className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="font-medium">Services:</div>
-                            <div className="text-muted-foreground">{order.services_summary}</div>
-                          </div>
+                      {/* All Services in unified list */}
+                      {order.services_summary || (orderServices[order.id] && orderServices[order.id].length > 0) ? (
+                        <div className="space-y-2">
+                          {/* Main services from summary */}
+                          {order.services_summary && order.services_summary.split(', ').map((service, index) => (
+                            <button
+                              key={`service-${index}`}
+                              onClick={() => handleMainServiceClick(order.id, service.trim(), index)}
+                              className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                            >
+                              <div className="flex items-center gap-2">
+                                <RiBox1Line className="h-4 w-4 flex-shrink-0" />
+                                <span className="font-medium">{service.trim()}</span>
+                              </div>
+                              {(() => {
+                                // Check if there's a priced service for this main service
+                                const mainService = orderServices[order.id]?.find(orderService => 
+                                  orderService.services.display_name === service.trim()
+                                );
+                                
+                                if (mainService && parseFloat(mainService.total_price) > 0) {
+                                  return <span className="text-green-600 font-medium">${parseFloat(mainService.total_price).toFixed(2)}</span>;
+                                } else {
+                                  return <span className="text-blue-600 font-medium text-xs">Main Service</span>;
+                                }
+                              })()}
+                            </button>
+                          ))}
+                          
+                          {/* Additional Services */}
+                          {orderServices[order.id] && orderServices[order.id]
+                            .filter(service => 
+                              // Filter out main service to avoid duplication
+                              !order.services_summary || 
+                              !order.services_summary.split(', ').map(s => s.trim()).includes(service.services.display_name)
+                            )
+                            .map((service, index) => (
+                            <button
+                              key={`order-service-${index}`}
+                              onClick={() => handleServiceClick(service)}
+                              className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                            >
+                              <div className="flex items-center gap-2">
+                                <RiBox1Line className="h-4 w-4 flex-shrink-0" />
+                                <div>
+                                  <span className="font-medium">{service.services.display_name}</span>
+                                  {service.quantity > 1 && (
+                                    <span className="text-muted-foreground ml-1">× {service.quantity}</span>
+                                  )}
+                                </div>
+                              </div>
+                              <span className="text-green-600 font-medium">${parseFloat(service.total_price).toFixed(2)}</span>
+                            </button>
+                          ))}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -729,38 +899,37 @@ function OrdersPageContent() {
                           <span>No services configured</span>
                         </div>
                       )}
-                      {order.total_service_amount > 0 && (
-                        <div className="flex items-center gap-2">
-                          <RiMoneyDollarCircleLine className="h-4 w-4 text-green-600" />
-                          <span>Total: ${order.total_service_amount.toFixed(2)}</span>
-                        </div>
-                      )}
-                      {order.address && (
-                        <div className="flex items-start gap-2">
-                          <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
-                          <div className="flex-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleQuickNavigate(order.address!, order.city || undefined, order.state || undefined);
-                              }}
-                              className="text-left hover:underline font-medium text-blue-600 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                              aria-label={`Navigate to ${order.address || ''}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
-                            >
-                              <div>{order.address}</div>
-                              {order.city && order.state && (
-                                <div className="text-muted-foreground">{order.city}, {order.state}</div>
-                              )}
-                            </button>
+
+                      {/* Total Summary */}
+                      {orderServices[order.id] && orderServices[order.id].length > 0 && (
+                        <div className="pt-2 border-t">
+                          <div className="flex justify-between items-center font-bold text-base">
+                            <span className="flex items-center gap-2">
+                              <RiMoneyDollarCircleLine className="h-4 w-4 text-green-600" />
+                              Services Total:
+                            </span>
+                            <span className="text-green-600">
+                              ${orderServices[order.id].reduce((sum, s) => sum + parseFloat(s.total_price), 0).toFixed(2)}
+                            </span>
                           </div>
                         </div>
                       )}
+
                       {order.scheduled_delivery_date && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 pt-2">
                           <RiCalendarLine className="h-4 w-4" />
                           <span>Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy')}</span>
                         </div>
                       )}
+
+                      {/* Add Services Button */}
+                      <div className="flex justify-end pt-3 mt-3 border-t">
+                        <AddServicesDialog
+                          orderId={order.id}
+                          type="order"
+                          onServicesAdded={(services) => handleServicesAdded(order.id, services)}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -780,7 +949,7 @@ function OrdersPageContent() {
                         <Label htmlFor={`driver-${order.id}`} className="text-sm font-semibold">
                           Assigned Driver
                         </Label>
-                        {order.status === 'completed' ? (
+                        {order.order_status === 'completed' ? (
                           // Show read-only driver info for completed orders
                           <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border min-h-[44px]">
                             <RiTruckLine className="h-3 w-3 text-gray-700" />
@@ -831,9 +1000,9 @@ function OrdersPageContent() {
                       {/* Dumpster Assignment */}
                       <div className="space-y-2">
                         <Label htmlFor={`dumpster-${order.id}`} className="text-sm font-semibold">
-                          {order.status === 'completed' ? 'Dumpsters Used' : 'Assigned Dumpsters'}
+                          {order.order_status === 'completed' ? 'Dumpsters Used' : 'Assigned Dumpsters'}
                         </Label>
-                        {order.status === 'completed' ? (
+                        {order.order_status === 'completed' ? (
                           // Show read-only dumpster info for completed orders
                           <div className="p-3 bg-muted rounded-lg border min-h-[44px]">
                             {order.assigned_dumpsters ? (
@@ -924,7 +1093,7 @@ function OrdersPageContent() {
                   <div className="flex flex-wrap gap-3">
 
                     {/* Status-specific buttons */}
-                    {order.status === 'scheduled' && (
+                    {order.order_status === 'scheduled' && (
                       <>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -963,7 +1132,7 @@ function OrdersPageContent() {
                         </Button>
                       </>
                     )}
-                    {order.status === 'on_way' && (
+                    {order.order_status === 'on_way' && (
                       <>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'scheduled')}
@@ -982,7 +1151,7 @@ function OrdersPageContent() {
                         </Button>
                       </>
                     )}
-                    {order.status === 'delivered' && (
+                    {order.order_status === 'delivered' && (
                       <>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'on_way')}
@@ -1001,7 +1170,7 @@ function OrdersPageContent() {
                         </Button>
                       </>
                     )}
-                    {order.status === 'on_way_pickup' && (
+                    {order.order_status === 'on_way_pickup' && (
                       <>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'delivered')}
@@ -1020,9 +1189,9 @@ function OrdersPageContent() {
                         </Button>
                       </>
                     )}
-                    {(order.status === 'completed' || order.status === 'cancelled') && (
+                    {(order.order_status === 'completed' || order.order_status === 'cancelled') && (
                       <div className="text-sm text-muted-foreground italic">
-                        {order.status === 'completed' ? '✅ Order completed' : '❌ Order cancelled'}
+                        {order.order_status === 'completed' ? '✅ Order completed' : '❌ Order cancelled'}
                       </div>
                     )}
                   </div>
@@ -1035,6 +1204,20 @@ function OrdersPageContent() {
 
       {/* Dumpster Assignment Dialog */}
       {/* TODO: Update DumpsterAssignmentDialog for multi-service structure */}
+
+      {/* Service Edit Dialog */}
+      {selectedService && (
+        <ServiceEditDialog
+          service={selectedService}
+          isOpen={serviceEditDialogOpen}
+          onClose={() => {
+            setServiceEditDialogOpen(false);
+            setSelectedService(null);
+          }}
+          onUpdate={handleServiceUpdate}
+          type="order"
+        />
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { DropoffCalendar } from '@/components/forms/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
 import AuthGuard from '@/components/providers/auth-guard';
 import GooglePlacesAutocomplete from '@/components/forms/google-places-autocomplete';
+import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
 
 export default function CreateQuotePage() {
   return (
@@ -53,11 +54,22 @@ function CreateQuoteContent() {
     city: '',
     state: 'FL',
     zipCode: '',
-    dropoffDate: '',
+    serviceDate: (() => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    })(),
     timeNeeded: '1-day',
-    dumpsterSize: '15',
     message: '',
   });
+  const [selectedServices, setSelectedServices] = useState<{
+    service_id: string;
+    service: any;
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    notes: string;
+  }[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -133,9 +145,8 @@ function CreateQuoteContent() {
         { field: 'city', label: 'City' },
         { field: 'state', label: 'State' },
         { field: 'zipCode', label: 'ZIP Code' },
-        { field: 'dropoffDate', label: 'Drop-off Date' },
+        { field: 'serviceDate', label: 'Service Date' },
         { field: 'timeNeeded', label: 'Time Needed' },
-        { field: 'dumpsterSize', label: 'Dumpster Size' },
       ];
 
       const missingFields = requiredFields.filter(
@@ -153,6 +164,16 @@ function CreateQuoteContent() {
         return;
       }
 
+      if (selectedServices.length === 0) {
+        setNotification({
+          type: 'warning',
+          title: 'No Services Selected',
+          description: 'Please add at least one service to the quote.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Send request to API - always skip email for admin-created quotes
       const response = await fetch('/api/send', {
         method: 'POST',
@@ -163,18 +184,17 @@ function CreateQuoteContent() {
           firstName: formData.firstName,
           email: formData.email,
           type: 'quote',
-          subject: 'New Dumpster Rental Request (Admin Created) - ARK Dumpster',
+          subject: 'New Service Quote Request (Admin Created) - ARK Dumpster',
           skipEmail: true, // Always skip email for admin-created quotes
           quoteDetails: {
-            service: formData.dumpsterSize
-              ? `${formData.dumpsterSize} Dumpster`
-              : 'Dumpster Rental',
+            service: selectedServices.map(s => `${s.service.display_name} (Qty: ${s.quantity})`).join(', '),
             location:
               `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
-            date: formData.dropoffDate || 'TBD',
+            date: formData.serviceDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
             message: formData.message,
           },
+          selectedServices,
           fullFormData: {
             ...formData,
             phone: formData.phone.replace(/\D/g, ''),
@@ -207,11 +227,15 @@ function CreateQuoteContent() {
           city: '',
           state: 'FL',
           zipCode: '',
-          dropoffDate: '',
+          serviceDate: (() => {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return tomorrow.toISOString().split('T')[0];
+          })(),
           timeNeeded: '1-day',
-          dumpsterSize: '15',
           message: '',
         });
+        setSelectedServices([]);
       } else {
         // const errorData = await response.json(); // TODO: Use error data for better user feedback
         setNotification({
@@ -391,8 +415,8 @@ function CreateQuoteContent() {
                 <div className="grid md:grid-cols-3 gap-6">
                   <div>
                     <DropoffCalendar
-                      value={formData.dropoffDate}
-                      onChange={date => handleSelectChange('dropoffDate', date)}
+                      value={formData.serviceDate}
+                      onChange={date => handleSelectChange('serviceDate', date)}
                     />
                   </div>
                   <div>
@@ -416,24 +440,42 @@ function CreateQuoteContent() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label htmlFor="dumpsterSize">Dumpster Size *</Label>
-                    <Select
-                      value={formData.dumpsterSize}
-                      onValueChange={value => handleSelectChange('dumpsterSize', value)}
-                      required
-                    >
-                      <SelectTrigger className="mt-1.5 w-full !h-11">
-                        <SelectValue placeholder="Select size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Available sizes</SelectLabel>
-                          <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
-                          <SelectItem value="20">20 Yard Dumpster</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                </div>
+                <div>
+                  <Label>Services *</Label>
+                  <div className="mt-1.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        {selectedServices.length === 0 
+                          ? 'No services selected' 
+                          : `${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''} selected`
+                        }
+                      </span>
+                      <AddServicesDialog
+                        onServicesAdded={setSelectedServices}
+                        existingServices={selectedServices}
+                        type="quote"
+                      />
+                    </div>
+                    {selectedServices.length > 0 && (
+                      <div className="space-y-2 p-3 bg-muted/30 rounded-md">
+                        {selectedServices.map((service) => (
+                          <div key={service.service_id} className="flex items-center justify-between text-sm">
+                            <span>{service.service.display_name}</span>
+                            <div className="text-right">
+                              <div className="font-medium">Qty: {service.quantity} × ${service.unit_price}</div>
+                              <div className="text-green-600">${service.total_price.toFixed(2)}</div>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="pt-2 border-t border-border/50 flex justify-between font-medium">
+                          <span>Total:</span>
+                          <span className="text-green-600">
+                            ${selectedServices.reduce((sum, s) => sum + s.total_price, 0).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>

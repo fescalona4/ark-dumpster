@@ -111,10 +111,21 @@ export const quoteFormSchema = z.object({
   city: citySchema,
   state: stateSchema,
   zipCode: zipCodeSchema,
-  dumpsterSize: dumpsterSizeSchema,
-  dropoffDate: dateSchema,
+  serviceDate: dateSchema,
   timeNeeded: timeNeededSchema,
   message: messageSchema,
+});
+
+// Selected service validation schema
+const selectedServiceSchema = z.object({
+  service_id: z.string().uuid('Invalid service ID'),
+  service: z.object({
+    display_name: z.string(),
+  }).passthrough(), // Allow additional properties
+  quantity: z.number().positive('Quantity must be positive'),
+  unit_price: z.number().nonnegative('Unit price must be non-negative'),
+  total_price: z.number().nonnegative('Total price must be non-negative'),
+  notes: z.string().optional(),
 });
 
 // Email API request validation schema
@@ -132,6 +143,7 @@ export const emailApiSchema = z.object({
     price: z.string().optional(),
   }).optional(),
   fullFormData: quoteFormSchema.optional(),
+  selectedServices: z.array(selectedServiceSchema).optional(),
 });
 
 // API route authentication validation

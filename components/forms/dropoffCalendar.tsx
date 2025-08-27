@@ -41,7 +41,7 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor="date" className="px-1">
-        Drop-off Date
+        Service Date *
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>

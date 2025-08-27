@@ -43,6 +43,21 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: false,
+  
+  // Disable service worker in development
+  ...(isDevelopment && {
+    headers: async () => [
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ],
+  }),
 
   // Proxy configuration for corporate networks - development only
   ...(isDevelopment && {

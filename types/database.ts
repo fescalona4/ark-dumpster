@@ -926,11 +926,9 @@ export type DumpsterAssignmentData = {
 };
 
 /**
- * Order with services for detailed operations
+ * Order with services for detailed operations (from view)
  */
-export type OrderWithServices = Order & {
-  order_services: OrderServiceWithRelations[];
-};
+export type OrderWithServices = Database['public']['Views']['order_summary_with_services']['Row'];
 
 /**
  * Service catalog with pricing rules

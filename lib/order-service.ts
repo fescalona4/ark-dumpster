@@ -163,36 +163,57 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
     throw new Error('Dropoff date is required to create an order');
   }
 
-  // Find the appropriate service for the quote's dumpster size
-  let service_id: string | null = null;
-  
-  if (quote.dumpster_size) {
-    const { data: service, error: serviceError } = await supabase
-      .from('services')
-      .select('id')
-      .eq('dumpster_size', `${quote.dumpster_size}-yard`)
-      .eq('is_active', true)
-      .limit(1)
-      .single();
+  // Get services from quote_services table
+  const { data: quoteServices, error: quoteServicesError } = await supabase
+    .from('quote_services')
+    .select(`
+      *,
+      services!inner(
+        display_name,
+        description
+      )
+    `)
+    .eq('quote_id', quoteId);
 
-    if (!serviceError && service) {
-      service_id = service.id;
-    }
+  if (quoteServicesError) {
+    console.error('Error fetching quote services:', quoteServicesError);
+    throw new Error('Failed to fetch quote services');
   }
 
-  // If no specific service found, use general service
-  if (!service_id) {
-    const { data: service, error: serviceError } = await supabase
-      .from('services')
-      .select('id')
-      .eq('sku', 'GENERAL-SERVICE')
-      .single();
+  // Build services array from quote_services
+  const services: ServiceSelection[] = [];
 
-    if (serviceError || !service) {
-      throw new Error('No suitable service found for this quote');
-    }
-    service_id = service.id;
+  if (quoteServices && quoteServices.length > 0) {
+    const quotedServices: ServiceSelection[] = quoteServices.map(qs => ({
+      service_id: qs.service_id,
+      quantity: parseFloat(qs.quantity),
+      unit_price: parseFloat(qs.unit_price),
+      service_date: qs.service_date || quote.dropoff_date,
+      start_date: qs.start_date,
+      end_date: qs.end_date,
+      notes: qs.notes,
+      metadata: {
+        converted_from_quote: true,
+        original_quote_service_id: qs.id,
+        dropoff_time: quote.dropoff_time,
+        time_needed: quote.time_needed,
+      }
+    }));
+    services.push(...quotedServices);
+  } else {
+    // No services configured - this should not happen with the new system
+    throw new Error('Quote has no services configured. Please add services to the quote before converting to an order.');
   }
+
+  console.log('Quote conversion:', {
+    quoteId,
+    servicesCount: services.length,
+    services: services.map(s => ({ 
+      service_id: s.service_id, 
+      quantity: s.quantity, 
+      unit_price: s.unit_price 
+    }))
+  });
 
   // Create the order data
   const orderData: OrderCreateData = {
@@ -210,21 +231,7 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
     priority: quote.priority,
     scheduledDeliveryDate: quote.dropoff_date,
     internalNotes: quote.quote_notes,
-    services: [
-      {
-        service_id: service_id!,
-        quantity: 1,
-        unit_price: quote.quoted_price || undefined,
-        service_date: quote.dropoff_date,
-        notes: quote.message,
-        metadata: {
-          converted_from_quote: true,
-          original_dumpster_size: quote.dumpster_size,
-          dropoff_time: quote.dropoff_time,
-          time_needed: quote.time_needed,
-        }
-      }
-    ]
+    services: services
   };
 
   return await createOrderWithServices(orderData);
