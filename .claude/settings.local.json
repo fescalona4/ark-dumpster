@@ -55,11 +55,16 @@
       "mcp__playwright__browser_close",
       "Bash(lsof:*)",
       "WebSearch",
-      "WebFetch(domain:developer.squareup.com)"
+      "WebFetch(domain:developer.squareup.com)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
   },
-  "enabledMcpjsonServers": ["memory", "browser-server", "supabase"],
+  "enabledMcpjsonServers": [
+    "memory",
+    "browser-server",
+    "supabase"
+  ],
   "outputStyle": "default"
 }

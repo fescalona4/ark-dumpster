@@ -57,7 +57,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [dueDate, setDueDate] = useState<Date>();
+  const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
   const [customMessage, setCustomMessage] = useState('');
 
@@ -348,7 +348,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                   <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
                 </PopoverContent>
               </Popover>
-              <p className="text-xs text-gray-500">Default: 30 days from today</p>
+              <p className="text-xs text-gray-500">Default: Tomorrow</p>
             </div>
 
             <div className="space-y-2">

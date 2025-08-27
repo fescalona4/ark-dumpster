@@ -12,12 +12,23 @@ import {
   markPaymentAsViewed,
   recordPaymentTransaction,
   cancelPayment,
+  getPayment,
   getPaymentBySquareInvoiceId,
   logPaymentWebhookEvent,
   centsToDollars,
 } from '@/lib/payment-service';
+import { SquareClient, SquareEnvironment, SquareError } from 'square';
 
-// Mock response types for development (replace with actual Square SDK)
+// Initialize Square client
+const squareClient = new SquareClient({
+  environment: process.env.SQUARE_ENVIRONMENT === 'production' ? SquareEnvironment.Production : SquareEnvironment.Sandbox,
+  token: process.env.SQUARE_ACCESS_TOKEN,
+});
+
+const customersApi = squareClient.customers;
+const invoicesApi = squareClient.invoices;
+const locationsApi = squareClient.locations;
+
 export interface SquareInvoiceResponse {
   success: boolean;
   invoice?: {
@@ -67,57 +78,154 @@ export async function createSquareInvoiceWithPayment(
 
     const payment = paymentResult.data;
 
-    // Step 2: Create Square invoice (mock for development)
-    if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
-      const mockSquareInvoiceId = `sq_invoice_${Date.now()}`;
-      const mockCustomerId = `sq_customer_${order.id}`;
-      const mockPublicUrl = `http://localhost:3000/dev/mock-square-invoice/${mockSquareInvoiceId}`;
-
-      // Update payment with Square data
-      await updateSquarePaymentData(payment.id, {
-        square_invoice_id: mockSquareInvoiceId,
-        square_customer_id: mockCustomerId,
-        square_location_id: process.env.SQUARE_LOCATION_ID || 'mock_location',
-        public_payment_url: mockPublicUrl,
-        invoice_url: mockPublicUrl,
+    // Step 2: Create Square customer if needed
+    let customerId: string;
+    
+    try {
+      const customerResponse = await customersApi.create({
+        givenName: order.first_name,
+        familyName: order.last_name || undefined,
+        emailAddress: order.email,
+        phoneNumber: order.phone?.toString(),
+        note: `ARK Dumpster Order ${order.order_number}`,
       });
+      
+      customerId = (customerResponse as any).customer?.id || '';
+    } catch (error) {
+      console.error('Error creating Square customer:', error);
+      // Try to continue without customer
+      customerId = '';
+    }
 
-      // Update payment with customer info
-      await updatePayment(payment.id, {
-        status: 'DRAFT',
-        metadata: {
-          ...payment.metadata,
-          customer_email: order.email,
-          customer_phone: order.phone?.toString(),
-        },
-      });
-
-      return {
-        success: true,
-        invoice: {
-          id: mockSquareInvoiceId,
-          status: 'DRAFT',
-          publicUrl: mockPublicUrl,
-          primaryRecipient: {
-            customerId: mockCustomerId,
+    // Step 3: Create Square Order first
+    let squareOrderId: string;
+    
+    try {
+      console.log('Creating Square Order...');
+      const orderRequest = {
+        locationId: process.env.SQUARE_LOCATION_ID,
+        lineItems: [{
+          name: `Dumpster Rental Service`,
+          note: order.internal_notes || 'Dumpster rental service',
+          quantity: '1',
+          itemType: 'ITEM',
+          basePriceMoney: {
+            amount: BigInt(Math.round(centsToDollars(payment.total_amount) * 100)),
+            currency: 'USD',
           },
+        }],
+      };
+
+      console.log('Order request:', JSON.stringify(orderRequest, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value, 2));
+
+      const orderResponse = await squareClient.orders.create({ order: orderRequest as any });
+      console.log('Order response:', orderResponse);
+      
+      const createdOrder = (orderResponse as any).order;
+      if (!createdOrder?.id) {
+        throw new Error(`Failed to create Square order: ${JSON.stringify(orderResponse)}`);
+      }
+      
+      squareOrderId = createdOrder.id;
+      console.log('Created Square Order ID:', squareOrderId);
+      
+    } catch (error) {
+      console.error('Error creating Square order:', error);
+      throw error;
+    }
+
+    // Step 4: Create Square invoice with the order ID
+    try {
+      console.log('Creating Square Invoice with order ID:', squareOrderId);
+      
+      const invoiceRequest = {
+        locationId: process.env.SQUARE_LOCATION_ID,
+        orderId: squareOrderId,
+        primaryRecipient: {
+          customerId: customerId || undefined,
         },
-        payment: {
-          ...payment,
-          square_invoice_id: mockSquareInvoiceId,
-          square_customer_id: mockCustomerId,
-          public_payment_url: mockPublicUrl,
+        paymentRequests: [{
+          requestType: 'BALANCE' as any,
+          dueDate: dueDate?.toISOString().split('T')[0],
+        }],
+        deliveryMethod: request.paymentRequestMethod || 'EMAIL',
+        invoiceNumber: `ARK-${order.order_number}-${Date.now()}`,
+        title: `ARK Dumpster Service - Order ${order.order_number}`,
+        description: order.internal_notes || `Dumpster rental service for ${order.first_name} ${order.last_name || ''}`.trim(),
+        customFields: request.customFields,
+        acceptedPaymentMethods: {
+          card: true,
+          bankAccount: false,
+          buyNowPayLater: false,
+          squareGiftCard: false,
         },
+      };
+
+      const invoiceResponse = await invoicesApi.create({ invoice: invoiceRequest as any });
+      
+      if ((invoiceResponse as any).invoice) {
+        const invoice = (invoiceResponse as any).invoice;
+        
+        // Update payment with Square data
+        await updateSquarePaymentData(payment.id, {
+          square_invoice_id: invoice.id,
+          square_customer_id: customerId,
+          square_location_id: process.env.SQUARE_LOCATION_ID || '',
+          public_payment_url: invoice.publicUrl,
+          invoice_url: invoice.publicUrl,
+        });
+
+        // Update payment with customer info
+        await updatePayment(payment.id, {
+          status: 'DRAFT',
+          metadata: {
+            ...payment.metadata,
+            customer_email: order.email,
+            customer_phone: order.phone?.toString(),
+          },
+        });
+
+        return {
+          success: true,
+          invoice: {
+            id: invoice.id || '',
+            status: invoice.status || 'DRAFT',
+            publicUrl: invoice.publicUrl,
+            primaryRecipient: {
+              customerId: customerId,
+            },
+          },
+          payment: {
+            ...payment,
+            square_invoice_id: invoice.id,
+            square_customer_id: customerId,
+            public_payment_url: invoice.publicUrl,
+          },
+        };
+      }
+    } catch (error) {
+      console.error('Error creating Square invoice:', error);
+      
+      if (error instanceof SquareError) {
+        return {
+          success: false,
+          error: `Square API Error: ${error.message}`,
+          payment,
+        };
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: `Failed to create Square invoice: ${errorMessage}`,
+        payment,
       };
     }
 
-    // TODO: Implement actual Square API integration here
-    // This would use the actual Square SDK to create the invoice
-
     return {
       success: false,
-      error: 'Square API not configured for production',
-      message: 'Please configure Square API credentials for production use',
+      error: 'Unknown error creating Square invoice',
       payment,
     };
   } catch (error) {
@@ -138,33 +246,83 @@ export async function sendSquareInvoiceWithPayment(
   try {
     console.log('Sending Square invoice for payment:', paymentId);
 
-    // Mock sending for development
-    if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
-      const result = await markPaymentAsSent(paymentId);
-
-      if (!result.success) {
-        return {
-          success: false,
-          error: result.error || 'Failed to mark payment as sent',
-        };
-      }
-
+    // Get payment record using the payment ID
+    const paymentResult = await getPayment(paymentId);
+    
+    if (!paymentResult.success || !paymentResult.data?.square_invoice_id) {
       return {
-        success: true,
-        invoice: {
-          id: result.data?.square_invoice_id || 'mock_invoice',
-          status: 'SENT',
-          publicUrl: result.data?.public_payment_url || undefined,
-        },
-        payment: result.data,
+        success: false,
+        error: 'No Square invoice ID found for this payment',
       };
     }
 
-    // TODO: Implement actual Square API sending
+    const payment = paymentResult.data;
+    
+    try {
+      // First get current invoice to get version
+      const currentInvoice = await invoicesApi.get({ invoiceId: payment.square_invoice_id });
+      
+      // Handle BigInt values in JSON serialization
+      const invoiceForLogging = JSON.stringify(currentInvoice, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value, 2);
+      console.log('Current invoice response:', invoiceForLogging);
+      
+      const invoice = (currentInvoice as any).invoice || (currentInvoice as any).result?.invoice;
+      
+      if (invoice?.version === undefined || invoice?.version === null) {
+        console.error('Invoice version not found. Available keys:', Object.keys(currentInvoice as any));
+        if (invoice) {
+          console.error('Invoice object keys:', Object.keys(invoice));
+        }
+        return {
+          success: false,
+          error: 'Could not retrieve invoice version from Square',
+        };
+      }
+
+      console.log('Using invoice version:', invoice.version);
+
+      // Send the invoice via Square API with version
+      const sendResponse = await invoicesApi.publish({
+        invoiceId: payment.square_invoice_id,
+        version: invoice.version,
+        requestMethod: 'EMAIL' as any,
+      } as any);
+
+      if ((sendResponse as any).invoice) {
+        // Mark payment as sent in our system
+        const result = await markPaymentAsSent(paymentId, (sendResponse as any).invoice.publicUrl);
+
+        return {
+          success: true,
+          invoice: {
+            id: (sendResponse as any).invoice.id || '',
+            status: (sendResponse as any).invoice.status || 'SENT',
+            publicUrl: (sendResponse as any).invoice.publicUrl,
+          },
+          payment: result.data,
+        };
+      }
+    } catch (error) {
+      console.error('Error sending Square invoice:', error);
+      
+      if (error instanceof SquareError) {
+        return {
+          success: false,
+          error: `Square API Error: ${error.message}`,
+        };
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: `Failed to send Square invoice: ${errorMessage}`,
+      };
+    }
 
     return {
       success: false,
-      error: 'Square API not configured for production',
+      error: 'Failed to send Square invoice',
     };
   } catch (error) {
     console.error('Error sending Square invoice:', error);
@@ -196,24 +354,83 @@ export async function getSquareInvoiceStatus(
 
     const payment = paymentResult.data;
 
-    // Mock status check for development
-    if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
+    try {
+      // Get invoice from Square API
+      const invoiceResponse = await invoicesApi.get({ invoiceId: squareInvoiceId });
+      
+      if ((invoiceResponse as any).invoice) {
+        const invoice = (invoiceResponse as any).invoice;
+        
+        // Update our payment status to match Square's
+        let paymentStatus = payment.status;
+        
+        switch (invoice.status) {
+          case 'DRAFT':
+            paymentStatus = 'DRAFT';
+            break;
+          case 'UNPAID':
+            paymentStatus = 'SENT';
+            break;
+          case 'SCHEDULED':
+            paymentStatus = 'SENT';
+            break;
+          case 'PARTIALLY_PAID':
+            paymentStatus = 'PARTIALLY_PAID';
+            break;
+          case 'PAID':
+            paymentStatus = 'PAID';
+            break;
+          case 'PARTIALLY_REFUNDED':
+            paymentStatus = 'PARTIALLY_PAID';
+            break;
+          case 'REFUNDED':
+            paymentStatus = 'REFUNDED';
+            break;
+          case 'CANCELED':
+            paymentStatus = 'CANCELED';
+            break;
+        }
+
+        // Update payment status if it changed
+        if (paymentStatus !== payment.status) {
+          await updatePayment(payment.id, { status: paymentStatus as PaymentStatus });
+        }
+
+        return {
+          success: true,
+          invoice: {
+            id: invoice.id || squareInvoiceId,
+            status: invoice.status || 'UNKNOWN',
+            publicUrl: invoice.publicUrl,
+          },
+          payment: {
+            ...payment,
+            status: paymentStatus as PaymentStatus,
+          },
+        };
+      }
+    } catch (error) {
+      console.error('Error getting Square invoice status:', error);
+      
+      if (error instanceof SquareError) {
+        return {
+          success: false,
+          error: `Square API Error: ${error.message}`,
+          payment,
+        };
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
-        success: true,
-        invoice: {
-          id: squareInvoiceId,
-          status: payment.status,
-          publicUrl: payment.public_payment_url || undefined,
-        },
+        success: false,
+        error: `Failed to get Square invoice status: ${errorMessage}`,
         payment,
       };
     }
 
-    // TODO: Implement actual Square API status check
-
     return {
       success: false,
-      error: 'Square API not configured for production',
+      error: 'Failed to get Square invoice status',
       payment,
     };
   } catch (error) {
@@ -245,23 +462,44 @@ export async function cancelSquareInvoiceWithPayment(
       };
     }
 
-    // Mock Square cancellation for development
-    if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
-      return {
-        success: true,
-        invoice: {
-          id: result.data?.square_invoice_id || 'mock_invoice',
-          status: 'CANCELED',
-        },
-        payment: result.data,
-      };
+    if (result.data?.square_invoice_id) {
+      try {
+        // Cancel the invoice in Square
+        const cancelResponse = await invoicesApi.cancel({
+          invoiceId: result.data.square_invoice_id,
+          version: result.data.metadata?.square_version as number || 0,
+        } as any);
+
+        return {
+          success: true,
+          invoice: {
+            id: result.data.square_invoice_id,
+            status: 'CANCELED',
+          },
+          payment: result.data,
+        };
+      } catch (error) {
+        console.error('Error canceling Square invoice:', error);
+        
+        if (error instanceof SquareError) {
+          return {
+            success: false,
+            error: `Square API Error: ${error.message}`,
+            payment: result.data,
+          };
+        }
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(`Failed to cancel Square invoice: ${errorMessage}`);
+      }
     }
 
-    // TODO: Implement actual Square API cancellation
-
     return {
-      success: false,
-      error: 'Square API not configured for production',
+      success: true, // Still successful locally even if Square fails
+      invoice: {
+        id: result.data?.square_invoice_id || '',
+        status: 'CANCELED',
+      },
       payment: result.data,
     };
   } catch (error) {
