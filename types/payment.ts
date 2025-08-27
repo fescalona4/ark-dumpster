@@ -44,30 +44,30 @@ export interface Payment {
   id: string;
   order_id: string;
   payment_number: string; // Human-readable payment identifier (e.g., PAY-001)
-  
+
   // Payment details
   type: PaymentType;
   method: PaymentMethod;
   status: PaymentStatus;
-  
+
   // Amount details (all in cents for precision)
   subtotal_amount: number;
   tax_amount: number;
   total_amount: number;
   paid_amount: number;
   refunded_amount: number;
-  
+
   // Square-specific fields
   square_invoice_id?: string | null;
   square_payment_id?: string | null;
   square_customer_id?: string | null;
   square_location_id?: string | null;
-  
+
   // Invoice details
   invoice_number?: string | null;
   invoice_url?: string | null;
   public_payment_url?: string | null;
-  
+
   // Dates and timing
   created_at: string;
   updated_at: string;
@@ -77,26 +77,26 @@ export interface Payment {
   paid_at?: string | null;
   failed_at?: string | null;
   canceled_at?: string | null;
-  
+
   // Customer communication
   customer_email?: string | null;
   customer_phone?: string | null;
   delivery_method?: 'EMAIL' | 'SMS' | 'MANUAL' | null;
-  
+
   // Additional metadata
   description?: string | null;
   notes?: string | null;
   metadata?: Record<string, any> | null;
-  
+
   // Webhook tracking
   last_webhook_event_id?: string | null;
   last_webhook_at?: string | null;
-  
+
   // Failure tracking
   failure_reason?: string | null;
   failure_code?: string | null;
   retry_count?: number | null;
-  
+
   // Audit fields
   created_by?: string | null;
   updated_by?: string | null;
@@ -106,25 +106,25 @@ export interface Payment {
 export interface PaymentTransaction {
   id: string;
   payment_id: string;
-  
+
   // Transaction details
   type: 'CHARGE' | 'REFUND' | 'ADJUSTMENT' | 'FEE';
   amount: number; // In cents
   currency: string;
-  
+
   // External references
   external_transaction_id?: string | null;
   external_reference?: string | null;
-  
+
   // Status and timing
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELED';
   processed_at?: string | null;
   failed_at?: string | null;
-  
+
   // Metadata
   description?: string | null;
   metadata?: Record<string, any> | null;
-  
+
   // Audit
   created_at: string;
   created_by?: string | null;
@@ -134,28 +134,28 @@ export interface PaymentTransaction {
 export interface PaymentReminder {
   id: string;
   payment_id: string;
-  
+
   // Reminder details
   type: 'INITIAL' | 'FOLLOW_UP' | 'FINAL_NOTICE' | 'OVERDUE';
   method: 'EMAIL' | 'SMS' | 'PHONE' | 'MAIL';
-  
+
   // Scheduling
   scheduled_at: string;
   sent_at?: string | null;
-  
+
   // Content
   subject?: string | null;
   message?: string | null;
   template_id?: string | null;
-  
+
   // Status
   status: 'SCHEDULED' | 'SENT' | 'FAILED' | 'CANCELED';
   failure_reason?: string | null;
-  
+
   // Tracking
   opened_at?: string | null;
   clicked_at?: string | null;
-  
+
   // Audit
   created_at: string;
   updated_at: string;
@@ -165,25 +165,25 @@ export interface PaymentReminder {
 export interface PaymentLineItem {
   id: string;
   payment_id: string;
-  
+
   // Item details
   name: string;
   description?: string | null;
   quantity: number;
   unit_price: number; // In cents
   total_price: number; // In cents
-  
+
   // Tax information
   tax_rate?: number | null;
   tax_amount?: number | null;
-  
+
   // Categorization
   category?: string | null;
   sku?: string | null;
-  
+
   // Metadata
   metadata?: Record<string, any> | null;
-  
+
   // Audit
   created_at: string;
   updated_at: string;
@@ -193,22 +193,22 @@ export interface PaymentLineItem {
 export interface PaymentWebhookEvent {
   id: string;
   payment_id?: string | null;
-  
+
   // Event details
   event_type: string;
   event_id: string;
   source: 'SQUARE' | 'STRIPE' | 'PAYPAL' | 'OTHER';
-  
+
   // Payload
   raw_payload: Record<string, any>;
   processed_payload?: Record<string, any> | null;
-  
+
   // Processing status
   status: 'PENDING' | 'PROCESSED' | 'FAILED' | 'IGNORED';
   processed_at?: string | null;
   failure_reason?: string | null;
   retry_count?: number | null;
-  
+
   // Audit
   created_at: string;
   updated_at: string;
@@ -274,11 +274,11 @@ export interface PaymentSummary {
   pending_amount: number;
   overdue_amount: number;
   refunded_amount: number;
-  
+
   by_status: Record<PaymentStatus, { count: number; amount: number }>;
   by_method: Record<PaymentMethod, { count: number; amount: number }>;
   by_type: Record<PaymentType, { count: number; amount: number }>;
-  
+
   recent_payments: Payment[];
   overdue_payments: Payment[];
 }

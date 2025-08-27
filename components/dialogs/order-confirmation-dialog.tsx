@@ -61,8 +61,13 @@ export function OrderConfirmationDialog({
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900 shadow-sm">
             <RiCheckboxCircleFill className="h-12 w-12 text-green-600 dark:text-green-400" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Order Created Successfully!</DialogTitle>
-          <DialogDescription id="order-confirmation-description" className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
+          <DialogTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Order Created Successfully!
+          </DialogTitle>
+          <DialogDescription
+            id="order-confirmation-description"
+            className="text-base text-gray-600 dark:text-gray-300 leading-relaxed"
+          >
             Your order has been created and scheduled for delivery.
           </DialogDescription>
         </DialogHeader>
@@ -70,8 +75,12 @@ export function OrderConfirmationDialog({
         <div className="space-y-6">
           {/* Order Number */}
           <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-gradient-to-b from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 p-5 text-center shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Order Number</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wide">{order.order_number}</p>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+              Order Number
+            </p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 font-mono tracking-wide">
+              {order.order_number}
+            </p>
           </div>
 
           {/* Order Details */}
@@ -80,7 +89,9 @@ export function OrderConfirmationDialog({
             <div className="flex items-center gap-3">
               <RiUserLine className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               <div>
-                <p className="font-medium text-gray-900 dark:text-gray-100">{order.first_name} {order.last_name}</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">
+                  {order.first_name} {order.last_name}
+                </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{order.email}</p>
               </div>
             </div>
@@ -90,7 +101,9 @@ export function OrderConfirmationDialog({
               <div className="flex items-center gap-3">
                 <RiBox1Line className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">{order.dumpster_size} Yard Dumpster</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {order.dumpster_size} Yard Dumpster
+                  </p>
                 </div>
               </div>
             )}
@@ -100,9 +113,7 @@ export function OrderConfirmationDialog({
               <RiCalendarLine className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5" />
               <div>
                 <p className="font-medium text-gray-900 dark:text-gray-100">Delivery Schedule</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  {getDeliveryStatus()}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{getDeliveryStatus()}</p>
               </div>
             </div>
 
@@ -115,7 +126,10 @@ export function OrderConfirmationDialog({
                   <p className="text-sm text-gray-600 dark:text-gray-300">
                     {order.address}
                     {order.city && order.state && (
-                      <><br />{order.city}, {order.state}</>
+                      <>
+                        <br />
+                        {order.city}, {order.state}
+                      </>
                     )}
                   </p>
                 </div>

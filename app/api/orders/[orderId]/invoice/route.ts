@@ -17,10 +17,7 @@ export async function GET(
       .single();
 
     if (error || !order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     // Generate invoice data
@@ -49,17 +46,14 @@ export async function GET(
         state: 'State',
         zipCode: '12345',
         phone: '(555) 123-4567',
-        email: 'info@arkdumpster.com'
-      }
+        email: 'info@arkdumpster.com',
+      },
     };
 
     return NextResponse.json(invoice);
   } catch (error) {
     console.error('Error generating invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate invoice' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to generate invoice' }, { status: 500 });
   }
 }
 
@@ -79,9 +73,6 @@ export async function POST(
     return getResponse;
   } catch (error) {
     console.error('Error creating invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to create invoice' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 });
   }
 }

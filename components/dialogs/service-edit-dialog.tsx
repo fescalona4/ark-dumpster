@@ -47,12 +47,12 @@ interface ServiceEditDialogProps {
   type: 'quote' | 'order';
 }
 
-export function ServiceEditDialog({ 
-  service, 
-  isOpen, 
-  onClose, 
-  onUpdate, 
-  type 
+export function ServiceEditDialog({
+  service,
+  isOpen,
+  onClose,
+  onUpdate,
+  type,
 }: ServiceEditDialogProps) {
   const [quantity, setQuantity] = useState(service.quantity);
   const [unitPrice, setUnitPrice] = useState(parseFloat(service.unit_price));
@@ -111,7 +111,7 @@ export function ServiceEditDialog({
                 category: 'main',
                 is_active: true,
                 created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
               })
               .select('id')
               .single();
@@ -121,17 +121,15 @@ export function ServiceEditDialog({
           }
 
           // Now create the quote_service record
-          const { error } = await supabase
-            .from('quote_services')
-            .insert({
-              quote_id: service.quote_id,
-              service_id: serviceId,
-              quantity,
-              unit_price: unitPrice.toString(),
-              total_price: totalPrice.toString(),
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+          const { error } = await supabase.from('quote_services').insert({
+            quote_id: service.quote_id,
+            service_id: serviceId,
+            quantity,
+            unit_price: unitPrice.toString(),
+            total_price: totalPrice.toString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
 
           if (error) throw error;
         }
@@ -194,10 +192,7 @@ export function ServiceEditDialog({
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from(tableName)
-        .delete()
-        .eq('id', service.id);
+      const { error } = await supabase.from(tableName).delete().eq('id', service.id);
 
       if (error) {
         console.error('Error deleting service:', error);
@@ -246,7 +241,7 @@ export function ServiceEditDialog({
                 type="number"
                 min="1"
                 value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={e => setQuantity(parseInt(e.target.value) || 1)}
                 className="mt-1"
               />
             </div>
@@ -257,14 +252,16 @@ export function ServiceEditDialog({
                 Unit Price ($)
               </Label>
               <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  $
+                </span>
                 <Input
                   id="unit-price"
                   type="number"
                   step="0.01"
                   min="0"
                   value={unitPrice}
-                  onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                  onChange={e => setUnitPrice(parseFloat(e.target.value) || 0)}
                   className="pl-7"
                   disabled={service.is_main_service && type === 'order'}
                 />
@@ -285,7 +282,9 @@ export function ServiceEditDialog({
             <div>
               <Label className="text-sm font-medium">Total Price</Label>
               <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-sm font-medium text-green-700">
-                {service.is_main_service && type === 'order' ? 'Included in order total' : `$${totalPrice.toFixed(2)}`}
+                {service.is_main_service && type === 'order'
+                  ? 'Included in order total'
+                  : `$${totalPrice.toFixed(2)}`}
               </div>
             </div>
           </div>
@@ -332,8 +331,8 @@ export function ServiceEditDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Service</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{service.services?.display_name || 'this service'}" from this {type}? 
-              This action cannot be undone.
+              Are you sure you want to delete "{service.services?.display_name || 'this service'}"
+              from this {type}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

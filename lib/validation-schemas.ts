@@ -41,7 +41,10 @@ const citySchema = z
   .string()
   .min(2, 'City must be at least 2 characters')
   .max(50, 'City must be less than 50 characters')
-  .regex(/^[a-zA-Z\s\-\'\.]+$/, 'City can only contain letters, spaces, hyphens, apostrophes, and periods')
+  .regex(
+    /^[a-zA-Z\s\-\'\.]+$/,
+    'City can only contain letters, spaces, hyphens, apostrophes, and periods'
+  )
   .trim()
   .optional()
   .or(z.literal(''));
@@ -89,7 +92,7 @@ const messageSchema = z
   .string()
   .max(1000, 'Message must be less than 1000 characters')
   .refine(
-    (val) => {
+    val => {
       // Basic XSS prevention - no script tags or javascript:
       const dangerous = /<script|javascript:|on\w+\s*=/i;
       return !dangerous.test(val);
@@ -119,9 +122,11 @@ export const quoteFormSchema = z.object({
 // Selected service validation schema
 const selectedServiceSchema = z.object({
   service_id: z.string().uuid('Invalid service ID'),
-  service: z.object({
-    display_name: z.string(),
-  }).passthrough(), // Allow additional properties
+  service: z
+    .object({
+      display_name: z.string(),
+    })
+    .passthrough(), // Allow additional properties
   quantity: z.number().positive('Quantity must be positive'),
   unit_price: z.number().nonnegative('Unit price must be non-negative'),
   total_price: z.number().nonnegative('Total price must be non-negative'),
@@ -134,14 +139,16 @@ export const emailApiSchema = z.object({
   email: emailSchema,
   type: z.enum(['welcome', 'quote', 'confirmation']).default('welcome'),
   subject: z.string().max(200, 'Subject must be less than 200 characters').optional(),
-  quoteDetails: z.object({
-    service: z.string().optional(),
-    location: z.string().optional(),
-    date: z.string().optional(),
-    duration: z.string().optional(),
-    message: z.string().optional(),
-    price: z.string().optional(),
-  }).optional(),
+  quoteDetails: z
+    .object({
+      service: z.string().optional(),
+      location: z.string().optional(),
+      date: z.string().optional(),
+      duration: z.string().optional(),
+      message: z.string().optional(),
+      price: z.string().optional(),
+    })
+    .optional(),
   fullFormData: quoteFormSchema.optional(),
   selectedServices: z.array(selectedServiceSchema).optional(),
 });
@@ -156,7 +163,7 @@ export const urlSchema = z
   .string()
   .url('Invalid URL format')
   .refine(
-    (url) => {
+    url => {
       try {
         const parsed = new URL(url);
         return parsed.protocol === 'https:';
@@ -188,15 +195,13 @@ export function validateInput<T>(
   data: unknown
 ): { success: true; data: T } | { success: false; errors: string[] } {
   const result = schema.safeParse(data);
-  
+
   if (result.success) {
     return { success: true, data: result.data };
   }
-  
-  const errors = result.error.issues.map((err: any) => 
-    `${err.path.join('.')}: ${err.message}`
-  );
-  
+
+  const errors = result.error.issues.map(err => `${err.path.join('.')}: ${err.message}`);
+
   return { success: false, errors };
 }
 

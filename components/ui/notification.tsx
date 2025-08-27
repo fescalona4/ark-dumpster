@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import { RiCheckboxCircleFill, RiCloseCircleFill, RiErrorWarningFill, RiInformationFill, RiCloseLine } from '@remixicon/react';
+import {
+  RiCheckboxCircleFill,
+  RiCloseCircleFill,
+  RiErrorWarningFill,
+  RiInformationFill,
+  RiCloseLine,
+} from '@remixicon/react';
 
 interface NotificationProps {
   type: 'success' | 'error' | 'warning' | 'info';

@@ -10,20 +10,18 @@
 export type QuoteStatus = 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
 export type QuotePriority = 'low' | 'normal' | 'high' | 'urgent';
 
-export type OrderStatus = 
-  | 'confirmed' 
-  | 'scheduled' 
-  | 'on_way' 
+export type OrderStatus =
+  | 'confirmed'
+  | 'scheduled'
+  | 'on_way'
   | 'in_progress'
-  | 'delivered' 
+  | 'delivered'
   | 'on_way_pickup'
-  | 'picked_up' 
-  | 'completed' 
+  | 'picked_up'
+  | 'completed'
   | 'cancelled';
 
-export type DumpsterStatus = 
-  | 'available' 
-  | 'in_use';
+export type DumpsterStatus = 'available' | 'in_use';
 
 export type DumpsterCondition = 'excellent' | 'good' | 'fair' | 'needs_repair';
 
@@ -32,9 +30,32 @@ export type DumpsterSize = '10-yard' | '15-yard' | '20-yard' | '30-yard';
 export type ServicePriceType = 'fixed' | 'hourly' | 'daily' | 'weekly' | 'custom';
 export type ServiceStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 export type DumpsterAssignmentStatus = 'assigned' | 'delivered' | 'picked_up' | 'returned';
-export type PaymentStatus = 'DRAFT' | 'PENDING' | 'SENT' | 'VIEWED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'CANCELED' | 'REFUNDED' | 'FAILED';
-export type PaymentMethod = 'SQUARE_INVOICE' | 'SQUARE_POS' | 'CASH' | 'CHECK' | 'BANK_TRANSFER' | 'CREDIT_CARD' | 'OTHER';
-export type PaymentType = 'INVOICE' | 'DEPOSIT' | 'FULL_PAYMENT' | 'PARTIAL_PAYMENT' | 'REFUND' | 'ADJUSTMENT';
+export type PaymentStatus =
+  | 'DRAFT'
+  | 'PENDING'
+  | 'SENT'
+  | 'VIEWED'
+  | 'PARTIALLY_PAID'
+  | 'PAID'
+  | 'OVERDUE'
+  | 'CANCELED'
+  | 'REFUNDED'
+  | 'FAILED';
+export type PaymentMethod =
+  | 'SQUARE_INVOICE'
+  | 'SQUARE_POS'
+  | 'CASH'
+  | 'CHECK'
+  | 'BANK_TRANSFER'
+  | 'CREDIT_CARD'
+  | 'OTHER';
+export type PaymentType =
+  | 'INVOICE'
+  | 'DEPOSIT'
+  | 'FULL_PAYMENT'
+  | 'PARTIAL_PAYMENT'
+  | 'REFUND'
+  | 'ADJUSTMENT';
 
 export type TimeNeeded = '1-3 days' | '4-7 days' | '1-2 weeks' | '2+ weeks';
 
@@ -49,33 +70,33 @@ export type DeviceType = 'desktop' | 'mobile' | 'tablet' | 'unknown';
  */
 export interface Quote {
   id: string;
-  
+
   // Customer information
   first_name: string;
   last_name: string | null;
   email: string;
   phone: string | null;
-  
+
   // Address information
   address: string | null;
   address2?: string | null;
   city: string | null;
   state: string | null;
   zip_code: string | null;
-  
+
   // Service details
   dumpster_size: DumpsterSize | null;
   dropoff_date: string | null;
   time_needed: TimeNeeded | null;
   message: string | null;
-  
+
   // Quote management
   status: QuoteStatus;
   priority: QuotePriority;
   quoted_price: number | null;
   quote_notes: string | null;
   assigned_to: string | null;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -108,18 +129,18 @@ export interface Service {
   name: string;
   display_name: string;
   description: string | null;
-  
+
   // Pricing
   base_price: number;
   price_type: ServicePriceType;
-  
+
   // Dumpster-specific fields
   dumpster_size: string | null;
   included_days: number | null;
   extra_day_price: number | null;
   included_weight_tons: number | null;
   extra_weight_price_per_ton: number | null;
-  
+
   // Service settings
   is_active: boolean;
   requires_scheduling: boolean;
@@ -127,11 +148,11 @@ export interface Service {
   is_taxable: boolean;
   tax_rate: number;
   sort_order: number;
-  
+
   metadata: Record<string, any> | null;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   category?: ServiceCategory;
 }
@@ -143,30 +164,30 @@ export interface OrderService {
   id: string;
   order_id: string;
   service_id: string;
-  
+
   // Service details
   quantity: number;
   unit_price: number;
   total_price: number;
   discount_amount: number;
   discount_reason: string | null;
-  
+
   // Scheduling
   service_date: string | null;
   start_date: string | null;
   end_date: string | null;
-  
+
   // Status and notes
   status: ServiceStatus;
   notes: string | null;
   driver_notes: string | null;
   metadata: Record<string, any> | null;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
   completed_at: string | null;
-  
+
   // Relations
   service?: Service;
   order?: Order;
@@ -181,7 +202,7 @@ export interface OrderDumpster {
   order_service_id: string;
   dumpster_id: string;
   order_id: string;
-  
+
   // Status and timing
   status: DumpsterAssignmentStatus;
   assigned_at: string;
@@ -189,13 +210,13 @@ export interface OrderDumpster {
   scheduled_pickup_date: string | null;
   actual_pickup_date: string | null;
   returned_at: string | null;
-  
+
   // Location tracking
   delivery_address: string | null;
   delivery_gps_coordinates: string | null;
   pickup_address: string | null;
   pickup_gps_coordinates: string | null;
-  
+
   // Weight and condition tracking
   empty_weight_tons: number | null;
   full_weight_tons: number | null;
@@ -204,17 +225,17 @@ export interface OrderDumpster {
   delivery_condition: string | null;
   return_condition: string | null;
   damage_notes: string | null;
-  
+
   // Photos and documentation
   delivery_photos: string[] | null;
   pickup_photos: string[] | null;
   delivery_notes: string | null;
   pickup_notes: string | null;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   order_service?: OrderService;
   dumpster?: Dumpster;
@@ -227,40 +248,40 @@ export interface OrderDumpster {
 export interface Order {
   id: string;
   quote_id: string | null;
-  
+
   // Customer information
   first_name: string;
   last_name: string | null;
   phone: string | null;
   email: string;
-  
+
   // Address information
   address: string | null;
   address2: string | null;
   city: string | null;
   state: string | null;
   zip_code: string | null;
-  
+
   // Order management
   order_number: string;
   status: OrderStatus;
   priority: QuotePriority;
-  
+
   // Pricing
   quoted_price: number | null;
   final_price: number | null;
-  
+
   // Assignment and tracking
   assigned_to: string | null;
   driver_notes: string | null;
   internal_notes: string | null;
-  
+
   // Scheduling
   scheduled_delivery_date: string | null;
   scheduled_pickup_date: string | null;
   actual_delivery_date: string | null;
   actual_pickup_date: string | null;
-  
+
   // Service summary (computed fields)
   service_count: number;
   total_service_amount: number;
@@ -268,12 +289,12 @@ export interface Order {
   primary_service_type: string | null;
   services_summary: string | null;
   assigned_dumpsters: number;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
   completed_at: string | null;
-  
+
   // Relations
   quote?: Quote;
   services?: OrderService[];
@@ -286,33 +307,33 @@ export interface Order {
  */
 export interface Dumpster {
   id: string;
-  
+
   // Basic information
   name: string;
   size: string | null;
-  
+
   // Status and condition
   status: DumpsterStatus;
   condition: DumpsterCondition;
-  
+
   // Location tracking
   address: string | null;
   last_known_location: string | null;
   gps_coordinates: string | null; // Point type stored as string
-  
+
   // Assignment tracking (removed current_order_id - now tracked via order_dumpsters)
   assigned_to: string | null;
   order_number: string | null; // Legacy field
-  
+
   // Maintenance
   notes: string | null;
   last_maintenance_at: string | null;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
   last_assigned_at: string | null;
-  
+
   // Relations
   current_assignments?: OrderDumpster[];
   assignment_history?: OrderDumpster[];
@@ -325,40 +346,40 @@ export interface Payment {
   id: string;
   order_id: string;
   payment_number: string;
-  
+
   // Payment details
   type: PaymentType;
   method: PaymentMethod;
   status: PaymentStatus;
-  
+
   // Amounts (stored in cents)
   subtotal_amount: number;
   tax_amount: number;
   total_amount: number;
   paid_amount: number;
   refunded_amount: number;
-  
+
   // Square integration
   square_invoice_id: string | null;
   square_payment_id: string | null;
   square_customer_id: string | null;
   square_location_id: string | null;
-  
+
   // Invoice details
   invoice_number: string | null;
   invoice_url: string | null;
   public_payment_url: string | null;
-  
+
   // Customer communication
   customer_email: string | null;
   customer_phone: string | null;
   delivery_method: 'EMAIL' | 'SMS' | 'MANUAL' | null;
-  
+
   // Content
   description: string | null;
   notes: string | null;
   metadata: Record<string, any> | null;
-  
+
   // Dates
   due_date: string | null;
   sent_at: string | null;
@@ -366,22 +387,22 @@ export interface Payment {
   paid_at: string | null;
   failed_at: string | null;
   canceled_at: string | null;
-  
+
   // Webhook tracking
   last_webhook_event_id: string | null;
   last_webhook_at: string | null;
-  
+
   // Failure tracking
   failure_reason: string | null;
   failure_code: string | null;
   retry_count: number;
-  
+
   // Audit
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   order?: Order;
   line_items?: PaymentLineItem[];
@@ -393,27 +414,27 @@ export interface Payment {
 export interface PaymentLineItem {
   id: string;
   payment_id: string;
-  
+
   // Item details
   name: string;
   description: string | null;
   quantity: number;
   unit_price: number; // In cents
   total_price: number; // In cents
-  
+
   // Tax information
   tax_rate: number | null;
   tax_amount: number | null;
-  
+
   // Categorization
   category: string | null;
   sku: string | null;
   metadata: Record<string, any> | null;
-  
+
   // Timestamps
   created_at: string;
   updated_at: string;
-  
+
   // Relations
   payment?: Payment;
 }
@@ -423,24 +444,24 @@ export interface PaymentLineItem {
  */
 export interface WebsiteVisit {
   id: string;
-  
+
   // Page information
   page_path: string;
   referrer: string | null;
-  
+
   // Session tracking
   session_id: string | null;
   user_agent: string | null;
   ip_address: string | null;
-  
+
   // Device information
   device_type: DeviceType | null;
   browser: string | null;
-  
+
   // Location information
   country: string | null;
   city: string | null;
-  
+
   // Timestamp
   created_at: string;
 }
@@ -455,7 +476,7 @@ export interface User {
   last_sign_in_at?: string | null;
   created_at: string;
   updated_at: string;
-  
+
   // Metadata
   user_metadata?: {
     role?: string;
@@ -463,7 +484,7 @@ export interface User {
     avatar_url?: string;
     [key: string]: any;
   };
-  
+
   app_metadata?: {
     provider?: string;
     providers?: string[];
@@ -492,19 +513,38 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       orders: {
         Row: Order;
-        Insert: Omit<Order, 'id' | 'created_at' | 'updated_at' | 'service_count' | 'total_service_amount' | 'has_multiple_services' | 'primary_service_type'> & {
+        Insert: Omit<
+          Order,
+          | 'id'
+          | 'created_at'
+          | 'updated_at'
+          | 'service_count'
+          | 'total_service_amount'
+          | 'has_multiple_services'
+          | 'primary_service_type'
+        > & {
           id?: string;
           created_at?: string;
           updated_at?: string;
         };
-        Update: Partial<Omit<Order, 'id' | 'created_at' | 'service_count' | 'total_service_amount' | 'has_multiple_services' | 'primary_service_type'>> & {
+        Update: Partial<
+          Omit<
+            Order,
+            | 'id'
+            | 'created_at'
+            | 'service_count'
+            | 'total_service_amount'
+            | 'has_multiple_services'
+            | 'primary_service_type'
+          >
+        > & {
           updated_at?: string;
         };
       };
-      
+
       dumpsters: {
         Row: Dumpster;
         Insert: Omit<Dumpster, 'id' | 'created_at' | 'updated_at'> & {
@@ -516,7 +556,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       website_visits: {
         Row: WebsiteVisit;
         Insert: Omit<WebsiteVisit, 'id' | 'created_at'> & {
@@ -525,7 +565,7 @@ export interface Database {
         };
         Update: Partial<Omit<WebsiteVisit, 'id' | 'created_at'>>;
       };
-      
+
       service_categories: {
         Row: ServiceCategory;
         Insert: Omit<ServiceCategory, 'id' | 'created_at' | 'updated_at'> & {
@@ -537,7 +577,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       services: {
         Row: Service;
         Insert: Omit<Service, 'id' | 'created_at' | 'updated_at'> & {
@@ -549,7 +589,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       order_services: {
         Row: OrderService;
         Insert: Omit<OrderService, 'id' | 'created_at' | 'updated_at' | 'total_price'> & {
@@ -561,7 +601,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       order_dumpsters: {
         Row: OrderDumpster;
         Insert: Omit<OrderDumpster, 'id' | 'created_at' | 'updated_at'> & {
@@ -573,7 +613,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       payments: {
         Row: Payment;
         Insert: Omit<Payment, 'id' | 'created_at' | 'updated_at' | 'payment_number'> & {
@@ -586,7 +626,7 @@ export interface Database {
           updated_at?: string;
         };
       };
-      
+
       payment_line_items: {
         Row: PaymentLineItem;
         Insert: Omit<PaymentLineItem, 'id' | 'created_at' | 'updated_at'> & {
@@ -599,7 +639,7 @@ export interface Database {
         };
       };
     };
-    
+
     Views: {
       order_summary_with_services: {
         Row: {
@@ -634,7 +674,7 @@ export interface Database {
         };
       };
     };
-    
+
     Functions: {
       add_service_to_order: {
         Args: {
@@ -680,7 +720,7 @@ export interface Database {
         }[];
       };
     };
-    
+
     Enums: {
       quote_status: QuoteStatus;
       quote_priority: QuotePriority;
@@ -789,24 +829,24 @@ export interface OrderCreateData {
   lastName?: string;
   phone?: string;
   email: string;
-  
+
   // Address
   address?: string;
   address2?: string;
   city?: string;
   state?: string;
   zipCode?: string;
-  
+
   // Order details
   priority?: QuotePriority;
   assignedTo?: string;
   scheduledDeliveryDate?: string;
   scheduledPickupDate?: string;
   internalNotes?: string;
-  
+
   // Services
   services: ServiceSelection[];
-  
+
   // Legacy fields for backward compatibility
   quoteId?: string;
   customerName?: string;
@@ -933,7 +973,8 @@ export type OrderWithServices = Database['public']['Views']['order_summary_with_
 /**
  * Order view interface for the orders page (matches actual view structure)
  */
-export interface OrderViewData extends Omit<Order, 'status' | 'primary_service_type' | 'services_summary'> {
+export interface OrderViewData
+  extends Omit<Order, 'status' | 'primary_service_type' | 'services_summary'> {
   order_status: OrderStatus; // The view uses 'order_status' instead of 'status'
   // Additional view fields
   services_summary?: string | null;

@@ -35,7 +35,7 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
       setLoading(true);
       const response = await fetch(`/api/orders/${order.id}/payments`);
       const data = await response.json();
-      
+
       if (response.ok && data.success) {
         setPayments(data.payments || []);
       }
@@ -55,11 +55,10 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
     }
   };
 
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-{children || (
+        {children || (
           <Button
             variant="outline"
             size="sm"
@@ -74,12 +73,10 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Square Invoice for Order {order.order_number}</span>
-            {loading && (
-              <RiLoader4Line className="h-4 w-4 animate-spin" />
-            )}
+            {loading && <RiLoader4Line className="h-4 w-4 animate-spin" />}
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="mt-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -95,27 +92,37 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
                 </div>
                 <h3 className="text-lg font-semibold text-green-900 mb-2">Square Invoice Ready</h3>
                 <div className="space-y-1 text-sm text-green-700 mb-4">
-                  <p><strong>Payment ID:</strong> {squarePayment.payment_number}</p>
-                  <p><strong>Status:</strong> {squarePayment.status.replace('_', ' ')}</p>
+                  <p>
+                    <strong>Payment ID:</strong> {squarePayment.payment_number}
+                  </p>
+                  <p>
+                    <strong>Status:</strong> {squarePayment.status.replace('_', ' ')}
+                  </p>
                   {squarePayment.total_amount && (
-                    <p><strong>Amount:</strong> ${(squarePayment.total_amount / 100).toFixed(2)}</p>
+                    <p>
+                      <strong>Amount:</strong> ${(squarePayment.total_amount / 100).toFixed(2)}
+                    </p>
                   )}
                   {squarePayment.due_date && (
-                    <p><strong>Due Date:</strong> {new Date(squarePayment.due_date).toLocaleDateString()}</p>
+                    <p>
+                      <strong>Due Date:</strong>{' '}
+                      {new Date(squarePayment.due_date).toLocaleDateString()}
+                    </p>
                   )}
                 </div>
-                <Button 
-                  onClick={handleViewSquareInvoice} 
-                  size="lg" 
+                <Button
+                  onClick={handleViewSquareInvoice}
+                  size="lg"
                   className="bg-blue-600 hover:bg-blue-700 px-8"
                 >
                   <RiExternalLinkLine className="h-5 w-5 mr-2" />
                   Open Square Invoice
                 </Button>
               </div>
-              
+
               <p className="text-sm text-gray-500">
-                This will open the professional Square invoice in a new tab where customers can view details and make payments.
+                This will open the professional Square invoice in a new tab where customers can view
+                details and make payments.
               </p>
             </div>
           ) : (
@@ -126,12 +133,10 @@ export function InvoiceDialog({ order, children }: InvoiceDialogProps) {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Square Invoice Found</h3>
               <p className="text-gray-600 mb-6">
-                Create a Square invoice for this order to enable professional invoicing and online payments.
+                Create a Square invoice for this order to enable professional invoicing and online
+                payments.
               </p>
-              <Button 
-                onClick={() => setOpen(false)}
-                variant="outline"
-              >
+              <Button onClick={() => setOpen(false)} variant="outline">
                 Close
               </Button>
             </div>

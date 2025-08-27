@@ -23,7 +23,7 @@ export function useAnalytics() {
 
     // Prevent tracking the same path multiple times in quick succession
     const now = Date.now();
-    if (lastTrackedPath.current === pathname && (now - lastTrackTime.current) < 1000) {
+    if (lastTrackedPath.current === pathname && now - lastTrackTime.current < 1000) {
       return;
     }
 
@@ -34,4 +34,5 @@ export function useAnalytics() {
     lastTrackedPath.current = pathname;
     lastTrackTime.current = now;
   }, [pathname]);
-} export default useAnalytics;
+}
+export default useAnalytics;

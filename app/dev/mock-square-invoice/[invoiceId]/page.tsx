@@ -2,7 +2,16 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { CheckCircle, CreditCard, Building, Mail, Phone, MapPin, Loader2, Clock } from 'lucide-react';
+import {
+  CheckCircle,
+  CreditCard,
+  Building,
+  Mail,
+  Phone,
+  MapPin,
+  Loader2,
+  Clock,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { centsToDollars } from '@/lib/utils';
@@ -30,7 +39,7 @@ interface Payment {
   customer_phone?: string;
   description?: string;
   due_date?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   line_items?: PaymentLineItem[];
   order?: {
     order_number: string;
@@ -53,16 +62,16 @@ export default function MockSquareInvoicePage() {
     const fetchPaymentData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch payment data by Square invoice ID
         const response = await fetch(`/api/payments/square-invoice/${invoiceId}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch payment data');
         }
-        
+
         const data = await response.json();
-        
+
         if (data.success && data.payment) {
           setPayment(data.payment);
         } else {
@@ -102,17 +111,17 @@ export default function MockSquareInvoicePage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Invoice Payment
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Invoice Payment</h1>
           <p className="text-gray-600">
-            {payment.order?.order_number ? `Order ${payment.order.order_number}` : `Invoice ${invoiceId}`}
+            {payment.order?.order_number
+              ? `Order ${payment.order.order_number}`
+              : `Invoice ${invoiceId}`}
           </p>
         </div>
 
@@ -125,7 +134,9 @@ export default function MockSquareInvoicePage() {
                   <Building className="h-5 w-5" />
                   ARK Dumpster Services
                 </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">Professional Waste Management Solutions</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Professional Waste Management Solutions
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-500 uppercase tracking-wide">Invoice</p>
@@ -139,9 +150,7 @@ export default function MockSquareInvoicePage() {
             <div>
               <h3 className="font-semibold mb-2">Bill To:</h3>
               <div className="space-y-1 text-sm">
-                {payment.order?.customer_name && (
-                  <div>{payment.order.customer_name}</div>
-                )}
+                {payment.order?.customer_name && <div>{payment.order.customer_name}</div>}
                 {payment.customer_email && (
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
@@ -161,8 +170,10 @@ export default function MockSquareInvoicePage() {
                       payment.order.address,
                       payment.order.city,
                       payment.order.state,
-                      payment.order.zip
-                    ].filter(Boolean).join(', ')}
+                      payment.order.zip,
+                    ]
+                      .filter(Boolean)
+                      .join(', ')}
                   </div>
                 )}
               </div>
@@ -171,17 +182,25 @@ export default function MockSquareInvoicePage() {
             {/* Service Details */}
             <div>
               <h3 className="font-semibold mb-3">Service Details</h3>
-              
+
               {/* Line Items Table */}
               {payment.line_items && payment.line_items.length > 0 ? (
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">Service</th>
-                        <th className="text-center px-3 py-3 text-sm font-semibold text-gray-900">Qty</th>
-                        <th className="text-right px-3 py-3 text-sm font-semibold text-gray-900">Rate</th>
-                        <th className="text-right px-4 py-3 text-sm font-semibold text-gray-900">Amount</th>
+                        <th className="text-left px-4 py-3 text-sm font-semibold text-gray-900">
+                          Service
+                        </th>
+                        <th className="text-center px-3 py-3 text-sm font-semibold text-gray-900">
+                          Qty
+                        </th>
+                        <th className="text-right px-3 py-3 text-sm font-semibold text-gray-900">
+                          Rate
+                        </th>
+                        <th className="text-right px-4 py-3 text-sm font-semibold text-gray-900">
+                          Amount
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
@@ -193,9 +212,7 @@ export default function MockSquareInvoicePage() {
                               <div className="text-sm text-gray-500 mt-0.5">{item.description}</div>
                             )}
                           </td>
-                          <td className="text-center px-3 py-3 text-gray-900">
-                            {item.quantity}
-                          </td>
+                          <td className="text-center px-3 py-3 text-gray-900">{item.quantity}</td>
                           <td className="text-right px-3 py-3 text-gray-900">
                             ${centsToDollars(item.unit_price)}
                           </td>
@@ -206,7 +223,7 @@ export default function MockSquareInvoicePage() {
                       ))}
                     </tbody>
                   </table>
-                  
+
                   {/* Totals Section */}
                   <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
                     <div className="space-y-2">
@@ -225,7 +242,9 @@ export default function MockSquareInvoicePage() {
                         </div>
                       )}
                       <div className="flex justify-between pt-2 border-t border-gray-200">
-                        <span className="text-base font-semibold text-gray-900">Total Amount Due</span>
+                        <span className="text-base font-semibold text-gray-900">
+                          Total Amount Due
+                        </span>
                         <span className="text-lg font-bold text-gray-900">
                           ${centsToDollars(payment.total_amount)}
                         </span>
@@ -238,7 +257,7 @@ export default function MockSquareInvoicePage() {
                   <div className="text-gray-500">No services found for this invoice</div>
                 </div>
               )}
-              
+
               {/* Payment Terms */}
               {payment.due_date && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -258,7 +277,8 @@ export default function MockSquareInvoicePage() {
                 <span className="font-semibold">Development Mode</span>
               </div>
               <p className="text-sm text-blue-600 mt-1">
-                This is a mock invoice for testing. In production, this would be a real Square payment page.
+                This is a mock invoice for testing. In production, this would be a real Square
+                payment page.
               </p>
               <p className="text-sm text-blue-600 mt-1">
                 Status: <span className="font-medium">{payment.status}</span>
@@ -267,10 +287,14 @@ export default function MockSquareInvoicePage() {
 
             {/* Mock Payment Button */}
             <div className="pt-4">
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700" 
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 size="lg"
-                onClick={() => alert('This is a mock payment page. In production, this would process the payment through Square.')}
+                onClick={() =>
+                  alert(
+                    'This is a mock payment page. In production, this would process the payment through Square.'
+                  )
+                }
                 disabled={['PAID', 'CANCELED', 'FAILED'].includes(payment.status)}
               >
                 <CreditCard className="h-5 w-5 mr-2" />
@@ -287,7 +311,8 @@ export default function MockSquareInvoicePage() {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
           <h3 className="font-semibold text-yellow-800 mb-2">Development Mode Active</h3>
           <p className="text-sm text-yellow-700">
-            To use real Square invoices, configure your Square API credentials and set NODE_ENV to production.
+            To use real Square invoices, configure your Square API credentials and set NODE_ENV to
+            production.
           </p>
         </div>
       </div>

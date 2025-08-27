@@ -28,7 +28,7 @@ export interface SquareInvoiceResponse {
       customerId?: string;
     };
   };
-  error?: any;
+  error?: string;
   message?: string;
   payment?: Payment;
 }
@@ -47,18 +47,16 @@ export interface SquareInvoiceRequest {
 /**
  * Create Square invoice and Payment record
  */
-export async function createSquareInvoiceWithPayment(request: SquareInvoiceRequest): Promise<SquareInvoiceResponse> {
+export async function createSquareInvoiceWithPayment(
+  request: SquareInvoiceRequest
+): Promise<SquareInvoiceResponse> {
   try {
     const { order, dueDate } = request;
 
     console.log('Creating Square invoice with payment for order:', order.order_number);
 
     // Step 1: Create payment record
-    const paymentResult = await createPaymentFromOrder(
-      order,
-      'SQUARE_INVOICE',
-      dueDate
-    );
+    const paymentResult = await createPaymentFromOrder(order, 'SQUARE_INVOICE', dueDate);
 
     if (!paymentResult.success || !paymentResult.data) {
       return {
@@ -91,7 +89,7 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
           ...payment.metadata,
           customer_email: order.email,
           customer_phone: order.phone?.toString(),
-        }
+        },
       });
 
       return {
@@ -134,7 +132,9 @@ export async function createSquareInvoiceWithPayment(request: SquareInvoiceReque
 /**
  * Send Square invoice
  */
-export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<SquareInvoiceResponse> {
+export async function sendSquareInvoiceWithPayment(
+  paymentId: string
+): Promise<SquareInvoiceResponse> {
   try {
     console.log('Sending Square invoice for payment:', paymentId);
 
@@ -178,7 +178,9 @@ export async function sendSquareInvoiceWithPayment(paymentId: string): Promise<S
 /**
  * Get Square invoice status and update payment
  */
-export async function getSquareInvoiceStatus(squareInvoiceId: string): Promise<SquareInvoiceResponse> {
+export async function getSquareInvoiceStatus(
+  squareInvoiceId: string
+): Promise<SquareInvoiceResponse> {
   try {
     console.log('Getting Square invoice status:', squareInvoiceId);
 
@@ -274,16 +276,37 @@ export async function cancelSquareInvoiceWithPayment(
 /**
  * Handle Square webhook events and update payment records
  */
+// Define interface for Square webhook payload
+interface SquareWebhookPayload {
+  data?: {
+    object?: {
+      invoice?: {
+        id?: string;
+        status?: string;
+        publicUrl?: string;
+        paymentRequests?: Array<{
+          totalCompletedAmountMoney?: {
+            amount?: string;
+          };
+        }>;
+      };
+      payment?: {
+        id?: string;
+      };
+    };
+  };
+}
+
 export async function handleSquareWebhookEvent(
   eventType: string,
   eventId: string,
-  payload: any
+  payload: SquareWebhookPayload
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('Handling Square webhook event:', eventType);
 
     // Log the webhook event
-    await logPaymentWebhookEvent(eventType, eventId, 'SQUARE', payload);
+    await logPaymentWebhookEvent(eventType, eventId, 'SQUARE', payload as Record<string, unknown>);
 
     const squareInvoiceId = payload.data?.object?.invoice?.id;
 
@@ -306,7 +329,7 @@ export async function handleSquareWebhookEvent(
     // Handle different webhook events
     switch (eventType) {
       case 'invoice.sent':
-        await markPaymentAsSent(payment.id, invoice.publicUrl);
+        await markPaymentAsSent(payment.id, invoice?.publicUrl);
         break;
 
       case 'invoice.viewed':
@@ -314,7 +337,7 @@ export async function handleSquareWebhookEvent(
         break;
 
       case 'invoice.payment_made':
-        const paidAmount = invoice.paymentRequests?.[0]?.totalCompletedAmountMoney?.amount;
+        const paidAmount = invoice?.paymentRequests?.[0]?.totalCompletedAmountMoney?.amount;
         if (paidAmount) {
           const dollarAmount = centsToDollars(parseInt(paidAmount));
 
@@ -348,7 +371,7 @@ export async function handleSquareWebhookEvent(
 
       case 'invoice.updated':
         // Update payment status to match Square status
-        const squareStatus = invoice.status;
+        const squareStatus = invoice?.status;
         let paymentStatus = payment.status;
 
         switch (squareStatus) {
@@ -398,16 +421,16 @@ export function formatPaymentAmount(payment: Payment): string {
  */
 export function getPaymentStatusInfo(status: PaymentStatus) {
   const statusMap = {
-    'DRAFT': { color: 'gray', label: 'Draft', icon: '📄' },
-    'PENDING': { color: 'yellow', label: 'Pending', icon: '⏳' },
-    'SENT': { color: 'blue', label: 'Sent', icon: '📧' },
-    'VIEWED': { color: 'purple', label: 'Viewed', icon: '👁️' },
-    'PARTIALLY_PAID': { color: 'orange', label: 'Partially Paid', icon: '💰' },
-    'PAID': { color: 'green', label: 'Paid', icon: '✅' },
-    'OVERDUE': { color: 'red', label: 'Overdue', icon: '⚠️' },
-    'CANCELED': { color: 'red', label: 'Canceled', icon: '❌' },
-    'REFUNDED': { color: 'gray', label: 'Refunded', icon: '↩️' },
-    'FAILED': { color: 'red', label: 'Failed', icon: '💥' },
+    DRAFT: { color: 'gray', label: 'Draft', icon: '📄' },
+    PENDING: { color: 'yellow', label: 'Pending', icon: '⏳' },
+    SENT: { color: 'blue', label: 'Sent', icon: '📧' },
+    VIEWED: { color: 'purple', label: 'Viewed', icon: '👁️' },
+    PARTIALLY_PAID: { color: 'orange', label: 'Partially Paid', icon: '💰' },
+    PAID: { color: 'green', label: 'Paid', icon: '✅' },
+    OVERDUE: { color: 'red', label: 'Overdue', icon: '⚠️' },
+    CANCELED: { color: 'red', label: 'Canceled', icon: '❌' },
+    REFUNDED: { color: 'gray', label: 'Refunded', icon: '↩️' },
+    FAILED: { color: 'red', label: 'Failed', icon: '💥' },
   };
 
   return statusMap[status] || statusMap['DRAFT'];

@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, canAccessCustomerData } from '@/lib/auth-middleware';
 import { withRateLimit } from '@/lib/rate-limiter';
-import { 
-  createSuccessResponse, 
-  createErrorResponse, 
+import {
+  createSuccessResponse,
+  createErrorResponse,
   ERROR_CODES,
   AuthorizationError,
-  DatabaseError 
+  DatabaseError,
 } from '@/lib/api-response';
 
 const supabase = createClient(
@@ -26,7 +26,7 @@ export const GET = withRateLimit(async (request: NextRequest) => {
 
     // SECURITY: Verify authentication and authorization
     const auth = await getAuthContext(request);
-    
+
     if (!canAccessCustomerData(auth, email)) {
       throw new AuthorizationError('Cannot access quotes for this email');
     }
@@ -47,11 +47,11 @@ export const GET = withRateLimit(async (request: NextRequest) => {
     if (error instanceof AuthorizationError) {
       return createErrorResponse(ERROR_CODES.AUTHORIZATION_ERROR);
     }
-    
+
     if (error instanceof DatabaseError) {
       return createErrorResponse(ERROR_CODES.DATABASE_ERROR);
     }
-    
+
     return createErrorResponse(ERROR_CODES.INTERNAL_ERROR);
   }
 });

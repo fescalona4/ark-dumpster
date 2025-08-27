@@ -26,7 +26,17 @@ export interface SquareInvoice {
     amount?: bigint;
     currency?: string;
   };
-  status?: 'DRAFT' | 'SENT' | 'VIEWED' | 'PARTIALLY_PAID' | 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED' | 'CANCELED' | 'FAILED' | 'SCHEDULED';
+  status?:
+    | 'DRAFT'
+    | 'SENT'
+    | 'VIEWED'
+    | 'PARTIALLY_PAID'
+    | 'PAID'
+    | 'PARTIALLY_REFUNDED'
+    | 'REFUNDED'
+    | 'CANCELED'
+    | 'FAILED'
+    | 'SCHEDULED';
   timezone?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -118,7 +128,14 @@ export interface SquareInvoicePayment {
 
 export interface SquareInvoiceEvent {
   id?: string;
-  type?: 'INVOICE_CREATED' | 'INVOICE_SENT' | 'INVOICE_VIEWED' | 'INVOICE_PAYMENT_MADE' | 'INVOICE_CANCELED' | 'INVOICE_UPDATED' | 'INVOICE_DELETED';
+  type?:
+    | 'INVOICE_CREATED'
+    | 'INVOICE_SENT'
+    | 'INVOICE_VIEWED'
+    | 'INVOICE_PAYMENT_MADE'
+    | 'INVOICE_CANCELED'
+    | 'INVOICE_UPDATED'
+    | 'INVOICE_DELETED';
   timestamp?: string;
   invoiceId?: string;
   eventData?: any;
@@ -129,7 +146,14 @@ export interface OrderWithSquareInvoice {
   id: string;
   square_invoice_id?: string | null;
   square_customer_id?: string | null;
-  square_payment_status?: 'DRAFT' | 'SENT' | 'VIEWED' | 'PARTIALLY_PAID' | 'PAID' | 'CANCELED' | null;
+  square_payment_status?:
+    | 'DRAFT'
+    | 'SENT'
+    | 'VIEWED'
+    | 'PARTIALLY_PAID'
+    | 'PAID'
+    | 'CANCELED'
+    | null;
   payment_link?: string | null;
   invoice_sent_at?: string | null;
   invoice_viewed_at?: string | null;

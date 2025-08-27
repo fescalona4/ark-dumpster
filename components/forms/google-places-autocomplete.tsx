@@ -4,9 +4,51 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { Input } from '@/components/ui/input';
 
+// Google Places API types
+interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface GooglePlaceGeometry {
+  location: {
+    lat(): number;
+    lng(): number;
+  };
+  viewport: {
+    getNorthEast(): { lat(): number; lng(): number };
+    getSouthWest(): { lat(): number; lng(): number };
+  };
+}
+
+interface GooglePlace {
+  address_components?: GoogleAddressComponent[];
+  formatted_address?: string;
+  geometry?: GooglePlaceGeometry;
+  name?: string;
+}
+
+interface GoogleMapsAPI {
+  maps: {
+    places: {
+      Autocomplete: new (
+        input: HTMLInputElement,
+        options?: unknown
+      ) => {
+        addListener: (event: string, callback: () => void) => void;
+        getPlace: () => GooglePlace;
+      };
+    };
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+    };
+  };
+}
+
 declare global {
   interface Window {
-    google?: any;
+    google?: GoogleMapsAPI;
     initGooglePlaces?: () => void;
   }
 }
@@ -15,7 +57,14 @@ interface GooglePlacesAutocompleteProps {
   id: string;
   placeholder: string;
   value: string;
-  onPlaceSelect: (place: any) => void;
+  onPlaceSelect: (place: {
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    fullAddress: string;
+    geometry: GooglePlaceGeometry | null;
+  }) => void;
   className?: string;
   required?: boolean;
 }
@@ -29,7 +78,7 @@ export default function GooglePlacesAutocomplete({
   required,
 }: GooglePlacesAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
+  const autocompleteRef = useRef<GoogleMapsAPI['maps']['places']['Autocomplete'] | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(true);
   const [inputValue, setInputValue] = useState(value);
@@ -50,7 +99,7 @@ export default function GooglePlacesAutocomplete({
 
       const style = document.createElement('style');
       style.id = 'google-places-theme-styles';
-      
+
       if (theme === 'dark') {
         // Dark theme styles
         style.textContent = `
@@ -161,7 +210,7 @@ export default function GooglePlacesAutocomplete({
           }
         `;
       }
-      
+
       document.head.appendChild(style);
     };
 
@@ -273,7 +322,7 @@ export default function GooglePlacesAutocomplete({
           let state = '';
           let zipCode = '';
 
-          addressComponents.forEach((component: any) => {
+          addressComponents.forEach((component: GoogleAddressComponent) => {
             const types = component.types;
 
             if (types.includes('street_number')) {
@@ -304,12 +353,12 @@ export default function GooglePlacesAutocomplete({
             city,
             state,
             zipCode,
-            fullAddress: place.formatted_address,
-            geometry: place.geometry,
+            fullAddress: place.formatted_address || '',
+            geometry: place.geometry || null,
           });
         });
 
-        autocompleteRef.current = autocomplete;
+        autocompleteRef.current = autocomplete as any;
       } catch (error) {
         console.error('Failed to initialize Google Places autocomplete:', error);
         setHasApiKey(false);

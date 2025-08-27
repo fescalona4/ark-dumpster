@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Order } from '@/types/database';
 import { Payment, PaymentStatus, PaymentMethod } from '@/types/payment';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
@@ -41,7 +40,7 @@ import {
   ExternalLink,
   Trash2,
   MoreVertical,
-  Plus
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -67,12 +66,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
   const [customMessage, setCustomMessage] = useState('');
 
-  // Load payments for this order
-  useEffect(() => {
-    loadPayments();
-  }, [order.id]);
-
-  const loadPayments = async () => {
+  const loadPayments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/orders/${order.id}/payments`);
@@ -89,12 +83,24 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [order.id]);
+
+  // Load payments for this order
+  useEffect(() => {
+    loadPayments();
+  }, [loadPayments]);
 
   // Get the active Square invoice payment
-  const activeSquarePayment = payments.find(p =>
-    p.method === PaymentMethod.SQUARE_INVOICE &&
-    [PaymentStatus.DRAFT, PaymentStatus.PENDING, PaymentStatus.SENT, PaymentStatus.VIEWED, PaymentStatus.PARTIALLY_PAID].includes(p.status)
+  const activeSquarePayment = payments.find(
+    p =>
+      p.method === PaymentMethod.SQUARE_INVOICE &&
+      [
+        PaymentStatus.DRAFT,
+        PaymentStatus.PENDING,
+        PaymentStatus.SENT,
+        PaymentStatus.VIEWED,
+        PaymentStatus.PARTIALLY_PAID,
+      ].includes(p.status)
   );
 
   // Check if we can create a new invoice (no active payments)
@@ -254,9 +260,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
 
     setIsCanceling(true);
     try {
-      const response = await fetch(`/api/orders/${order.id}/square-invoice?reason=Canceled by admin`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(
+        `/api/orders/${order.id}/square-invoice?reason=Canceled by admin`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       const data = await response.json();
 
@@ -279,7 +288,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   // Delete payment (only for canceled payments)
   const handleDeletePayment = async () => {
     if (!selectedPayment) return;
-    if (!confirm('Are you sure you want to permanently delete this canceled invoice? This action cannot be undone.')) return;
+    if (
+      !confirm(
+        'Are you sure you want to permanently delete this canceled invoice? This action cannot be undone.'
+      )
+    )
+      return;
 
     setIsDeleting(true);
     try {
@@ -327,11 +341,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-700">Invoices & Payments</h3>
         {canCreateNewInvoice && (
-          <Button 
-            onClick={() => setShowCreateDialog(true)} 
-            size="sm"
-            variant="outline"
-          >
+          <Button onClick={() => setShowCreateDialog(true)} size="sm" variant="outline">
             <Plus className="h-4 w-4 mr-1" />
             Create Invoice
           </Button>
@@ -341,7 +351,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
       {/* Compact Payment List */}
       {payments.length > 0 && (
         <div className="space-y-2">
-          {payments.map((payment) => (
+          {payments.map(payment => (
             <div
               key={payment.id}
               className="bg-card p-3 rounded-lg border hover:border-gray-300 cursor-pointer transition-colors"
@@ -351,12 +361,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-4 w-4 text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium">
-                      Invoice {payment.payment_number}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatCurrency(payment.total_amount)}
-                    </p>
+                    <p className="text-sm font-medium">Invoice {payment.payment_number}</p>
+                    <p className="text-xs text-gray-500">{formatCurrency(payment.total_amount)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -376,9 +382,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Invoice Options</DialogTitle>
-            <DialogDescription>
-              Manage invoice {selectedPayment?.payment_number}
-            </DialogDescription>
+            <DialogDescription>Manage invoice {selectedPayment?.payment_number}</DialogDescription>
           </DialogHeader>
 
           {selectedPayment && (
@@ -392,10 +396,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                     {selectedPayment.status.replace('_', ' ')}
                   </Badge>
                 </div>
-                
+
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">Amount</span>
-                  <span className="font-semibold text-gray-900">{formatCurrency(selectedPayment.total_amount)}</span>
+                  <span className="font-semibold text-gray-900">
+                    {formatCurrency(selectedPayment.total_amount)}
+                  </span>
                 </div>
 
                 {selectedPayment.paid_amount > 0 && (
@@ -410,21 +416,27 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                 {selectedPayment.due_date && (
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Due Date</span>
-                    <span className="text-sm text-gray-900">{format(new Date(selectedPayment.due_date), 'MMM dd, yyyy')}</span>
+                    <span className="text-sm text-gray-900">
+                      {format(new Date(selectedPayment.due_date), 'MMM dd, yyyy')}
+                    </span>
                   </div>
                 )}
 
                 {selectedPayment.sent_at && (
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Sent</span>
-                    <span className="text-sm text-gray-900">{format(new Date(selectedPayment.sent_at), 'MMM dd, yyyy h:mm a')}</span>
+                    <span className="text-sm text-gray-900">
+                      {format(new Date(selectedPayment.sent_at), 'MMM dd, yyyy h:mm a')}
+                    </span>
                   </div>
                 )}
 
                 {selectedPayment.viewed_at && (
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Viewed</span>
-                    <span className="text-sm text-gray-900">{format(new Date(selectedPayment.viewed_at), 'MMM dd, yyyy h:mm a')}</span>
+                    <span className="text-sm text-gray-900">
+                      {format(new Date(selectedPayment.viewed_at), 'MMM dd, yyyy h:mm a')}
+                    </span>
                   </div>
                 )}
 
@@ -534,12 +546,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                  />
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
                 </PopoverContent>
               </Popover>
               <p className="text-xs text-gray-500">Default: 30 days from today</p>
@@ -547,7 +554,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
 
             <div className="space-y-2">
               <Label>Delivery Method</Label>
-              <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+              <Select
+                value={paymentMethod}
+                onValueChange={(value: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY') =>
+                  setPaymentMethod(value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -564,7 +576,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
               <Textarea
                 placeholder="Add a message to the invoice..."
                 value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
+                onChange={e => setCustomMessage(e.target.value)}
                 rows={3}
               />
               <p className="text-xs text-gray-500">This message will appear on the invoice</p>

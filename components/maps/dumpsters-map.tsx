@@ -2,6 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { Loader } from '@googlemaps/js-api-loader';
+
+// Global polylines storage type
+declare global {
+  interface Window {
+    mapPolylines?: google.maps.Polyline[];
+  }
+}
 import { useTheme } from 'next-themes';
 import { Dumpster } from '@/types/dumpster';
 import { calculateDistance, parseGpsCoordinates, ARK_HOME_COORDINATES } from '@/lib/utils';
@@ -21,7 +28,7 @@ interface MarkerInfo {
 export default function DumpstersMap({
   dumpsters,
   className = '',
-  height = '400px'
+  height = '400px',
 }: DumpstersMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -41,118 +48,117 @@ export default function DumpstersMap({
   const hidePOIStyles = [
     // Hide all POI business markers
     {
-      featureType: "poi.business",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.business',
+      stylers: [{ visibility: 'off' }],
     },
     // Hide other POI categories
     {
-      featureType: "poi.attraction",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.attraction',
+      stylers: [{ visibility: 'off' }],
     },
     {
-      featureType: "poi.government",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.government',
+      stylers: [{ visibility: 'off' }],
     },
     {
-      featureType: "poi.medical",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.medical',
+      stylers: [{ visibility: 'off' }],
     },
     {
-      featureType: "poi.place_of_worship",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.place_of_worship',
+      stylers: [{ visibility: 'off' }],
     },
     {
-      featureType: "poi.school",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.school',
+      stylers: [{ visibility: 'off' }],
     },
     {
-      featureType: "poi.sports_complex",
-      stylers: [{ visibility: "off" }]
+      featureType: 'poi.sports_complex',
+      stylers: [{ visibility: 'off' }],
     },
     // Hide transit stations
     {
-      featureType: "transit.station",
-      stylers: [{ visibility: "off" }]
+      featureType: 'transit.station',
+      stylers: [{ visibility: 'off' }],
     },
     // Keep parks visible but hide their labels
     {
-      featureType: "poi.park",
-      elementType: "labels",
-      stylers: [{ visibility: "off" }]
-    }
+      featureType: 'poi.park',
+      elementType: 'labels',
+      stylers: [{ visibility: 'off' }],
+    },
   ];
 
   // Dark mode styles for Google Maps
   const darkModeStyles = [
     ...hidePOIStyles, // Include POI hiding styles
-    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-    { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+    { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+    { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+    { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
     {
-      featureType: "administrative.locality",
-      elementType: "labels.text.fill",
-      stylers: [{ color: "#d59563" }],
+      featureType: 'administrative.locality',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#d59563' }],
     },
     {
-      featureType: "poi.park",
-      elementType: "geometry",
-      stylers: [{ color: "#263c3f" }],
+      featureType: 'poi.park',
+      elementType: 'geometry',
+      stylers: [{ color: '#263c3f' }],
     },
     {
-      featureType: "road",
-      elementType: "geometry",
-      stylers: [{ color: "#38414e" }],
+      featureType: 'road',
+      elementType: 'geometry',
+      stylers: [{ color: '#38414e' }],
     },
     {
-      featureType: "road",
-      elementType: "geometry.stroke",
-      stylers: [{ color: "#212a37" }],
+      featureType: 'road',
+      elementType: 'geometry.stroke',
+      stylers: [{ color: '#212a37' }],
     },
     {
-      featureType: "road",
-      elementType: "labels.text.fill",
-      stylers: [{ color: "#9ca5b3" }],
+      featureType: 'road',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#9ca5b3' }],
     },
     {
-      featureType: "road.highway",
-      elementType: "geometry",
-      stylers: [{ color: "#746855" }],
+      featureType: 'road.highway',
+      elementType: 'geometry',
+      stylers: [{ color: '#746855' }],
     },
     {
-      featureType: "road.highway",
-      elementType: "geometry.stroke",
-      stylers: [{ color: "#1f2835" }],
+      featureType: 'road.highway',
+      elementType: 'geometry.stroke',
+      stylers: [{ color: '#1f2835' }],
     },
     {
-      featureType: "road.highway",
-      elementType: "labels.text.fill",
-      stylers: [{ color: "#f3d19c" }],
+      featureType: 'road.highway',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#f3d19c' }],
     },
     {
-      featureType: "transit",
-      elementType: "geometry",
-      stylers: [{ color: "#2f3948" }],
+      featureType: 'transit',
+      elementType: 'geometry',
+      stylers: [{ color: '#2f3948' }],
     },
     {
-      featureType: "water",
-      elementType: "geometry",
-      stylers: [{ color: "#17263c" }],
+      featureType: 'water',
+      elementType: 'geometry',
+      stylers: [{ color: '#17263c' }],
     },
     {
-      featureType: "water",
-      elementType: "labels.text.fill",
-      stylers: [{ color: "#515c6d" }],
+      featureType: 'water',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#515c6d' }],
     },
     {
-      featureType: "water",
-      elementType: "labels.text.stroke",
-      stylers: [{ color: "#17263c" }],
+      featureType: 'water',
+      elementType: 'labels.text.stroke',
+      stylers: [{ color: '#17263c' }],
     },
   ];
 
   // Light mode styles (also hide POI)
   const lightModeStyles = hidePOIStyles;
-
 
   // Get status color for markers
   const getStatusColor = (status: string): string => {
@@ -175,23 +181,25 @@ export default function DumpstersMap({
   // Initialize Google Maps
   useEffect(() => {
     if (!mounted) return;
-    
+
     const initMap = async () => {
       try {
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
         if (!apiKey) {
-          setError('Google Maps API key not found. Please configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.');
+          setError(
+            'Google Maps API key not found. Please configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.'
+          );
           return;
         }
 
         // Dynamically import the loader to prevent HMR issues
         const { Loader } = await import('@googlemaps/js-api-loader');
-        
+
         const loader = new Loader({
           apiKey,
           version: 'weekly',
-          libraries: ['maps', 'places']
+          libraries: ['maps', 'places'],
         });
 
         await loader.load();
@@ -200,17 +208,18 @@ export default function DumpstersMap({
 
         // Debug: Log current theme
         console.log('DumpstersMap: Initializing with theme:', theme);
-        
+
         // Check for dark mode: explicit 'dark' theme or system preference when theme is 'system'
-        const isDarkMode = theme === 'dark' || 
+        const isDarkMode =
+          theme === 'dark' ||
           (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        
+
         console.log('DumpstersMap: Initial dark mode:', isDarkMode);
-        
+
         // Determine initial styles based on current theme
         const initialStyles = isDarkMode ? darkModeStyles : lightModeStyles;
         console.log('DumpstersMap: Applied styles count:', initialStyles.length);
-        
+
         // Create map centered on ARK Dumpster business home address in St. Petersburg, FL
         // Note: Cannot use both mapId and custom styles - mapId styles are controlled via Cloud Console
         const mapOptions: google.maps.MapOptions = {
@@ -237,19 +246,20 @@ export default function DumpstersMap({
     };
 
     initMap();
-  }, [mounted]);
+  }, [mounted, theme]);
 
   // Update map styles when theme changes
   useEffect(() => {
     if (map && mounted) {
       console.log('DumpstersMap: Updating map styles, theme:', theme);
-      
+
       // Check for dark mode: explicit 'dark' theme or system preference when theme is 'system'
-      const isDarkMode = theme === 'dark' || 
+      const isDarkMode =
+        theme === 'dark' ||
         (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      
+
       console.log('DumpstersMap: Is dark mode:', isDarkMode);
-      
+
       // Force map style update using setOptions
       const newStyles = isDarkMode ? darkModeStyles : lightModeStyles;
       map.setOptions({
@@ -260,16 +270,19 @@ export default function DumpstersMap({
 
   // Geocode address to get coordinates
   const geocodeAddress = async (address: string): Promise<google.maps.LatLng | null> => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const geocoder = new google.maps.Geocoder();
-      geocoder.geocode({ address }, (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
-        if (status === 'OK' && results && results[0]) {
-          resolve(results[0].geometry.location);
-        } else {
-          console.warn(`Geocoding failed for address: ${address}`);
-          resolve(null);
+      geocoder.geocode(
+        { address },
+        (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+          if (status === 'OK' && results && results[0]) {
+            resolve(results[0].geometry.location);
+          } else {
+            console.warn(`Geocoding failed for address: ${address}`);
+            resolve(null);
+          }
         }
-      });
+      );
     });
   };
 
@@ -283,13 +296,13 @@ export default function DumpstersMap({
       infoWindow.close();
     });
     markersRef.current = [];
-    
+
     // Clear existing polylines
-    if ((window as any).mapPolylines) {
-      (window as any).mapPolylines.forEach((polyline: google.maps.Polyline) => {
+    if (window.mapPolylines) {
+      window.mapPolylines.forEach((polyline: google.maps.Polyline) => {
         polyline.setMap(null);
       });
-      (window as any).mapPolylines = [];
+      window.mapPolylines = [];
     }
 
     // Add markers for dumpsters with addresses
@@ -304,9 +317,9 @@ export default function DumpstersMap({
         if (dumpster.name === 'ARK-HOME') {
           const address = dumpster.address || dumpster.last_known_location;
           if (!address) continue;
-          
+
           let position: google.maps.LatLng | null = null;
-          
+
           if (dumpster.gps_coordinates) {
             const coords = parseGpsCoordinates(dumpster.gps_coordinates);
             if (coords) {
@@ -315,7 +328,7 @@ export default function DumpstersMap({
               console.log('ARK-HOME position found:', coords.lat, coords.lng);
             }
           }
-          
+
           if (!position) {
             position = await geocodeAddress(address);
             if (position) {
@@ -341,20 +354,29 @@ export default function DumpstersMap({
             const coords = parseGpsCoordinates(dumpster.gps_coordinates);
             if (coords) {
               position = new google.maps.LatLng(coords.lat, coords.lng);
-              console.log(`Successfully parsed GPS coordinates for ${dumpster.name}: lat=${coords.lat}, lng=${coords.lng}`);
+              console.log(
+                `Successfully parsed GPS coordinates for ${dumpster.name}: lat=${coords.lat}, lng=${coords.lng}`
+              );
               if (dumpster.name === 'ARK-HOME') {
                 console.log('ARK-HOME raw GPS data:', dumpster.gps_coordinates);
                 console.log('ARK-HOME parsed coords:', coords);
                 console.log('ARK-HOME expected coords: lat=27.7987, lng=-82.7074');
               }
             } else {
-              console.warn(`Failed to parse GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}" - parseGpsCoordinates returned null`);
+              console.warn(
+                `Failed to parse GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}" - parseGpsCoordinates returned null`
+              );
             }
           } catch (err) {
-            console.error(`Error parsing GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}"`, err);
+            console.error(
+              `Error parsing GPS coordinates for dumpster ${dumpster.name}: "${dumpster.gps_coordinates}"`,
+              err
+            );
           }
         } else {
-          console.log(`No GPS coordinates provided for dumpster ${dumpster.name}, will try geocoding address: ${address}`);
+          console.log(
+            `No GPS coordinates provided for dumpster ${dumpster.name}, will try geocoding address: ${address}`
+          );
         }
 
         // Fallback to geocoding the address
@@ -382,25 +404,27 @@ export default function DumpstersMap({
         // Create custom marker icon with status color
         const isBusinessHome = dumpster.name === 'ARK-HOME';
 
-        const icon = isBusinessHome ? {
-          // Clean home icon for business location
-          path: 'M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z',
-          scale: 1.0,
-          fillColor: '#dc2626', // red-600
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 1.5,
-          anchor: new google.maps.Point(12, 22), // Center bottom of icon
-        } : {
-          // Simple, clean truck icon for dumpsters
-          path: 'M20 8h-3V4H3v10h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2V8zM8 15.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm12 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z',
-          scale: 0.8,
-          fillColor: getStatusColor(dumpster.status),
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 1.5,
-          anchor: new google.maps.Point(12, 17), // Center bottom of icon
-        };
+        const icon = isBusinessHome
+          ? {
+              // Clean home icon for business location
+              path: 'M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z',
+              scale: 1.0,
+              fillColor: '#dc2626', // red-600
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 1.5,
+              anchor: new google.maps.Point(12, 22), // Center bottom of icon
+            }
+          : {
+              // Simple, clean truck icon for dumpsters
+              path: 'M20 8h-3V4H3v10h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2V8zM8 15.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm12 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z',
+              scale: 0.8,
+              fillColor: getStatusColor(dumpster.status),
+              fillOpacity: 1,
+              strokeColor: '#ffffff',
+              strokeWeight: 1.5,
+              anchor: new google.maps.Point(12, 17), // Center bottom of icon
+            };
 
         // Create marker using regular Marker (not AdvancedMarkerElement)
         const marker = new google.maps.Marker({
@@ -429,7 +453,8 @@ export default function DumpstersMap({
           const bgColor = isDark ? '#1f2937' : '#ffffff';
           const textColor = isDark ? '#f9fafb' : '#111827';
 
-          const infoWindowContent = isBusinessHome ? `
+          const infoWindowContent = isBusinessHome
+            ? `
             <style>
               .gm-style .gm-style-iw-c {
                 background-color: ${bgColor} !important;
@@ -455,7 +480,8 @@ export default function DumpstersMap({
                 ${dumpster.notes ? `<div style="color: ${textColor};"><strong>Notes:</strong> ${dumpster.notes}</div>` : ''}
               </div>
             </div>
-          ` : `
+          `
+            : `
             <style>
               .gm-style .gm-style-iw-c {
                 background-color: ${bgColor} !important;
@@ -479,14 +505,22 @@ export default function DumpstersMap({
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Condition:</strong> <span style="text-transform: capitalize;">${dumpster.condition}</span></div>
                 ${distance ? `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Distance from ARK-HOME:</strong> <span style="color: #3b82f6; font-weight: 600;">${distance} mi</span></div>` : ''}
                 <div style="margin-bottom: 6px; color: ${textColor};"><strong>Address:</strong> ${address}</div>
-                ${dumpster.current_order_id && dumpster.orders ? (() => {
-                  const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
-                  if (order) {
-                    const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
-                    return `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Assigned to Order:</strong> #${order.order_number} - ${customerName}</div>`;
-                  }
-                  return '';
-                })() : ''}
+                ${
+                  dumpster.current_order_id && dumpster.orders
+                    ? (() => {
+                        const order = Array.isArray(dumpster.orders)
+                          ? dumpster.orders[0]
+                          : dumpster.orders;
+                        if (order) {
+                          const customerName = order.last_name
+                            ? `${order.first_name} ${order.last_name}`
+                            : order.first_name;
+                          return `<div style="margin-bottom: 6px; color: ${textColor};"><strong>Assigned to Order:</strong> #${order.order_number} - ${customerName}</div>`;
+                        }
+                        return '';
+                      })()
+                    : ''
+                }
                 ${dumpster.notes ? `<div style="color: ${textColor};"><strong>Notes:</strong> ${dumpster.notes}</div>` : ''}
               </div>
             </div>
@@ -497,11 +531,11 @@ export default function DumpstersMap({
         });
 
         markersRef.current.push({ dumpster, marker, infoWindow });
-        
+
         // Create polyline from dumpster to ARK-HOME (for all non-ARK-HOME dumpsters)
         if (!isBusinessHome && arkHomePosition && position) {
           console.log(`Creating polyline from ARK-HOME to ${dumpster.name}`);
-          
+
           const polyline = new google.maps.Polyline({
             path: [arkHomePosition, position],
             geodesic: true,
@@ -511,7 +545,7 @@ export default function DumpstersMap({
             map: map,
             zIndex: 1,
           });
-          
+
           // Add hover effect to make line more prominent
           polyline.addListener('mouseover', () => {
             polyline.setOptions({
@@ -520,7 +554,7 @@ export default function DumpstersMap({
               zIndex: 100,
             });
           });
-          
+
           polyline.addListener('mouseout', () => {
             polyline.setOptions({
               strokeOpacity: 0.6,
@@ -528,9 +562,11 @@ export default function DumpstersMap({
               zIndex: 1,
             });
           });
-          
+
           polylines.push(polyline);
-          console.log(`Polyline created for ${dumpster.name}, total polylines: ${polylines.length}`);
+          console.log(
+            `Polyline created for ${dumpster.name}, total polylines: ${polylines.length}`
+          );
         } else {
           if (isBusinessHome) {
             console.log('Skipping polyline for ARK-HOME itself');
@@ -543,7 +579,7 @@ export default function DumpstersMap({
       }
 
       // Store polylines reference for cleanup
-      (window as any).mapPolylines = polylines;
+      window.mapPolylines = polylines;
 
       // Fit map to show all markers
       if (hasValidLocation) {
@@ -570,7 +606,10 @@ export default function DumpstersMap({
 
   if (error) {
     return (
-      <div className={`flex items-center justify-center border rounded-lg ${className}`} style={{ height }}>
+      <div
+        className={`flex items-center justify-center border rounded-lg ${className}`}
+        style={{ height }}
+      >
         <div className="text-center p-4">
           <div className="text-red-500 mb-2">⚠️ Map Error</div>
           <div className="text-sm text-muted-foreground">{error}</div>
@@ -598,7 +637,8 @@ export default function DumpstersMap({
           <div className="text-center p-4">
             <div className="text-muted-foreground mb-2">📍 No Location Data</div>
             <div className="text-sm text-muted-foreground">
-              No dumpsters with valid addresses found.<br />
+              No dumpsters with valid addresses found.
+              <br />
               Add addresses to dumpsters to see them on the map.
             </div>
           </div>
@@ -616,23 +656,38 @@ export default function DumpstersMap({
             </div>
             <div className="border-t border-border my-2"></div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getStatusColor('available') }}></div>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getStatusColor('available') }}
+              ></div>
               <span className="text-foreground">Available</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getStatusColor('assigned') }}></div>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getStatusColor('assigned') }}
+              ></div>
               <span className="text-foreground">Assigned</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getStatusColor('in_transit') }}></div>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getStatusColor('in_transit') }}
+              ></div>
               <span className="text-foreground">In Transit</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getStatusColor('maintenance') }}></div>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getStatusColor('maintenance') }}
+              ></div>
               <span className="text-foreground">Maintenance</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getStatusColor('out_of_service') }}></div>
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: getStatusColor('out_of_service') }}
+              ></div>
               <span className="text-foreground">Out of Service</span>
             </div>
           </div>

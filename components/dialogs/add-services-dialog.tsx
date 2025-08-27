@@ -45,7 +45,7 @@ interface ServiceCategory {
   display_name: string;
 }
 
-interface SelectedService {
+export interface SelectedService {
   service_id: string;
   service: Service;
   quantity: number;
@@ -62,12 +62,12 @@ interface AddServicesDialogProps {
   type?: 'quote' | 'order';
 }
 
-export function AddServicesDialog({ 
+export function AddServicesDialog({
   quoteId,
-  orderId, 
-  onServicesAdded, 
+  orderId,
+  onServicesAdded,
   existingServices = [],
-  type = 'quote'
+  type = 'quote',
 }: AddServicesDialogProps) {
   const [open, setOpen] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
@@ -95,7 +95,8 @@ export function AddServicesDialog({
 
       const { data, error } = await supabase
         .from(tableName)
-        .select(`
+        .select(
+          `
           *,
           services!inner(
             *,
@@ -104,7 +105,8 @@ export function AddServicesDialog({
               display_name
             )
           )
-        `)
+        `
+        )
         .eq(idField, entityId);
 
       if (error) throw error;
@@ -114,12 +116,12 @@ export function AddServicesDialog({
         service: {
           ...serviceRecord.services,
           category_name: serviceRecord.services.service_categories.name,
-          base_price: parseFloat(serviceRecord.services.base_price)
+          base_price: parseFloat(serviceRecord.services.base_price),
         },
         quantity: parseFloat(serviceRecord.quantity),
         unit_price: parseFloat(serviceRecord.unit_price),
         total_price: parseFloat(serviceRecord.total_price),
-        notes: serviceRecord.notes || ''
+        notes: serviceRecord.notes || '',
       }));
 
       setSelectedServices(existingSelectedServices);
@@ -134,14 +136,16 @@ export function AddServicesDialog({
       // Fetch services with category names
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
-        .select(`
+        .select(
+          `
           *,
           service_categories!inner(
             id,
             name,
             display_name
           )
-        `)
+        `
+        )
         .eq('is_active', true)
         .order('sort_order');
 
@@ -151,7 +155,7 @@ export function AddServicesDialog({
       const transformedServices: Service[] = (servicesData || []).map(service => ({
         ...service,
         category_name: service.service_categories.name,
-        base_price: parseFloat(service.base_price)
+        base_price: parseFloat(service.base_price),
       }));
 
       setServices(transformedServices);
@@ -164,7 +168,6 @@ export function AddServicesDialog({
 
       if (categoriesError) throw categoriesError;
       setCategories(categoriesData || []);
-
     } catch (error) {
       console.error('Error fetching services:', error);
       toast.error('Failed to load services');
@@ -186,7 +189,7 @@ export function AddServicesDialog({
       quantity: 1,
       unit_price: service.base_price,
       total_price: service.base_price,
-      notes: ''
+      notes: '',
     };
 
     setSelectedServices(prev => [...prev, newSelectedService]);
@@ -197,27 +200,25 @@ export function AddServicesDialog({
   };
 
   const updateServiceQuantity = (serviceId: string, quantity: number) => {
-    setSelectedServices(prev => prev.map(s => 
-      s.service_id === serviceId 
-        ? { ...s, quantity, total_price: s.unit_price * quantity }
-        : s
-    ));
+    setSelectedServices(prev =>
+      prev.map(s =>
+        s.service_id === serviceId ? { ...s, quantity, total_price: s.unit_price * quantity } : s
+      )
+    );
   };
 
   const updateServiceUnitPrice = (serviceId: string, unitPrice: number) => {
-    setSelectedServices(prev => prev.map(s => 
-      s.service_id === serviceId 
-        ? { ...s, unit_price: unitPrice, total_price: unitPrice * s.quantity }
-        : s
-    ));
+    setSelectedServices(prev =>
+      prev.map(s =>
+        s.service_id === serviceId
+          ? { ...s, unit_price: unitPrice, total_price: unitPrice * s.quantity }
+          : s
+      )
+    );
   };
 
   const updateServiceNotes = (serviceId: string, notes: string) => {
-    setSelectedServices(prev => prev.map(s => 
-      s.service_id === serviceId 
-        ? { ...s, notes }
-        : s
-    ));
+    setSelectedServices(prev => prev.map(s => (s.service_id === serviceId ? { ...s, notes } : s)));
   };
 
   const handleSave = async () => {
@@ -231,10 +232,7 @@ export function AddServicesDialog({
         const idField = type === 'quote' ? 'quote_id' : 'order_id';
 
         // First, delete all existing services for this entity
-        await supabase
-          .from(tableName)
-          .delete()
-          .eq(idField, entityId);
+        await supabase.from(tableName).delete().eq(idField, entityId);
 
         // Then insert the current selected services
         if (selectedServices.length > 0) {
@@ -246,7 +244,7 @@ export function AddServicesDialog({
               unit_price: service.unit_price,
               total_price: service.total_price,
               notes: service.notes || null,
-              status: type === 'quote' ? 'pending' : 'confirmed'
+              status: type === 'quote' ? 'pending' : 'confirmed',
             };
 
             // For orders, add additional fields that may be expected
@@ -254,16 +252,14 @@ export function AddServicesDialog({
               return {
                 ...baseData,
                 discount_amount: 0,
-                service_date: new Date().toISOString().split('T')[0] // Today's date
+                service_date: new Date().toISOString().split('T')[0], // Today's date
               };
             }
 
             return baseData;
           });
 
-          const { error } = await supabase
-            .from(tableName)
-            .insert(servicesData);
+          const { error } = await supabase.from(tableName).insert(servicesData);
 
           if (error) {
             throw error;
@@ -275,16 +271,18 @@ export function AddServicesDialog({
       onServicesAdded(selectedServices);
       setOpen(false);
       const entityType = type === 'quote' ? 'quote' : 'order';
-      
+
       if (entityId) {
-        toast.success(selectedServices.length > 0 
-          ? `Services updated successfully for ${entityType}!` 
-          : `All services removed from ${entityType}!`
+        toast.success(
+          selectedServices.length > 0
+            ? `Services updated successfully for ${entityType}!`
+            : `All services removed from ${entityType}!`
         );
       } else {
-        toast.success(selectedServices.length > 0 
-          ? `${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''} added to ${entityType}!` 
-          : `Services cleared from ${entityType}!`
+        toast.success(
+          selectedServices.length > 0
+            ? `${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''} added to ${entityType}!`
+            : `Services cleared from ${entityType}!`
         );
       }
     } catch (error) {
@@ -295,19 +293,20 @@ export function AddServicesDialog({
     }
   };
 
-  const filteredServices = selectedCategoryId === 'all' 
-    ? services.sort((a, b) => {
-        // Show dumpster services first (services with dumpster_size property)
-        const aIsDumpster = a.dumpster_size !== null;
-        const bIsDumpster = b.dumpster_size !== null;
-        
-        if (aIsDumpster && !bIsDumpster) return -1;
-        if (!aIsDumpster && bIsDumpster) return 1;
-        
-        // Within same category type, sort by original sort_order
-        return a.sort_order - b.sort_order;
-      })
-    : services.filter(s => s.category_id === selectedCategoryId);
+  const filteredServices =
+    selectedCategoryId === 'all'
+      ? services.sort((a, b) => {
+          // Show dumpster services first (services with dumpster_size property)
+          const aIsDumpster = a.dumpster_size !== null;
+          const bIsDumpster = b.dumpster_size !== null;
+
+          if (aIsDumpster && !bIsDumpster) return -1;
+          if (!aIsDumpster && bIsDumpster) return 1;
+
+          // Within same category type, sort by original sort_order
+          return a.sort_order - b.sort_order;
+        })
+      : services.filter(s => s.category_id === selectedCategoryId);
 
   const totalAmount = selectedServices.reduce((sum, s) => sum + s.total_price, 0);
 
@@ -339,7 +338,7 @@ export function AddServicesDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((category) => (
+                  {categories.map(category => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.display_name}
                     </SelectItem>
@@ -352,7 +351,7 @@ export function AddServicesDialog({
             <div className="space-y-2">
               <Label>Available Services</Label>
               <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-2">
-                {filteredServices.map((service) => (
+                {filteredServices.map(service => (
                   <div
                     key={service.id}
                     className="flex items-center justify-between p-2 border rounded hover:bg-muted/50 cursor-pointer"
@@ -383,10 +382,13 @@ export function AddServicesDialog({
               <div className="space-y-2">
                 <Label>Selected Services</Label>
                 <div className="space-y-3 border rounded-md p-3">
-                  {selectedServices.map((selectedService) => (
-                    <div key={selectedService.service_id} className="grid gap-3 p-3 bg-muted/30 rounded-md">
+                  {selectedServices.map(selectedService => (
+                    <div
+                      key={selectedService.service_id}
+                      className="grid gap-3 p-3 bg-muted/30 rounded-md"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{selectedService.service.display_name}</span>
+                        <span className="font-medium">{selectedService.service?.display_name || 'Unknown'}</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -396,7 +398,7 @@ export function AddServicesDialog({
                           <RiDeleteBin2Line className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Quantity</Label>
@@ -405,10 +407,12 @@ export function AddServicesDialog({
                             min="1"
                             step="1"
                             value={selectedService.quantity}
-                            onChange={(e) => updateServiceQuantity(
-                              selectedService.service_id, 
-                              Math.max(1, parseInt(e.target.value) || 1)
-                            )}
+                            onChange={e =>
+                              updateServiceQuantity(
+                                selectedService.service_id,
+                                Math.max(1, parseInt(e.target.value) || 1)
+                              )
+                            }
                             className="h-9"
                           />
                         </div>
@@ -419,10 +423,12 @@ export function AddServicesDialog({
                             min="0"
                             step="0.01"
                             value={selectedService.unit_price}
-                            onChange={(e) => updateServiceUnitPrice(
-                              selectedService.service_id, 
-                              parseFloat(e.target.value) || 0
-                            )}
+                            onChange={e =>
+                              updateServiceUnitPrice(
+                                selectedService.service_id,
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
                             className="h-9"
                           />
                         </div>
@@ -436,19 +442,21 @@ export function AddServicesDialog({
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-1">
                         <Label className="text-xs">Notes (optional)</Label>
                         <Textarea
                           value={selectedService.notes}
-                          onChange={(e) => updateServiceNotes(selectedService.service_id, e.target.value)}
+                          onChange={e =>
+                            updateServiceNotes(selectedService.service_id, e.target.value)
+                          }
                           placeholder="Additional notes for this service..."
                           className="h-20 text-sm"
                         />
                       </div>
                     </div>
                   ))}
-                  
+
                   <div className="pt-2 border-t">
                     <div className="flex justify-between items-center font-medium">
                       <span>Total Amount:</span>

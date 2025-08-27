@@ -131,7 +131,10 @@ function DragHandle({ id }: { id: number }) {
   );
 }
 
-const columns = (viewType: string, statuses?: readonly string[]): ColumnDef<z.infer<typeof schema>>[] => [
+const columns = (
+  viewType: string,
+  statuses?: readonly string[]
+): ColumnDef<z.infer<typeof schema>>[] => [
   {
     id: 'drag',
     header: () => null,
@@ -332,7 +335,7 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
 export function DataTable({
   data: initialData,
   type = 'quotes',
-  statuses
+  statuses,
 }: {
   data: z.infer<typeof schema>[];
   type?: string;
@@ -347,7 +350,7 @@ export function DataTable({
     pageIndex: 0,
     pageSize: 10,
   });
-  const [currentView, setCurrentView] = React.useState("all");
+  const [currentView, setCurrentView] = React.useState('all');
   const sortableId = React.useId();
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -360,10 +363,10 @@ export function DataTable({
       hasData: !!data,
       dataLength: data?.length,
       currentView,
-      isAll: currentView === "all"
+      isAll: currentView === 'all',
     });
 
-    if (!data || !currentView || currentView === "all") return data;
+    if (!data || !currentView || currentView === 'all') return data;
 
     const filtered = data.filter(item => item.status === currentView);
     console.log('Filtered result:', filtered.length);
@@ -371,7 +374,10 @@ export function DataTable({
     return filtered;
   }, [data, currentView]);
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(() => filteredData?.map(({ id }) => id) || [], [filteredData]);
+  const dataIds = React.useMemo<UniqueIdentifier[]>(
+    () => filteredData?.map(({ id }) => id) || [],
+    [filteredData]
+  );
 
   const table = useReactTable({
     data: filteredData,
@@ -414,7 +420,7 @@ export function DataTable({
     const options = [
       <SelectItem key="all" value="all">
         All
-      </SelectItem>
+      </SelectItem>,
     ];
 
     if (statuses && statuses.length > 0) {
@@ -427,10 +433,14 @@ export function DataTable({
     }
 
     return options;
-  }
+  };
 
   return (
-    <Tabs value={currentView} onValueChange={setCurrentView} className="w-full flex-col justify-start gap-6">
+    <Tabs
+      value={currentView}
+      onValueChange={setCurrentView}
+      className="w-full flex-col justify-start gap-6"
+    >
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
           View
@@ -439,20 +449,13 @@ export function DataTable({
           <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
             <SelectValue placeholder="Select a view" />
           </SelectTrigger>
-          <SelectContent>
-            {getStatusOptions()}
-          </SelectContent>
+          <SelectContent>{getStatusOptions()}</SelectContent>
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="all">
-            All
-          </TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
           {statuses && statuses.length > 0 ? (
             statuses.map(status => (
-              <TabsTrigger
-                key={status}
-                value={status}
-              >
+              <TabsTrigger key={status} value={status}>
                 {status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </TabsTrigger>
             ))
@@ -531,7 +534,10 @@ export function DataTable({
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns(currentView, statuses).length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={columns(currentView, statuses).length}
+                      className="h-24 text-center"
+                    >
                       No results.
                     </TableCell>
                   </TableRow>
@@ -652,7 +658,10 @@ export function DataTable({
                   </SortableContext>
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns(currentView, statuses).length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={columns(currentView, statuses).length}
+                      className="h-24 text-center"
+                    >
                       No results.
                     </TableCell>
                   </TableRow>
@@ -772,7 +781,7 @@ const chartConfig = {
 function TableCellViewer({
   item,
   viewType,
-  statuses
+  statuses,
 }: {
   item: z.infer<typeof schema>;
   viewType: string;
@@ -793,23 +802,51 @@ function TableCellViewer({
     // Fallback if no statuses prop is provided
     if (viewType === 'quotes') {
       return [
-        <SelectItem key="pending" value="Pending">Pending</SelectItem>,
-        <SelectItem key="quoted" value="Quoted">Quoted</SelectItem>,
-        <SelectItem key="accepted" value="Accepted">Accepted</SelectItem>,
-        <SelectItem key="declined" value="Declined">Declined</SelectItem>,
-        <SelectItem key="completed" value="Completed">Completed</SelectItem>,
+        <SelectItem key="pending" value="Pending">
+          Pending
+        </SelectItem>,
+        <SelectItem key="quoted" value="Quoted">
+          Quoted
+        </SelectItem>,
+        <SelectItem key="accepted" value="Accepted">
+          Accepted
+        </SelectItem>,
+        <SelectItem key="declined" value="Declined">
+          Declined
+        </SelectItem>,
+        <SelectItem key="completed" value="Completed">
+          Completed
+        </SelectItem>,
       ];
     } else {
       return [
-        <SelectItem key="pending" value="Pending">Pending</SelectItem>,
-        <SelectItem key="scheduled" value="Scheduled">Scheduled</SelectItem>,
-        <SelectItem key="on-way" value="On Way">On Way</SelectItem>,
-        <SelectItem key="in-progress" value="In Progress">In Progress</SelectItem>,
-        <SelectItem key="delivered" value="Delivered">Delivered</SelectItem>,
-        <SelectItem key="on-way-pickup" value="On Way Pickup">On Way Pickup</SelectItem>,
-        <SelectItem key="picked-up" value="Picked Up">Picked Up</SelectItem>,
-        <SelectItem key="completed" value="Completed">Completed</SelectItem>,
-        <SelectItem key="cancelled" value="Cancelled">Cancelled</SelectItem>,
+        <SelectItem key="pending" value="Pending">
+          Pending
+        </SelectItem>,
+        <SelectItem key="scheduled" value="Scheduled">
+          Scheduled
+        </SelectItem>,
+        <SelectItem key="on-way" value="On Way">
+          On Way
+        </SelectItem>,
+        <SelectItem key="in-progress" value="In Progress">
+          In Progress
+        </SelectItem>,
+        <SelectItem key="delivered" value="Delivered">
+          Delivered
+        </SelectItem>,
+        <SelectItem key="on-way-pickup" value="On Way Pickup">
+          On Way Pickup
+        </SelectItem>,
+        <SelectItem key="picked-up" value="Picked Up">
+          Picked Up
+        </SelectItem>,
+        <SelectItem key="completed" value="Completed">
+          Completed
+        </SelectItem>,
+        <SelectItem key="cancelled" value="Cancelled">
+          Cancelled
+        </SelectItem>,
       ];
     }
   };
@@ -907,9 +944,7 @@ function TableCellViewer({
                   <SelectTrigger id="status" className="w-full">
                     <SelectValue placeholder="Select a status" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {getStatusOptions()}
-                  </SelectContent>
+                  <SelectContent>{getStatusOptions()}</SelectContent>
                 </Select>
               </div>
             </div>

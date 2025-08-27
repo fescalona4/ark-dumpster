@@ -122,7 +122,7 @@ function DumpsterCard({
   statuses,
   onEdit,
   onDelete,
-  onUnassign
+  onUnassign,
 }: {
   item: z.infer<typeof dumpsterSchema>;
   statuses?: readonly string[];
@@ -137,7 +137,10 @@ function DumpsterCard({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">{item.header}</CardTitle>
-          <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 ${getStatusBadgeClasses(item.status)}`}>
+          <Badge
+            variant={getStatusBadgeVariant(item.status)}
+            className={`gap-1 ${getStatusBadgeClasses(item.status)}`}
+          >
             {getStatusIcon(item.status)}
             {item.status.replace('_', ' ')}
           </Badge>
@@ -187,7 +190,10 @@ function DumpsterCard({
                   </div>
                   <div>
                     <Label className="text-muted-foreground">Status</Label>
-                    <Badge variant={getStatusBadgeVariant(item.status)} className={`gap-1 w-fit ${getStatusBadgeClasses(item.status)}`}>
+                    <Badge
+                      variant={getStatusBadgeVariant(item.status)}
+                      className={`gap-1 w-fit ${getStatusBadgeClasses(item.status)}`}
+                    >
                       {getStatusIcon(item.status)}
                       {item.status.replace('_', ' ')}
                     </Badge>
@@ -243,7 +249,6 @@ function DumpsterCard({
   );
 }
 
-
 interface AddDumpsterData {
   name: string;
   size: string;
@@ -295,14 +300,17 @@ function AddDumpsterDialog({ onAdd }: { onAdd: (data: AddDumpsterData) => void }
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., D001"
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="size">Size</Label>
-            <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
+            <Select
+              value={formData.size}
+              onValueChange={value => setFormData({ ...formData, size: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select size" />
               </SelectTrigger>
@@ -317,7 +325,12 @@ function AddDumpsterDialog({ onAdd }: { onAdd: (data: AddDumpsterData) => void }
           </div>
           <div className="space-y-2">
             <Label htmlFor="condition">Condition</Label>
-            <Select value={formData.condition} onValueChange={(value: 'excellent' | 'good' | 'fair' | 'needs_repair') => setFormData({ ...formData, condition: value })}>
+            <Select
+              value={formData.condition}
+              onValueChange={(value: 'excellent' | 'good' | 'fair' | 'needs_repair') =>
+                setFormData({ ...formData, condition: value })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -334,7 +347,7 @@ function AddDumpsterDialog({ onAdd }: { onAdd: (data: AddDumpsterData) => void }
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Additional notes about the dumpster..."
               rows={3}
             />
@@ -361,7 +374,7 @@ interface EditDumpsterData {
 
 function EditDumpsterDialog({
   item,
-  onEdit
+  onEdit,
 }: {
   item: z.infer<typeof dumpsterSchema>;
   onEdit: (data: EditDumpsterData) => void;
@@ -386,7 +399,7 @@ function EditDumpsterDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+        <DropdownMenuItem onSelect={e => e.preventDefault()}>
           <IconEdit className="mr-2 h-4 w-4" />
           Edit dumpster
         </DropdownMenuItem>
@@ -394,9 +407,7 @@ function EditDumpsterDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Dumpster</DialogTitle>
-          <DialogDescription>
-            Update the dumpster details. Name is required.
-          </DialogDescription>
+          <DialogDescription>Update the dumpster details. Name is required.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -404,14 +415,17 @@ function EditDumpsterDialog({
             <Input
               id="edit-name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g., D001"
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-size">Size</Label>
-            <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })}>
+            <Select
+              value={formData.size}
+              onValueChange={value => setFormData({ ...formData, size: value })}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select size" />
               </SelectTrigger>
@@ -426,7 +440,12 @@ function EditDumpsterDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-condition">Condition</Label>
-            <Select value={formData.condition} onValueChange={(value: 'excellent' | 'good' | 'fair' | 'needs_repair') => setFormData({ ...formData, condition: value })}>
+            <Select
+              value={formData.condition}
+              onValueChange={(value: 'excellent' | 'good' | 'fair' | 'needs_repair') =>
+                setFormData({ ...formData, condition: value })
+              }
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -443,7 +462,7 @@ function EditDumpsterDialog({
             <Textarea
               id="edit-notes"
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={e => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Additional notes about the dumpster..."
               rows={3}
             />
@@ -462,7 +481,7 @@ function EditDumpsterDialog({
 
 function UnassignDumpsterDialog({
   item,
-  onUnassign
+  onUnassign,
 }: {
   item: z.infer<typeof dumpsterSchema>;
   onUnassign: (id: number) => void;
@@ -470,7 +489,7 @@ function UnassignDumpsterDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+        <DropdownMenuItem onSelect={e => e.preventDefault()}>
           <IconUnlink className="mr-2 h-4 w-4" />
           Unassign dumpster
         </DropdownMenuItem>
@@ -479,16 +498,13 @@ function UnassignDumpsterDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Unassign Dumpster</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to unassign "{item.header}" from {item.reviewer}? The dumpster will be marked as available.
+            Are you sure you want to unassign &quot;{item.header}&quot; from {item.reviewer}? The
+            dumpster will be marked as available.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => onUnassign(item.id)}
-          >
-            Unassign
-          </AlertDialogAction>
+          <AlertDialogAction onClick={() => onUnassign(item.id)}>Unassign</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -497,7 +513,7 @@ function UnassignDumpsterDialog({
 
 function DeleteDumpsterDialog({
   item,
-  onDelete
+  onDelete,
 }: {
   item: z.infer<typeof dumpsterSchema>;
   onDelete: (id: number) => void;
@@ -505,7 +521,7 @@ function DeleteDumpsterDialog({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+        <DropdownMenuItem onSelect={e => e.preventDefault()} className="text-destructive">
           <IconTrash className="mr-2 h-4 w-4" />
           Delete dumpster
         </DropdownMenuItem>
@@ -514,7 +530,7 @@ function DeleteDumpsterDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Dumpster</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete "{item.header}"? This action cannot be undone.
+            Are you sure you want to delete &quot;{item.header}&quot;? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -549,24 +565,24 @@ export function DumpstersDataTable({
   const [data] = useState(initialData);
 
   // Group data by status
-  const statusOnlyTabs = statuses ?
-    statuses.map(status => ({
-      label: status.replace('_', ' '),
-      value: status,
-      count: data.filter(item => item.status === status).length,
-    })) :
-    [
-      {
-        label: 'available',
-        value: 'available',
-        count: data.filter(item => item.status === 'available').length,
-      },
-      {
-        label: 'in use',
-        value: 'in_use',
-        count: data.filter(item => item.status === 'in_use').length,
-      },
-    ];
+  const statusOnlyTabs = statuses
+    ? statuses.map(status => ({
+        label: status.replace('_', ' '),
+        value: status,
+        count: data.filter(item => item.status === status).length,
+      }))
+    : [
+        {
+          label: 'available',
+          value: 'available',
+          count: data.filter(item => item.status === 'available').length,
+        },
+        {
+          label: 'in use',
+          value: 'in_use',
+          count: data.filter(item => item.status === 'in_use').length,
+        },
+      ];
 
   // Add "All" option as the first tab
   const statusTabs = [
@@ -618,20 +634,22 @@ export function DumpstersDataTable({
         </div>
       </div>
 
-
       {statusTabs.map(tab => {
         const filteredData = getFilteredData(tab.value);
 
         return (
-          <TabsContent
-            key={tab.value}
-            value={tab.value}
-            className="relative flex flex-col gap-6"
-          >
+          <TabsContent key={tab.value} value={tab.value} className="relative flex flex-col gap-6">
             {filteredData.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredData.map(item => (
-                  <DumpsterCard key={item.id} item={item} statuses={statuses} onEdit={onEdit} onDelete={onDelete} onUnassign={onUnassign} />
+                  <DumpsterCard
+                    key={item.id}
+                    item={item}
+                    statuses={statuses}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onUnassign={onUnassign}
+                  />
                 ))}
               </div>
             ) : (
@@ -639,7 +657,7 @@ export function DumpstersDataTable({
                 <IconTruck className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium mb-2">No dumpsters found</h3>
                 <p className="text-muted-foreground">
-                  No dumpsters found with status "{tab.label}".
+                  No dumpsters found with status &quot;{tab.label}&quot;.
                 </p>
               </div>
             )}

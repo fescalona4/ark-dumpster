@@ -22,8 +22,22 @@ import { getDailyVisits, getAnalytics } from '@/lib/analytics';
 
 export const description = 'An advanced interactive area chart with multiple data streams';
 
+interface Visit {
+  device_type: string;
+  created_at: string;
+}
+
+interface ChartDataPoint {
+  date: string;
+  desktop?: number;
+  mobile?: number;
+  tablet?: number;
+  quotes?: number;
+  orders?: number;
+}
+
 interface AdvancedAreaChartProps {
-  data?: any[];
+  data?: ChartDataPoint[];
   timeRange?: string;
   onTimeRangeChange?: (range: string) => void;
   className?: string;
@@ -62,7 +76,7 @@ export function AdvancedAreaChart({
   className,
 }: AdvancedAreaChartProps) {
   const [timeRange, setTimeRange] = React.useState(externalTimeRange || '7d');
-  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [chartData, setChartData] = React.useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const handleTimeRangeChange = (newRange: string) => {
@@ -86,20 +100,23 @@ export function AdvancedAreaChart({
         const days = parseInt(timeRange.replace('d', ''));
         const [dailyVisits, analyticsData] = await Promise.all([
           getDailyVisits(days),
-          getAnalytics(days)
+          getAnalytics(days),
         ]);
 
         // Calculate device stats from analytics data
         const deviceStats: Record<string, number> = {};
         if (analyticsData) {
-          analyticsData.forEach((visit: any) => {
+          analyticsData.forEach((visit: Visit) => {
             const deviceType = visit.device_type || 'desktop';
             deviceStats[deviceType] = (deviceStats[deviceType] || 0) + 1;
           });
         }
 
         // Calculate device ratios
-        const totalDeviceVisits = Object.values(deviceStats).reduce((sum: number, count: number) => sum + count, 0);
+        const totalDeviceVisits = Object.values(deviceStats).reduce(
+          (sum: number, count: number) => sum + count,
+          0
+        );
         const deviceRatios = {
           desktop: totalDeviceVisits > 0 ? (deviceStats.desktop || 0) / totalDeviceVisits : 0.6,
           mobile: totalDeviceVisits > 0 ? (deviceStats.mobile || 0) / totalDeviceVisits : 0.3,
@@ -127,7 +144,8 @@ export function AdvancedAreaChart({
 
           // Simulate business metrics (quotes and orders)
           // In a real implementation, you'd fetch this from your database
-          const quotes = Math.floor(Math.random() * (totalVisits * 0.15)) + Math.floor(totalVisits * 0.05);
+          const quotes =
+            Math.floor(Math.random() * (totalVisits * 0.15)) + Math.floor(totalVisits * 0.05);
           const orders = Math.floor(Math.random() * (quotes * 0.3)) + Math.floor(quotes * 0.1);
 
           return {
@@ -137,7 +155,7 @@ export function AdvancedAreaChart({
             tablet: Math.max(0, tablet),
             quotes: Math.max(0, quotes),
             orders: Math.max(0, orders),
-            total: totalVisits
+            total: totalVisits,
           };
         });
 
@@ -155,8 +173,8 @@ export function AdvancedAreaChart({
 
   const filteredData = React.useMemo(() => {
     if (externalData) return externalData;
-    
-    return chartData.filter((item) => {
+
+    return chartData.filter(item => {
       const date = new Date(item.date);
       const referenceDate = new Date();
       let daysToSubtract = 30;
@@ -208,71 +226,28 @@ export function AdvancedAreaChart({
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <ChartContainer
-            config={chartConfig}
-            className="h-[300px] w-full"
-          >
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <AreaChart data={filteredData}>
               <defs>
                 <linearGradient id="advanced-fillDesktop" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-desktop)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-desktop)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-desktop)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-desktop)" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="advanced-fillMobile" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-mobile)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-mobile)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-mobile)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-mobile)" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="advanced-fillTablet" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-tablet)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-tablet)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-tablet)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-tablet)" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="advanced-fillQuotes" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-quotes)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-quotes)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-quotes)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-quotes)" stopOpacity={0.1} />
                 </linearGradient>
                 <linearGradient id="advanced-fillOrders" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="5%"
-                    stopColor="var(--color-orders)"
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset="95%"
-                    stopColor="var(--color-orders)"
-                    stopOpacity={0.1}
-                  />
+                  <stop offset="5%" stopColor="var(--color-orders)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-orders)" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
@@ -282,7 +257,7 @@ export function AdvancedAreaChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value) => {
+                tickFormatter={value => {
                   const date = new Date(value);
                   return date.toLocaleDateString('en-US', {
                     month: 'short',
@@ -294,7 +269,7 @@ export function AdvancedAreaChart({
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(value) => {
+                    labelFormatter={value => {
                       return new Date(value).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -340,7 +315,11 @@ export function AdvancedAreaChart({
                 stroke="var(--color-desktop)"
                 stackId="traffic"
               />
-              <ChartLegend content={(props) => <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />} />
+              <ChartLegend
+                content={props => (
+                  <ChartLegendContent payload={props.payload} verticalAlign={props.verticalAlign} />
+                )}
+              />
             </AreaChart>
           </ChartContainer>
         )}

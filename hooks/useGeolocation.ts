@@ -35,24 +35,30 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     supported: typeof navigator !== 'undefined' && 'geolocation' in navigator,
   });
 
-  const updatePosition = useCallback((position: GeolocationPosition) => {
-    setState(prev => ({
-      ...prev,
-      position,
-      error: null,
-      loading: false,
-    }));
-    onSuccess?.(position);
-  }, [onSuccess]);
+  const updatePosition = useCallback(
+    (position: GeolocationPosition) => {
+      setState(prev => ({
+        ...prev,
+        position,
+        error: null,
+        loading: false,
+      }));
+      onSuccess?.(position);
+    },
+    [onSuccess]
+  );
 
-  const updateError = useCallback((error: GeolocationPositionError) => {
-    setState(prev => ({
-      ...prev,
-      error,
-      loading: false,
-    }));
-    onError?.(error);
-  }, [onError]);
+  const updateError = useCallback(
+    (error: GeolocationPositionError) => {
+      setState(prev => ({
+        ...prev,
+        error,
+        loading: false,
+      }));
+      onError?.(error);
+    },
+    [onError]
+  );
 
   const getCurrentPosition = useCallback(() => {
     if (!state.supported) {
@@ -68,15 +74,11 @@ export function useGeolocation(options: GeolocationOptions = {}) {
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
-    navigator.geolocation.getCurrentPosition(
-      updatePosition,
-      updateError,
-      {
-        enableHighAccuracy,
-        timeout,
-        maximumAge,
-      }
-    );
+    navigator.geolocation.getCurrentPosition(updatePosition, updateError, {
+      enableHighAccuracy,
+      timeout,
+      maximumAge,
+    });
   }, [state.supported, updatePosition, updateError, enableHighAccuracy, timeout, maximumAge]);
 
   const watchPosition = useCallback(() => {
@@ -84,15 +86,11 @@ export function useGeolocation(options: GeolocationOptions = {}) {
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
-    const watchId = navigator.geolocation.watchPosition(
-      updatePosition,
-      updateError,
-      {
-        enableHighAccuracy,
-        timeout,
-        maximumAge,
-      }
-    );
+    const watchId = navigator.geolocation.watchPosition(updatePosition, updateError, {
+      enableHighAccuracy,
+      timeout,
+      maximumAge,
+    });
 
     return () => {
       navigator.geolocation.clearWatch(watchId);
@@ -116,21 +114,15 @@ export function useGeolocation(options: GeolocationOptions = {}) {
 }
 
 // Calculate distance between two points using Haversine formula
-export function calculateDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 3959; // Earth's radius in miles
   const dLat = toRadians(lat2 - lat1);
   const dLon = toRadians(lon2 - lon1);
-  
+
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -164,7 +156,7 @@ export function useLocationPermission() {
       setLoading(true);
       const result = await navigator.permissions.query({ name: 'geolocation' });
       setPermission(result.state);
-      
+
       result.addEventListener('change', () => {
         setPermission(result.state);
       });
@@ -176,7 +168,7 @@ export function useLocationPermission() {
   }, []);
 
   const requestPermission = useCallback(async () => {
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(resolve => {
       if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
         resolve(false);
         return;
@@ -187,7 +179,7 @@ export function useLocationPermission() {
           setPermission('granted');
           resolve(true);
         },
-        (error) => {
+        error => {
           if (error.code === error.PERMISSION_DENIED) {
             setPermission('denied');
           }

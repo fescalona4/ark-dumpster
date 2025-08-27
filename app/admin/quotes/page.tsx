@@ -1,6 +1,6 @@
 /**
  * Admin Quotes Management Page
- * 
+ *
  * This page provides a comprehensive interface for managing dumpster rental quotes.
  * Features include:
  * - View all quotes in a card-based layout
@@ -14,7 +14,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { convertQuoteToOrder } from '@/lib/order-service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,19 +51,12 @@ import {
 } from '@/components/ui/dialog';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { QuoteEditDialog } from '@/components/dialogs/quote-edit-dialog';
-import { OrderConfirmationDialog } from '@/components/dialogs/order-confirmation-dialog';
-import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
+import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
 import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   RiDeleteBin2Line,
-  RiEditLine,
   RiSaveLine,
-  RiCloseLine,
   RiCalendarLine,
   RiMapPinLine,
   RiPhoneLine,
@@ -73,14 +65,13 @@ import {
   RiTimeLine,
   RiMoneyDollarCircleLine,
   RiSearchLine,
-  RiFilterLine,
   RiInformationLine,
   RiRefreshLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import AuthGuard from '@/components/providers/auth-guard';
-import { Order } from '@/types/database';
+import { Order, OrderServiceWithRelations } from '@/types/database';
 
 /**
  * Quote interface defining the structure of a quote object
@@ -130,8 +121,6 @@ export default function QuotesAdminPage() {
  * Features include filtering, editing, deleting, and managing quotes
  */
 function QuotesPageContent() {
-  const router = useRouter();
-
   // Core data state
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,10 +137,6 @@ function QuotesPageContent() {
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
   // const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null); // TODO: Implement delete functionality
 
-  // Order confirmation dialog state
-  const [orderConfirmationOpen, setOrderConfirmationOpen] = useState(false);
-  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
-
   // Date-time picker dialog state
   const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
 
@@ -159,11 +144,17 @@ function QuotesPageContent() {
   const [savingQuotes, setSavingQuotes] = useState<Set<string>>(new Set());
 
   // Quote services state
-  const [quoteServices, setQuoteServices] = useState<{ [quoteId: string]: any[] }>({});
+  const [quoteServices, setQuoteServices] = useState<{
+    [quoteId: string]: OrderServiceWithRelations[];
+  }>({});
 
   // Service edit dialog state
-  const [selectedService, setSelectedService] = useState<any | null>(null);
+  const [selectedService, setSelectedService] = useState<OrderServiceWithRelations | null>(null);
   const [serviceEditDialogOpen, setServiceEditDialogOpen] = useState(false);
+
+  // Order creation state
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
+  const [orderConfirmationOpen, setOrderConfirmationOpen] = useState(false);
 
   // Drivers configuration - easy to expand in the future
   const drivers = [
@@ -206,7 +197,6 @@ function QuotesPageContent() {
         query = query.eq('status', statusFilter);
       }
 
-
       const { data, error } = await query;
 
       if (error) {
@@ -228,12 +218,13 @@ function QuotesPageContent() {
         let filteredQuotes = validQuotes;
         if (searchTerm.trim()) {
           const searchLower = searchTerm.toLowerCase();
-          filteredQuotes = validQuotes.filter(quote =>
-            quote.first_name?.toLowerCase().includes(searchLower) ||
-            quote.last_name?.toLowerCase().includes(searchLower) ||
-            quote.email?.toLowerCase().includes(searchLower) ||
-            quote.phone?.toString().includes(searchTerm) ||
-            quote.id.toLowerCase().includes(searchLower)
+          filteredQuotes = validQuotes.filter(
+            quote =>
+              quote.first_name?.toLowerCase().includes(searchLower) ||
+              quote.last_name?.toLowerCase().includes(searchLower) ||
+              quote.email?.toLowerCase().includes(searchLower) ||
+              quote.phone?.toString().includes(searchTerm) ||
+              quote.id.toLowerCase().includes(searchLower)
           );
         }
 
@@ -249,7 +240,7 @@ function QuotesPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, searchTerm]);
 
   useEffect(() => {
     fetchQuotes();
@@ -262,7 +253,8 @@ function QuotesPageContent() {
     try {
       const { data, error } = await supabase
         .from('quote_services')
-        .select(`
+        .select(
+          `
           quote_id,
           quantity,
           unit_price,
@@ -271,8 +263,12 @@ function QuotesPageContent() {
             display_name,
             description
           )
-        `)
-        .in('quote_id', quotes.map(q => q.id));
+        `
+        )
+        .in(
+          'quote_id',
+          quotes.map(q => q.id)
+        );
 
       if (error) {
         console.error('Error fetching quote services:', error);
@@ -280,12 +276,12 @@ function QuotesPageContent() {
       }
 
       // Group services by quote_id
-      const servicesByQuote: { [quoteId: string]: any[] } = {};
+      const servicesByQuote: { [quoteId: string]: OrderServiceWithRelations[] } = {};
       (data || []).forEach(service => {
         if (!servicesByQuote[service.quote_id]) {
           servicesByQuote[service.quote_id] = [];
         }
-        servicesByQuote[service.quote_id].push(service);
+        servicesByQuote[service.quote_id].push(service as unknown as OrderServiceWithRelations);
       });
 
       setQuoteServices(servicesByQuote);
@@ -305,14 +301,14 @@ function QuotesPageContent() {
       if (!editForms[quote.id]) {
         newEditForms[quote.id] = {
           ...quote,
-          assigned_to: quote.assigned_to || 'Ariel'
+          assigned_to: quote.assigned_to || 'Ariel',
         };
       }
     });
     if (Object.keys(newEditForms).length > 0) {
       setEditForms(prev => ({ ...prev, ...newEditForms }));
     }
-  }, [quotes]);
+  }, [quotes, editForms]);
 
   /**
    * Saves quote changes to the database
@@ -351,7 +347,7 @@ function QuotesPageContent() {
         // Update the edit form with the new data
         setEditForms(prev => ({
           ...prev,
-          [quoteId]: { ...data[0], assigned_to: data[0].assigned_to || 'Ariel' }
+          [quoteId]: { ...data[0], assigned_to: data[0].assigned_to || 'Ariel' },
         }));
         toast.success('Quote saved successfully!');
       }
@@ -393,7 +389,7 @@ function QuotesPageContent() {
   /**
    * Handles when services are added to a quote
    */
-  const handleServicesAdded = async (quoteId: string, services: any[]) => {
+  const handleServicesAdded = async (quoteId: string, services: SelectedService[]) => {
     // Refresh quote services for this specific quote
     await fetchQuoteServices();
   };
@@ -401,7 +397,7 @@ function QuotesPageContent() {
   /**
    * Handles service click to open edit dialog
    */
-  const handleServiceClick = (service: any) => {
+  const handleServiceClick = (service: OrderServiceWithRelations) => {
     setSelectedService(service);
     setServiceEditDialogOpen(true);
   };
@@ -422,7 +418,8 @@ function QuotesPageContent() {
       // Check if this main service already exists in quote_services
       const { data: existingService } = await supabase
         .from('quote_services')
-        .select(`
+        .select(
+          `
           id,
           quantity,
           unit_price,
@@ -431,7 +428,8 @@ function QuotesPageContent() {
             display_name,
             description
           )
-        `)
+        `
+        )
         .eq('quote_id', quoteId)
         .eq('services.display_name', serviceName)
         .single();
@@ -441,29 +439,29 @@ function QuotesPageContent() {
         // Use existing service data
         serviceToEdit = {
           id: existingService.id,
-          quote_id: quoteId,
+          order_id: quoteId, // Using order_id to match OrderServiceWithRelations interface
           quantity: existingService.quantity,
           unit_price: existingService.unit_price,
           total_price: existingService.total_price,
           services: existingService.services,
-          is_main_service: true
-        };
+          is_main_service: true,
+        } as unknown as OrderServiceWithRelations;
       } else {
         // Create a mock service object for main services that haven't been priced yet
         serviceToEdit = {
           id: `main-${quoteId}-${index}`, // Special ID for main services
-          quote_id: quoteId,
+          order_id: quoteId, // Using order_id to match OrderServiceWithRelations interface
           quantity: 1,
-          unit_price: "0.00", // Start with 0, user can set price
-          total_price: "0.00",
+          unit_price: '0.00', // Start with 0, user can set price
+          total_price: '0.00',
           services: {
             display_name: serviceName,
-            description: "Main service from quote"
+            description: 'Main service from quote',
           },
-          is_main_service: true // Flag to identify this as a main service
-        };
+          is_main_service: true, // Flag to identify this as a main service
+        } as unknown as OrderServiceWithRelations;
       }
-      
+
       setSelectedService(serviceToEdit);
       setServiceEditDialogOpen(true);
     } catch (error) {
@@ -471,17 +469,17 @@ function QuotesPageContent() {
       // Fallback to mock service
       const mockService = {
         id: `main-${quoteId}-${index}`,
-        quote_id: quoteId,
+        order_id: quoteId, // Using order_id to match OrderServiceWithRelations interface
         quantity: 1,
-        unit_price: "0.00",
-        total_price: "0.00",
+        unit_price: '0.00',
+        total_price: '0.00',
         services: {
           display_name: serviceName,
-          description: "Main service from quote"
+          description: 'Main service from quote',
         },
-        is_main_service: true
-      };
-      
+        is_main_service: true,
+      } as unknown as OrderServiceWithRelations;
+
       setSelectedService(mockService);
       setServiceEditDialogOpen(true);
     }
@@ -515,7 +513,7 @@ function QuotesPageContent() {
 
       console.log('Order created successfully:', {
         order: orderResult,
-        services: services.length
+        services: services.length,
       });
 
       // Refresh quotes to show updated status
@@ -530,9 +528,10 @@ function QuotesPageContent() {
     }
   };
 
-
   // Helper function to map quote status to Status component status
-  const mapQuoteStatusToStatusType = (quoteStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+  const mapQuoteStatusToStatusType = (
+    quoteStatus: string
+  ): 'online' | 'offline' | 'maintenance' | 'degraded' => {
     switch (quoteStatus) {
       case 'accepted':
       case 'completed':
@@ -593,7 +592,6 @@ function QuotesPageContent() {
 
   return (
     <div className="p-2 md:p-6">
-
       {/* Header section with stats and filters */}
       <div className="mb-4">
         {/* Enhanced filtering and search */}
@@ -604,14 +602,13 @@ function QuotesPageContent() {
             <Input
               placeholder="Search quotes by name, email, phone, or ID..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
 
           {/* Filter controls */}
           <div className="flex flex-wrap items-center gap-4">
-
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Status" />
@@ -626,8 +623,12 @@ function QuotesPageContent() {
               </SelectContent>
             </Select>
 
-
-            <Button onClick={fetchQuotes} variant="outline" size="icon" className="min-h-[34px] min-w-[34px]">
+            <Button
+              onClick={fetchQuotes}
+              variant="outline"
+              size="icon"
+              className="min-h-[34px] min-w-[34px]"
+            >
               <RiRefreshLine className="h-4 w-4" />
             </Button>
 
@@ -697,11 +698,12 @@ function QuotesPageContent() {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  <Status status={mapQuoteStatusToStatusType(quote.status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
+                  <Status
+                    status={mapQuoteStatusToStatusType(quote.status)}
+                    className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
+                  >
                     <StatusIndicator />
-                    <StatusLabel className="ml-2">
-                      {quote.status.toUpperCase()}
-                    </StatusLabel>
+                    <StatusLabel className="ml-2">{quote.status.toUpperCase()}</StatusLabel>
                   </Status>
                 </div>
 
@@ -755,8 +757,12 @@ function QuotesPageContent() {
                               <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
                               <div className="flex-1">
                                 <div>
-                                  {quote.address && <div className="font-medium text-blue-600">{quote.address}</div>}
-                                  {quote.address2 && <div className="text-muted-foreground">{quote.address2}</div>}
+                                  {quote.address && (
+                                    <div className="font-medium text-blue-600">{quote.address}</div>
+                                  )}
+                                  {quote.address2 && (
+                                    <div className="text-muted-foreground">{quote.address2}</div>
+                                  )}
                                   <div className="text-muted-foreground">
                                     {quote.city && quote.city}
                                     {quote.city && quote.state && ', '}
@@ -767,16 +773,21 @@ function QuotesPageContent() {
                               </div>
                             </div>
                           )}
-                          
+
                           {/* Delivery and Duration info - moved here from services section */}
                           {quote.dropoff_date && (
                             <div className="flex items-center gap-2 pt-1">
                               <RiCalendarLine className="h-4 w-4" />
-                              <span>Delivery: {(() => {
-                                const [year, month, day] = quote.dropoff_date.split('-').map(Number);
-                                const localDate = new Date(year, month - 1, day);
-                                return format(localDate, 'MMM dd');
-                              })()}</span>
+                              <span>
+                                Delivery:{' '}
+                                {(() => {
+                                  const [year, month, day] = quote.dropoff_date
+                                    .split('-')
+                                    .map(Number);
+                                  const localDate = new Date(year, month - 1, day);
+                                  return format(localDate, 'MMM dd');
+                                })()}
+                              </span>
                             </div>
                           )}
                           {quote.time_needed && (
@@ -799,68 +810,100 @@ function QuotesPageContent() {
                           Services
                           {quoteServices[quote.id] && quoteServices[quote.id].length > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                              {(quote.dumpster_size ? 1 : 0) + quoteServices[quote.id].filter(service => 
-                                !quote.dumpster_size || 
-                                service.services.display_name !== `Dumpster Rental - ${quote.dumpster_size}`
-                              ).length} Total
+                              {(quote.dumpster_size ? 1 : 0) +
+                                quoteServices[quote.id].filter(
+                                  service =>
+                                    !quote.dumpster_size ||
+                                    service.services?.display_name !==
+                                      `Dumpster Rental - ${quote.dumpster_size}`
+                                ).length}{' '}
+                              Total
                             </Badge>
                           )}
                         </h4>
                       </div>
                       <div className="space-y-2 text-sm">
                         {/* All Services in unified list */}
-                        {quote.dumpster_size || (quoteServices[quote.id] && quoteServices[quote.id].length > 0) ? (
+                        {quote.dumpster_size ||
+                        (quoteServices[quote.id] && quoteServices[quote.id].length > 0) ? (
                           <div className="space-y-2">
                             {/* Main service (dumpster) */}
                             {quote.dumpster_size && (
                               <button
-                                onClick={() => handleMainServiceClick(quote.id, `Dumpster Rental - ${quote.dumpster_size}`, 0)}
+                                onClick={() =>
+                                  handleMainServiceClick(
+                                    quote.id,
+                                    `Dumpster Rental - ${quote.dumpster_size}`,
+                                    0
+                                  )
+                                }
                                 className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
                               >
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-4 w-4 flex-shrink-0" />
-                                  <span className="font-medium">Dumpster Rental - {quote.dumpster_size}</span>
+                                  <span className="font-medium">
+                                    Dumpster Rental - {quote.dumpster_size}
+                                  </span>
                                 </div>
                                 {(() => {
                                   // Check if there's a priced service for this main service
-                                  const mainService = quoteServices[quote.id]?.find(service => 
-                                    service.services.display_name === `Dumpster Rental - ${quote.dumpster_size}`
+                                  const mainService = quoteServices[quote.id]?.find(
+                                    service =>
+                                      service.services?.display_name ===
+                                      `Dumpster Rental - ${quote.dumpster_size}`
                                   );
-                                  
-                                  if (mainService && parseFloat(mainService.total_price) > 0) {
-                                    return <span className="text-green-600 font-medium">${parseFloat(mainService.total_price).toFixed(2)}</span>;
+
+                                  if (mainService && mainService.total_price > 0) {
+                                    return (
+                                      <span className="text-green-600 font-medium">
+                                        ${mainService.total_price.toFixed(2)}
+                                      </span>
+                                    );
                                   } else {
-                                    return <span className="text-blue-600 font-medium text-xs">Main Service</span>;
+                                    return (
+                                      <span className="text-blue-600 font-medium text-xs">
+                                        Main Service
+                                      </span>
+                                    );
                                   }
                                 })()}
                               </button>
                             )}
-                            
+
                             {/* Additional Services */}
-                            {quoteServices[quote.id] && quoteServices[quote.id]
-                              .filter(service => 
-                                // Filter out main service to avoid duplication
-                                !quote.dumpster_size || 
-                                service.services.display_name !== `Dumpster Rental - ${quote.dumpster_size}`
-                              )
-                              .map((service, index) => (
-                              <button
-                                key={`service-${index}`}
-                                onClick={() => handleServiceClick(service)}
-                                className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <RiBox1Line className="h-4 w-4 flex-shrink-0" />
-                                  <div>
-                                    <span className="font-medium">{service.services.display_name}</span>
-                                    {service.quantity > 1 && (
-                                      <span className="text-muted-foreground ml-1">× {service.quantity}</span>
-                                    )}
-                                  </div>
-                                </div>
-                                <span className="text-green-600 font-medium">${parseFloat(service.total_price).toFixed(2)}</span>
-                              </button>
-                            ))}
+                            {quoteServices[quote.id] &&
+                              quoteServices[quote.id]
+                                .filter(
+                                  service =>
+                                    // Filter out main service to avoid duplication
+                                    !quote.dumpster_size ||
+                                    service.services?.display_name !==
+                                      `Dumpster Rental - ${quote.dumpster_size}`
+                                )
+                                .map((service, index) => (
+                                  <button
+                                    key={`service-${index}`}
+                                    onClick={() => handleServiceClick(service)}
+                                    className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <RiBox1Line className="h-4 w-4 flex-shrink-0" />
+                                      <div>
+                                        <span className="font-medium">
+                                          {service.services?.display_name}
+                                        </span>
+                                        {service.quantity > 1 && (
+                                          <span className="text-muted-foreground ml-1">
+                                            × {service.quantity}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <span className="text-green-600 font-medium">
+                                      ${service.total_price.toFixed(2)}
+                                    </span>
+                                  </button>
+                                ))}
                           </div>
                         ) : (
                           <div className="flex items-center gap-2 text-muted-foreground">
@@ -878,12 +921,14 @@ function QuotesPageContent() {
                                 Services Total:
                               </span>
                               <span className="text-green-600">
-                                ${quoteServices[quote.id].reduce((sum, s) => sum + parseFloat(s.total_price), 0).toFixed(2)}
+                                $
+                                {quoteServices[quote.id]
+                                  .reduce((sum, s) => sum + s.total_price, 0)
+                                  .toFixed(2)}
                               </span>
                             </div>
                           </div>
                         )}
-
                       </div>
                       {quote.message && (
                         <div className="mt-4">
@@ -897,7 +942,7 @@ function QuotesPageContent() {
                         <AddServicesDialog
                           quoteId={quote.id}
                           type="quote"
-                          onServicesAdded={(services) => handleServicesAdded(quote.id, services)}
+                          onServicesAdded={services => handleServicesAdded(quote.id, services)}
                         />
                       </div>
                     </div>
@@ -916,7 +961,7 @@ function QuotesPageContent() {
                                 setEditForms={setEditForms}
                                 onSave={saveQuote}
                                 isOpen={editDialogOpen === quote.id}
-                                onOpenChange={(open) => setEditDialogOpen(open ? quote.id : null)}
+                                onOpenChange={open => setEditDialogOpen(open ? quote.id : null)}
                               />
                             </div>
                           </TooltipTrigger>
@@ -926,7 +971,6 @@ function QuotesPageContent() {
                         </Tooltip>
                       </div>
                       <div className="space-y-3 text-sm">
-
                         {/* Status and Priority Assignment - 2 Column Layout */}
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -939,7 +983,7 @@ function QuotesPageContent() {
                                   [quote.id]: {
                                     ...prev[quote.id],
                                     status: value as Quote['status'],
-                                  }
+                                  },
                                 }))
                               }
                             >
@@ -966,7 +1010,7 @@ function QuotesPageContent() {
                                   [quote.id]: {
                                     ...prev[quote.id],
                                     priority: value as Quote['priority'],
-                                  }
+                                  },
                                 }))
                               }
                             >
@@ -994,7 +1038,7 @@ function QuotesPageContent() {
                                 [quote.id]: {
                                   ...prev[quote.id],
                                   assigned_to: value,
-                                }
+                                },
                               }))
                             }
                           >
@@ -1002,7 +1046,7 @@ function QuotesPageContent() {
                               <SelectValue placeholder="Select team member" />
                             </SelectTrigger>
                             <SelectContent>
-                              {drivers.map((driver) => (
+                              {drivers.map(driver => (
                                 <SelectItem key={driver.value} value={driver.value}>
                                   {driver.label}
                                 </SelectItem>
@@ -1016,27 +1060,38 @@ function QuotesPageContent() {
                           <div className="space-y-2">
                             <Label className="text-sm font-semibold">
                               Dropoff Date
-                              <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
+                              <span
+                                className="text-red-500 ml-1"
+                                title="Required for creating orders"
+                              >
+                                *
+                              </span>
                             </Label>
-                            <Dialog open={dateTimeDialogOpen === quote.id} onOpenChange={(open) => setDateTimeDialogOpen(open ? quote.id : null)}>
+                            <Dialog
+                              open={dateTimeDialogOpen === quote.id}
+                              onOpenChange={open => setDateTimeDialogOpen(open ? quote.id : null)}
+                            >
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                    ? "text-muted-foreground border-red-300 hover:border-red-400"
-                                    : ""
-                                    }`}
+                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                    !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                      ? 'text-muted-foreground border-red-300 hover:border-red-400'
+                                      : ''
+                                  }`}
                                 >
                                   <RiCalendarLine className="mr-2 h-4 w-4" />
-                                  {(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                  {editForms[quote.id]?.dropoff_date || quote.dropoff_date
                                     ? (() => {
-                                      const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
-                                      const [year, month, day] = dateStr.split('-').map(Number);
-                                      const localDate = new Date(year, month - 1, day);
-                                      return format(localDate, 'MMM dd');
-                                    })()
-                                    : "Pick a date"
-                                  }
+                                        const dateStr =
+                                          editForms[quote.id]?.dropoff_date ||
+                                          quote.dropoff_date ||
+                                          '';
+                                        const [year, month, day] = dateStr.split('-').map(Number);
+                                        const localDate = new Date(year, month - 1, day);
+                                        return format(localDate, 'MMM dd');
+                                      })()
+                                    : 'Pick a date'}
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="!max-w-[500px] !w-[500px]">
@@ -1045,32 +1100,37 @@ function QuotesPageContent() {
                                 </DialogHeader>
                                 <DateTimePicker
                                   date={
-                                    (editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                    editForms[quote.id]?.dropoff_date || quote.dropoff_date
                                       ? (() => {
-                                        const dateStr = editForms[quote.id]?.dropoff_date || quote.dropoff_date || '';
-                                        const [year, month, day] = dateStr.split('-').map(Number);
-                                        return new Date(year, month - 1, day); // month is 0-indexed
-                                      })()
+                                          const dateStr =
+                                            editForms[quote.id]?.dropoff_date ||
+                                            quote.dropoff_date ||
+                                            '';
+                                          const [year, month, day] = dateStr.split('-').map(Number);
+                                          return new Date(year, month - 1, day); // month is 0-indexed
+                                        })()
                                       : undefined
                                   }
-                                  time={editForms[quote.id]?.dropoff_time || quote.dropoff_time || ''}
-                                  onDateChange={(date) => {
+                                  time={
+                                    editForms[quote.id]?.dropoff_time || quote.dropoff_time || ''
+                                  }
+                                  onDateChange={date => {
                                     const dateString = date ? format(date, 'yyyy-MM-dd') : '';
                                     setEditForms(prev => ({
                                       ...prev,
                                       [quote.id]: {
                                         ...prev[quote.id],
                                         dropoff_date: dateString,
-                                      }
+                                      },
                                     }));
                                   }}
-                                  onTimeChange={(time) => {
+                                  onTimeChange={time => {
                                     setEditForms(prev => ({
                                       ...prev,
                                       [quote.id]: {
                                         ...prev[quote.id],
                                         dropoff_time: time,
-                                      }
+                                      },
                                     }));
                                   }}
                                 />
@@ -1080,8 +1140,10 @@ function QuotesPageContent() {
                                     className="min-w-[200px]"
                                   >
                                     {(() => {
-                                      const currentDate = editForms[quote.id]?.dropoff_date || quote.dropoff_date;
-                                      const currentTime = editForms[quote.id]?.dropoff_time || quote.dropoff_time;
+                                      const currentDate =
+                                        editForms[quote.id]?.dropoff_date || quote.dropoff_date;
+                                      const currentTime =
+                                        editForms[quote.id]?.dropoff_time || quote.dropoff_time;
 
                                       if (currentDate && currentTime) {
                                         // Convert 24-hour time to 12-hour AM/PM format
@@ -1089,11 +1151,15 @@ function QuotesPageContent() {
                                         const hour12 = parseInt(hours) % 12 || 12;
                                         const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
                                         const formattedTime = `${hour12}:${minutes} ${ampm}`;
-                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const [year, month, day] = currentDate
+                                          .split('-')
+                                          .map(Number);
                                         const localDate = new Date(year, month - 1, day);
                                         return `${format(localDate, 'MMM dd')} at ${formattedTime}`;
                                       } else if (currentDate) {
-                                        const [year, month, day] = currentDate.split('-').map(Number);
+                                        const [year, month, day] = currentDate
+                                          .split('-')
+                                          .map(Number);
                                         const localDate = new Date(year, month - 1, day);
                                         return `${format(localDate, 'MMM dd')} - Select time`;
                                       } else if (currentTime) {
@@ -1115,26 +1181,33 @@ function QuotesPageContent() {
                           <div className="space-y-2">
                             <Label className="text-sm font-semibold">
                               Dropoff Time
-                              <span className="text-red-500 ml-1" title="Required for creating orders">*</span>
+                              <span
+                                className="text-red-500 ml-1"
+                                title="Required for creating orders"
+                              >
+                                *
+                              </span>
                             </Label>
                             <Button
                               variant="outline"
-                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
-                                ? "text-muted-foreground border-red-300 hover:border-red-400"
-                                : ""
-                                }`}
+                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                !(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                                  ? 'text-muted-foreground border-red-300 hover:border-red-400'
+                                  : ''
+                              }`}
                               onClick={() => setDateTimeDialogOpen(quote.id)}
                             >
                               <RiTimeLine className="mr-2 h-4 w-4" />
                               {(() => {
-                                const currentTime = editForms[quote.id]?.dropoff_time || quote.dropoff_time;
+                                const currentTime =
+                                  editForms[quote.id]?.dropoff_time || quote.dropoff_time;
                                 if (currentTime) {
                                   const [hours, minutes] = currentTime.split(':');
                                   const hour12 = parseInt(hours) % 12 || 12;
                                   const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
                                   return `${hour12}:${minutes} ${ampm}`;
                                 }
-                                return "Pick a time";
+                                return 'Pick a time';
                               })()}
                             </Button>
                           </div>
@@ -1151,7 +1224,7 @@ function QuotesPageContent() {
                                 [quote.id]: {
                                   ...prev[quote.id],
                                   quote_notes: e.target.value,
-                                }
+                                },
                               }))
                             }
                             className="min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -1164,13 +1237,14 @@ function QuotesPageContent() {
                           Created: {format(new Date(quote.created_at), "MMM dd, yyyy 'at' h:mm a")}
                         </div>
                       </div>
-
                     </div>
                   </div>
 
                   {/* Action Buttons */}
                   <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
-                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>Quick Actions</h5>
+                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>
+                      Quick Actions
+                    </h5>
                     <div className="flex flex-wrap gap-3">
                       <Button
                         variant="outline"
@@ -1208,33 +1282,34 @@ function QuotesPageContent() {
                         </TooltipTrigger>
                         <TooltipContent>
                           {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
-                            !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                            ? "Dropoff date and time are required to create an order"
-                            : "Create order from this quote"
-                          }
+                          !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                            ? 'Dropoff date and time are required to create an order'
+                            : 'Create order from this quote'}
                         </TooltipContent>
                       </Tooltip>
 
                       {/* Validation feedback */}
                       {(!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
                         !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)) && (
-                          <div className="w-full mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                            <div className="flex items-start gap-2">
-                              <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                              <div className="text-xs text-yellow-700 dark:text-yellow-300">
-                                <p className="font-medium">Missing required fields for order creation:</p>
-                                <ul className="mt-1 space-y-1">
-                                  {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
-                                    <li>• Dropoff date is required</li>
-                                  )}
-                                  {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
-                                    <li>• Dropoff time is required</li>
-                                  )}
-                                </ul>
-                              </div>
+                        <div className="w-full mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                          <div className="flex items-start gap-2">
+                            <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                            <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                              <p className="font-medium">
+                                Missing required fields for order creation:
+                              </p>
+                              <ul className="mt-1 space-y-1">
+                                {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
+                                  <li>• Dropoff date is required</li>
+                                )}
+                                {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
+                                  <li>• Dropoff time is required</li>
+                                )}
+                              </ul>
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1248,7 +1323,18 @@ function QuotesPageContent() {
       {/* Service Edit Dialog */}
       {selectedService && (
         <ServiceEditDialog
-          service={selectedService}
+          service={{
+            id: selectedService.id,
+            quote_id: selectedService.order_id, // Convert back to quote_id for dialog
+            quantity: selectedService.quantity,
+            unit_price: selectedService.unit_price.toString(),
+            total_price: selectedService.total_price.toString(),
+            services: {
+              display_name: selectedService.services?.display_name || '',
+              description: selectedService.services?.description || undefined,
+            },
+            is_main_service: (selectedService as any).is_main_service,
+          }}
           isOpen={serviceEditDialogOpen}
           onClose={() => {
             setServiceEditDialogOpen(false);

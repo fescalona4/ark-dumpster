@@ -19,16 +19,13 @@ import {
   RiReceiptLine,
   RiCalendarLine,
   RiMoneyDollarCircleLine,
-  RiUserLine,
   RiFileTextLine,
   RiPrinterLine,
-  RiDownloadLine,
   RiExternalLinkLine,
   RiSearchLine,
   RiPhoneLine,
   RiMailLine,
   RiMapPinLine,
-  RiBox1Line,
   RiRefreshLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
@@ -39,7 +36,7 @@ import { Order } from '@/types/database';
 
 /**
  * Admin Invoices Management Page
- * 
+ *
  * This page provides an interface for managing invoices for dumpster rental orders.
  * Features include:
  * - View all invoices for completed orders
@@ -100,7 +97,7 @@ function InvoicesPageContent() {
       } else {
         setLoading(true);
       }
-      let query = supabase
+      const query = supabase
         .from('orders')
         .select('*')
         .in('status', ['delivered', 'completed', 'picked_up']); // Only orders that should have invoices
@@ -127,12 +124,13 @@ function InvoicesPageContent() {
 
     // Apply search filter
     if (searchTerm) {
-      filteredData = filteredData.filter(order =>
-        order.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        generateInvoiceNumber(order.id).toLowerCase().includes(searchTerm.toLowerCase())
+      filteredData = filteredData.filter(
+        order =>
+          order.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          generateInvoiceNumber(order.id).toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -143,13 +141,21 @@ function InvoicesPageContent() {
 
     // Apply sorting
     if (sortBy === 'created_at_desc') {
-      filteredData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      filteredData.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     } else if (sortBy === 'created_at_asc') {
-      filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      filteredData.sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
     } else if (sortBy === 'total_desc') {
-      filteredData.sort((a, b) => (b.final_price || b.quoted_price || 0) - (a.final_price || a.quoted_price || 0));
+      filteredData.sort(
+        (a, b) => (b.final_price || b.quoted_price || 0) - (a.final_price || a.quoted_price || 0)
+      );
     } else if (sortBy === 'total_asc') {
-      filteredData.sort((a, b) => (a.final_price || a.quoted_price || 0) - (b.final_price || b.quoted_price || 0));
+      filteredData.sort(
+        (a, b) => (a.final_price || a.quoted_price || 0) - (b.final_price || b.quoted_price || 0)
+      );
     }
 
     return filteredData;
@@ -161,7 +167,9 @@ function InvoicesPageContent() {
   }, [fetchInvoices]);
 
   // Helper function to map order status to Status component status
-  const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+  const mapOrderStatusToStatusType = (
+    orderStatus: string
+  ): 'online' | 'offline' | 'maintenance' | 'degraded' => {
     switch (orderStatus) {
       case 'delivered':
       case 'completed':
@@ -193,7 +201,12 @@ function InvoicesPageContent() {
     const diff = currentY - touchStartY.current;
 
     // Trigger refresh if pulled down enough
-    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 80 && !isRefreshing) {
+    if (
+      scrollContainerRef.current &&
+      scrollContainerRef.current.scrollTop === 0 &&
+      diff > 80 &&
+      !isRefreshing
+    ) {
       fetchInvoices(true);
     }
   };
@@ -236,21 +249,18 @@ function InvoicesPageContent() {
     <div className="p-2 md:p-6">
       {/* Header section with stats and filters */}
       <div className="mb-4">
-
         {/* Search bar */}
         <div className="relative mb-4">
           <RiSearchLine className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search invoices..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             className="pl-10 w-48"
           />
         </div>
 
         <div className="flex items-center gap-4">
-
-
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Sort by" />
@@ -264,7 +274,7 @@ function InvoicesPageContent() {
           </Select>
 
           <Button
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               fetchInvoices(true);
             }}
@@ -324,7 +334,10 @@ function InvoicesPageContent() {
               >
                 {/* Status badge positioned in top right */}
                 <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                  <Status status={mapOrderStatusToStatusType(order.status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
+                  <Status
+                    status={mapOrderStatusToStatusType(order.status)}
+                    className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
+                  >
                     <StatusIndicator />
                     <StatusLabel className="ml-2">
                       {order.status.replace('_', ' ').toUpperCase()}
@@ -341,7 +354,10 @@ function InvoicesPageContent() {
                       </div>
 
                       {/* Customer name */}
-                      <CardTitle id={`invoice-${order.id}-title`} className="text-lg mb-2 font-bold">
+                      <CardTitle
+                        id={`invoice-${order.id}-title`}
+                        className="text-lg mb-2 font-bold"
+                      >
                         {order.first_name} {order.last_name || ''}
                       </CardTitle>
 
@@ -388,7 +404,9 @@ function InvoicesPageContent() {
                             <div className="flex-1">
                               <div>{order.address}</div>
                               {order.city && order.state && (
-                                <div className="text-muted-foreground">{order.city}, {order.state}</div>
+                                <div className="text-muted-foreground">
+                                  {order.city}, {order.state}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -441,14 +459,20 @@ function InvoicesPageContent() {
 
                   {/* Action Buttons */}
                   <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
-                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>Quick Actions</h5>
+                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>
+                      Quick Actions
+                    </h5>
                     <div className="flex flex-wrap gap-3">
                       {/* View Invoice Dialog */}
                       <InvoiceDialog order={order} />
 
                       {/* Full Page View */}
                       <Link href={`/admin/orders/${order.id}/invoice`} target="_blank">
-                        <Button variant="outline" size="sm" className="min-h-[44px] px-4 touch-manipulation">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="min-h-[44px] px-4 touch-manipulation"
+                        >
                           <RiExternalLinkLine className="h-4 w-4 mr-2" />
                           Full Page
                         </Button>

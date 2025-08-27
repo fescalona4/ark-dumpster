@@ -1,6 +1,6 @@
 /**
  * Admin Orders Management Page
- * 
+ *
  * This page provides an interface for managing dumpster rental orders.
  * Features include:
  * - View all orders converted from quotes
@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { getOrdersWithServiceSummary, getOrderWithServices } from '@/lib/order-service';
+import { getOrdersWithServiceSummary } from '@/lib/order-service';
 import { geocodeAddress } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,18 +52,28 @@ import {
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
-import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
-import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
+import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
 import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
 import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
-import { Order, OrderWithServices, OrderViewData } from '@/types/database';
+import {
+  Order,
+  OrderWithServices,
+  OrderViewData,
+  OrderService,
+  OrderServiceWithRelations,
+} from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
-import { updateOrderStatus as updateOrderStatusShared, getStatusIcon } from '@/components/order-management/order-status-manager';
+import {
+  updateOrderStatus as updateOrderStatusShared,
+  getStatusIcon,
+} from '@/components/order-management/order-status-manager';
 
 // Helper function to map order status to Status component status
-const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+const mapOrderStatusToStatusType = (
+  orderStatus: string
+): 'online' | 'offline' | 'maintenance' | 'degraded' => {
   switch (orderStatus) {
     case 'delivered':
     case 'completed':
@@ -125,15 +135,20 @@ function OrdersPageContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Dialog state for dumpster assignment
+  const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<OrderViewData | null>(
+    null
+  );
   const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
-  const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<OrderViewData | null>(null);
 
   // Order services state
-  const [orderServices, setOrderServices] = useState<{ [orderId: string]: any[] }>({});
+  const [orderServices, setOrderServices] = useState<{
+    [orderId: string]: OrderServiceWithRelations[];
+  }>({});
 
   // Service edit dialog state
-  const [selectedService, setSelectedService] = useState<any | null>(null);
+  const [selectedService, setSelectedService] = useState<OrderServiceWithRelations | null>(null);
   const [serviceEditDialogOpen, setServiceEditDialogOpen] = useState(false);
+
 
   /**
    * Fetches dumpsters from the database
@@ -158,27 +173,30 @@ function OrdersPageContent() {
   /**
    * Fetches orders from the database with optional filtering using new service summary
    */
-  const fetchOrders = useCallback(async (showRefreshIndicator = false) => {
-    try {
-      if (showRefreshIndicator) {
-        setIsRefreshing(true);
-      } else {
-        setLoading(true);
+  const fetchOrders = useCallback(
+    async (showRefreshIndicator = false) => {
+      try {
+        if (showRefreshIndicator) {
+          setIsRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+
+        // Use the new service to get orders with service summaries
+        const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
+        const ordersData = await getOrdersWithServiceSummary(filters);
+
+        setOrders((ordersData || []) as unknown as OrderViewData[]);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch orders');
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
       }
-
-      // Use the new service to get orders with service summaries
-      const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
-      const ordersData = await getOrdersWithServiceSummary(filters);
-
-      setOrders((ordersData || []) as unknown as OrderViewData[]);
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [statusFilter]);
+    },
+    [statusFilter]
+  );
 
   // Fetch orders and dumpsters on component mount and when filters change
   useEffect(() => {
@@ -193,7 +211,8 @@ function OrdersPageContent() {
     try {
       const { data, error } = await supabase
         .from('order_services')
-        .select(`
+        .select(
+          `
           order_id,
           quantity,
           unit_price,
@@ -202,8 +221,12 @@ function OrdersPageContent() {
             display_name,
             description
           )
-        `)
-        .in('order_id', orders.map(o => o.id));
+        `
+        )
+        .in(
+          'order_id',
+          orders.map(o => o.id)
+        );
 
       if (error) {
         console.error('Error fetching order services:', error);
@@ -211,12 +234,12 @@ function OrdersPageContent() {
       }
 
       // Group services by order_id
-      const servicesByOrder: { [orderId: string]: any[] } = {};
+      const servicesByOrder: { [orderId: string]: OrderServiceWithRelations[] } = {};
       (data || []).forEach(service => {
         if (!servicesByOrder[service.order_id]) {
           servicesByOrder[service.order_id] = [];
         }
-        servicesByOrder[service.order_id].push(service);
+        servicesByOrder[service.order_id].push(service as unknown as OrderServiceWithRelations);
       });
 
       setOrderServices(servicesByOrder);
@@ -232,7 +255,7 @@ function OrdersPageContent() {
   /**
    * Handles when services are added to an order
    */
-  const handleServicesAdded = async (orderId: string, services: any[]) => {
+  const handleServicesAdded = async (orderId: string, services: SelectedService[]) => {
     // Refresh order services for this specific order
     await fetchOrderServices();
   };
@@ -240,7 +263,7 @@ function OrdersPageContent() {
   /**
    * Handles service click to open edit dialog
    */
-  const handleServiceClick = (service: any) => {
+  const handleServiceClick = (service: OrderServiceWithRelations) => {
     setSelectedService(service);
     setServiceEditDialogOpen(true);
   };
@@ -262,16 +285,16 @@ function OrdersPageContent() {
       id: `main-${orderId}-${index}`, // Special ID for main services
       order_id: orderId,
       quantity: 1,
-      unit_price: "0.00", // Main services typically don't have separate pricing
-      total_price: "0.00",
+      unit_price: '0.00', // Main services typically don't have separate pricing
+      total_price: '0.00',
       services: {
         display_name: serviceName,
-        description: "Main service from order"
+        description: 'Main service from order',
       },
-      is_main_service: true // Flag to identify this as a main service
+      is_main_service: true, // Flag to identify this as a main service
     };
-    
-    setSelectedService(mockService);
+
+    setSelectedService(mockService as unknown as OrderServiceWithRelations);
     setServiceEditDialogOpen(true);
   };
 
@@ -295,7 +318,12 @@ function OrdersPageContent() {
     const diff = currentY - touchStartY.current;
 
     // Trigger refresh if pulled down enough
-    if (scrollContainerRef.current && scrollContainerRef.current.scrollTop === 0 && diff > 80 && !isRefreshing) {
+    if (
+      scrollContainerRef.current &&
+      scrollContainerRef.current.scrollTop === 0 &&
+      diff > 80 &&
+      !isRefreshing
+    ) {
       fetchOrders(true);
       fetchDumpsters();
     }
@@ -317,7 +345,6 @@ function OrdersPageContent() {
     const encodedAddress = encodeURIComponent(fullAddress);
     window.open(`https://maps.google.com/?q=${encodedAddress}`, '_blank');
   };
-
 
   /**
    * Format phone number for display
@@ -345,24 +372,37 @@ function OrdersPageContent() {
       orderId,
       newStatus,
       currentOrder,
-      dumpsters
+      dumpsters,
     });
 
     if (result.success) {
       // Update local state - order (map status to order_status for view compatibility)
-      setOrders(orders.map(order =>
-        order.id === orderId
-          ? { ...order, ...result.updatedOrder, order_status: result.updatedOrder?.status || order.order_status }
-          : order
-      ));
+      setOrders(
+        orders.map(order =>
+          order.id === orderId
+            ? {
+                ...order,
+                ...result.updatedOrder,
+                order_status: result.updatedOrder?.status || order.order_status,
+              }
+            : order
+        )
+      );
 
       // Update local state - dumpster if freed
       if (result.freedDumpsterId) {
-        setDumpsters(dumpsters.map(d =>
-          d.id === result.freedDumpsterId
-            ? { ...d, status: 'available' as const, current_order_id: undefined, address: undefined }
-            : d
-        ));
+        setDumpsters(
+          dumpsters.map(d =>
+            d.id === result.freedDumpsterId
+              ? {
+                  ...d,
+                  status: 'available' as const,
+                  current_order_id: undefined,
+                  address: undefined,
+                }
+              : d
+          )
+        );
       }
     } else {
       alert(result.error || 'Failed to update order status');
@@ -386,12 +426,9 @@ function OrdersPageContent() {
       }
 
       // Update local state
-      setOrders(orders.map(order =>
-        order.id === orderId
-          ? { ...order, assigned_to: driverName }
-          : order
-      ));
-
+      setOrders(
+        orders.map(order => (order.id === orderId ? { ...order, assigned_to: driverName } : order))
+      );
     } catch (err) {
       console.error('Unexpected error assigning driver:', err);
       alert('Failed to assign driver');
@@ -404,22 +441,19 @@ function OrdersPageContent() {
   const deleteOrder = async (orderId: string) => {
     try {
       // First, if there's a dumpster assigned, free it up
-      const order = orders.find(o => o.id === orderId);
-      if (false) { // TODO: Update for multi-service
+      if (false) {
+        // TODO: Update for multi-service
         await supabase
           .from('dumpsters')
           .update({
             status: 'available',
-            current_order_id: null
+            current_order_id: null,
           })
           .eq('id', 'temp-id'); // TODO: Update for multi-service
       }
 
       // Delete the order
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId);
+      const { error } = await supabase.from('orders').delete().eq('id', orderId);
 
       if (error) {
         console.error('Error deleting order:', error);
@@ -431,14 +465,16 @@ function OrdersPageContent() {
       setOrders(orders.filter(order => order.id !== orderId));
 
       // Update dumpsters state if needed
-      if (false) { // TODO: Update for multi-service
-        setDumpsters(dumpsters.map(d =>
-          d.id === 'temp-id' // TODO: Update for multi-service
-            ? { ...d, status: 'available' as const, current_order_id: undefined }
-            : d
-        ));
+      if (false) {
+        // TODO: Update for multi-service
+        setDumpsters(
+          dumpsters.map(d =>
+            d.id === 'temp-id' // TODO: Update for multi-service
+              ? { ...d, status: 'available' as const, current_order_id: undefined }
+              : d
+          )
+        );
       }
-
     } catch (err) {
       console.error('Unexpected error deleting order:', err);
       alert('Failed to delete order');
@@ -450,8 +486,8 @@ function OrdersPageContent() {
    */
   const handleOnMyWayClick = async (order: OrderViewData) => {
     // Check if dumpster is assigned
-    const hasAssignedDumpster = 'temp-id' // TODO: Update for multi-service ||
-      dumpsters.some(d => d.current_order_id === order.id);
+    const hasAssignedDumpster = 'temp-id'; // TODO: Update for multi-service ||
+    dumpsters.some(d => d.current_order_id === order.id);
 
     if (!hasAssignedDumpster) {
       // Open dumpster assignment dialog
@@ -462,26 +498,6 @@ function OrdersPageContent() {
       await updateOrderStatus(order.id, 'on_way');
     }
   };
-
-  /**
-   * Handles proceeding without dumpster assignment (fallback)
-   */
-  const handleProceedWithoutDumpster = async () => {
-    if (selectedOrderForDumpster) {
-      await updateOrderStatus(selectedOrderForDumpster.id, 'on_way');
-      setDumpsterDialogOpen(false);
-      setSelectedOrderForDumpster(null);
-    }
-  };
-
-  /**
-   * Assigns dumpster and proceeds to "On My Way" status
-   */
-  const assignDumpsterAndProceed = async (orderId: string, dumpsterId: string) => {
-    await assignDumpsterToOrder(orderId, dumpsterId);
-    await updateOrderStatus(orderId, 'on_way');
-  };
-
 
   /**
    * Assigns a dumpster to an order
@@ -498,7 +514,7 @@ function OrdersPageContent() {
         const { error: orderError } = await supabase
           .from('orders')
           .update({
-            dumpster_id: dumpsterId
+            dumpster_id: dumpsterId,
           })
           .eq('id', orderId);
 
@@ -511,15 +527,16 @@ function OrdersPageContent() {
         // Build the dumpster's address from the order
         let dumpsterAddress = order.address || '';
         if (order.city && order.state) {
-          dumpsterAddress = dumpsterAddress ? `${dumpsterAddress}, ${order.city}, ${order.state}` : `${order.city}, ${order.state}`;
+          dumpsterAddress = dumpsterAddress
+            ? `${dumpsterAddress}, ${order.city}, ${order.state}`
+            : `${order.city}, ${order.state}`;
         }
 
         // Update the dumpster to mark it as assigned and set its location
-        const updateData: any = {
+        const updateData: Partial<Dumpster> = {
           status: 'in_use',
-          current_order_id: orderId,
           address: dumpsterAddress,
-          last_assigned_at: new Date().toISOString()
+          last_assigned_at: new Date().toISOString(),
         };
 
         const { error: dumpsterError } = await supabase
@@ -535,7 +552,7 @@ function OrdersPageContent() {
               .from('dumpsters')
               .update({
                 gps_coordinates: `(${coords.lng},${coords.lat})`,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
               })
               .eq('id', dumpsterId);
 
@@ -554,18 +571,24 @@ function OrdersPageContent() {
         }
 
         // Update local state
-        setOrders(orders.map(order =>
-          order.id === orderId
-            ? { ...order, dumpster_id: dumpsterId }
-            : order
-        ));
+        setOrders(
+          orders.map(order =>
+            order.id === orderId ? { ...order, dumpster_id: dumpsterId } : order
+          )
+        );
 
-        setDumpsters(dumpsters.map(d =>
-          d.id === dumpsterId
-            ? { ...d, status: 'in_use', current_order_id: orderId, last_assigned_at: new Date().toISOString() }
-            : d
-        ));
-
+        setDumpsters(
+          dumpsters.map(d =>
+            d.id === dumpsterId
+              ? {
+                  ...d,
+                  status: 'in_use',
+                  current_order_id: orderId,
+                  last_assigned_at: new Date().toISOString(),
+                }
+              : d
+          )
+        );
       } else if (!dumpsterId) {
         // If we're unassigning (dumpsterId is null), clear the assignment
         const currentDumpster = dumpsters.find(d => d.current_order_id === orderId);
@@ -588,7 +611,7 @@ function OrdersPageContent() {
             .from('dumpsters')
             .update({
               status: 'available',
-              current_order_id: null
+              current_order_id: null,
             })
             .eq('id', currentDumpster.id);
 
@@ -598,21 +621,20 @@ function OrdersPageContent() {
             return;
           }
 
-          setDumpsters(dumpsters.map(d =>
-            d.id === currentDumpster.id
-              ? { ...d, status: 'available' as const, current_order_id: undefined }
-              : d
-          ));
+          setDumpsters(
+            dumpsters.map(d =>
+              d.id === currentDumpster.id
+                ? { ...d, status: 'available' as const, current_order_id: undefined }
+                : d
+            )
+          );
         }
 
         // Update local state
-        setOrders(orders.map(order =>
-          order.id === orderId
-            ? { ...order, dumpster_id: null }
-            : order
-        ));
+        setOrders(
+          orders.map(order => (order.id === orderId ? { ...order, dumpster_id: null } : order))
+        );
       }
-
     } catch (err) {
       console.error('Unexpected error assigning dumpster:', err);
       alert('Failed to assign dumpster');
@@ -665,7 +687,7 @@ function OrdersPageContent() {
           </Select>
 
           <Button
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               fetchOrders(true);
               fetchDumpsters();
@@ -729,14 +751,15 @@ function OrdersPageContent() {
                       className="h-11 min-w-[44px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 touch-manipulation"
                     >
                       <RiDeleteBinLine className="h-4 w-4" />
-
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Order</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to permanently delete this order for {order.first_name} {order.last_name}? This action cannot be undone and will remove all order data.
+                        Are you sure you want to permanently delete this order for{' '}
+                        {order.first_name} {order.last_name}? This action cannot be undone and will
+                        remove all order data.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -750,7 +773,10 @@ function OrdersPageContent() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                <Status status={mapOrderStatusToStatusType(order.order_status)} className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center">
+                <Status
+                  status={mapOrderStatusToStatusType(order.order_status)}
+                  className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
+                >
                   <StatusIndicator />
                   <StatusLabel className="ml-2">
                     <span className="mr-2 text-lg">{getStatusIcon(order.order_status)}</span>
@@ -787,7 +813,7 @@ function OrdersPageContent() {
                             <a
                               href={`tel:${order.phone}`}
                               className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
                                 handleQuickCall(order.phone ? parseInt(order.phone) : 0);
                               }}
@@ -812,16 +838,22 @@ function OrdersPageContent() {
                             <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
                             <div className="flex-1">
                               <button
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
-                                  handleQuickNavigate(order.address!, order.city || undefined, order.state || undefined);
+                                  handleQuickNavigate(
+                                    order.address!,
+                                    order.city || undefined,
+                                    order.state || undefined
+                                  );
                                 }}
                                 className="text-left hover:underline font-medium text-blue-600 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                                 aria-label={`Navigate to ${order.address || ''}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
                               >
                                 <div>{order.address}</div>
                                 {order.city && order.state && (
-                                  <div className="text-muted-foreground">{order.city}, {order.state}</div>
+                                  <div className="text-muted-foreground">
+                                    {order.city}, {order.state}
+                                  </div>
                                 )}
                               </button>
                             </div>
@@ -842,69 +874,101 @@ function OrdersPageContent() {
                         Services
                         {orderServices[order.id] && orderServices[order.id].length > 0 && (
                           <Badge variant="secondary" className="text-xs">
-                            {(order.services_summary ? order.services_summary.split(', ').length : 0) + orderServices[order.id].filter(service => 
-                              !order.services_summary || 
-                              !order.services_summary.split(', ').map(s => s.trim()).includes(service.services.display_name)
-                            ).length} Total
+                            {(order.services_summary
+                              ? order.services_summary.split(', ').length
+                              : 0) +
+                              orderServices[order.id].filter(
+                                service =>
+                                  !order.services_summary ||
+                                  !order.services_summary
+                                    .split(', ')
+                                    .map(s => s.trim())
+                                    .includes(service.services?.display_name || '')
+                              ).length}{' '}
+                            Total
                           </Badge>
                         )}
                       </h4>
                     </div>
                     <div className="space-y-2 text-sm">
                       {/* All Services in unified list */}
-                      {order.services_summary || (orderServices[order.id] && orderServices[order.id].length > 0) ? (
+                      {order.services_summary ||
+                      (orderServices[order.id] && orderServices[order.id].length > 0) ? (
                         <div className="space-y-2">
                           {/* Main services from summary */}
-                          {order.services_summary && order.services_summary.split(', ').map((service, index) => (
-                            <button
-                              key={`service-${index}`}
-                              onClick={() => handleMainServiceClick(order.id, service.trim(), index)}
-                              className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
-                            >
-                              <div className="flex items-center gap-2">
-                                <RiBox1Line className="h-4 w-4 flex-shrink-0" />
-                                <span className="font-medium">{service.trim()}</span>
-                              </div>
-                              {(() => {
-                                // Check if there's a priced service for this main service
-                                const mainService = orderServices[order.id]?.find(orderService => 
-                                  orderService.services.display_name === service.trim()
-                                );
-                                
-                                if (mainService && parseFloat(mainService.total_price) > 0) {
-                                  return <span className="text-green-600 font-medium">${parseFloat(mainService.total_price).toFixed(2)}</span>;
-                                } else {
-                                  return <span className="text-blue-600 font-medium text-xs">Main Service</span>;
+                          {order.services_summary &&
+                            order.services_summary.split(', ').map((service, index) => (
+                              <button
+                                key={`service-${index}`}
+                                onClick={() =>
+                                  handleMainServiceClick(order.id, service.trim(), index)
                                 }
-                              })()}
-                            </button>
-                          ))}
-                          
-                          {/* Additional Services */}
-                          {orderServices[order.id] && orderServices[order.id]
-                            .filter(service => 
-                              // Filter out main service to avoid duplication
-                              !order.services_summary || 
-                              !order.services_summary.split(', ').map(s => s.trim()).includes(service.services.display_name)
-                            )
-                            .map((service, index) => (
-                            <button
-                              key={`order-service-${index}`}
-                              onClick={() => handleServiceClick(service)}
-                              className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
-                            >
-                              <div className="flex items-center gap-2">
-                                <RiBox1Line className="h-4 w-4 flex-shrink-0" />
-                                <div>
-                                  <span className="font-medium">{service.services.display_name}</span>
-                                  {service.quantity > 1 && (
-                                    <span className="text-muted-foreground ml-1">× {service.quantity}</span>
-                                  )}
+                                className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <RiBox1Line className="h-4 w-4 flex-shrink-0" />
+                                  <span className="font-medium">{service.trim()}</span>
                                 </div>
-                              </div>
-                              <span className="text-green-600 font-medium">${parseFloat(service.total_price).toFixed(2)}</span>
-                            </button>
-                          ))}
+                                {(() => {
+                                  // Check if there's a priced service for this main service
+                                  const mainService = orderServices[order.id]?.find(
+                                    orderService =>
+                                      orderService.services?.display_name === service.trim()
+                                  );
+
+                                  if (mainService && mainService.total_price > 0) {
+                                    return (
+                                      <span className="text-green-600 font-medium">
+                                        ${mainService.total_price.toFixed(2)}
+                                      </span>
+                                    );
+                                  } else {
+                                    return (
+                                      <span className="text-blue-600 font-medium text-xs">
+                                        Main Service
+                                      </span>
+                                    );
+                                  }
+                                })()}
+                              </button>
+                            ))}
+
+                          {/* Additional Services */}
+                          {orderServices[order.id] &&
+                            orderServices[order.id]
+                              .filter(
+                                service =>
+                                  // Filter out main service to avoid duplication
+                                  !order.services_summary ||
+                                  !order.services_summary
+                                    .split(', ')
+                                    .map(s => s.trim())
+                                    .includes(service.services?.display_name || '')
+                              )
+                              .map((service, index) => (
+                                <button
+                                  key={`order-service-${index}`}
+                                  onClick={() => handleServiceClick(service)}
+                                  className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <RiBox1Line className="h-4 w-4 flex-shrink-0" />
+                                    <div>
+                                      <span className="font-medium">
+                                        {service.services?.display_name}
+                                      </span>
+                                      {service.quantity > 1 && (
+                                        <span className="text-muted-foreground ml-1">
+                                          × {service.quantity}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <span className="text-green-600 font-medium">
+                                    ${service.total_price.toFixed(2)}
+                                  </span>
+                                </button>
+                              ))}
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 text-muted-foreground">
@@ -922,7 +986,10 @@ function OrdersPageContent() {
                               Services Total:
                             </span>
                             <span className="text-green-600">
-                              ${orderServices[order.id].reduce((sum, s) => sum + parseFloat(s.total_price), 0).toFixed(2)}
+                              $
+                              {orderServices[order.id]
+                                .reduce((sum, s) => sum + s.total_price, 0)
+                                .toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -931,7 +998,10 @@ function OrdersPageContent() {
                       {order.scheduled_delivery_date && (
                         <div className="flex items-center gap-2 pt-2">
                           <RiCalendarLine className="h-4 w-4" />
-                          <span>Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy')}</span>
+                          <span>
+                            Delivery:{' '}
+                            {format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy')}
+                          </span>
                         </div>
                       )}
 
@@ -940,7 +1010,7 @@ function OrdersPageContent() {
                         <AddServicesDialog
                           orderId={order.id}
                           type="order"
-                          onServicesAdded={(services) => handleServicesAdded(order.id, services)}
+                          onServicesAdded={services => handleServicesAdded(order.id, services)}
                         />
                       </div>
                     </div>
@@ -978,9 +1048,9 @@ function OrdersPageContent() {
                         ) : (
                           // Show dropdown for non-completed orders
                           <Select
-                            value={order.assigned_to || "unassigned"}
-                            onValueChange={(value) => {
-                              const driverName = value === "unassigned" ? null : value;
+                            value={order.assigned_to || 'unassigned'}
+                            onValueChange={value => {
+                              const driverName = value === 'unassigned' ? null : value;
                               assignDriverToOrder(order.id, driverName);
                             }}
                           >
@@ -992,7 +1062,9 @@ function OrdersPageContent() {
                               <SelectValue>
                                 <div className="flex items-center gap-2">
                                   <RiTruckLine className="h-3 w-3" />
-                                  <span className="text-sm">{order.assigned_to || 'Select a driver'}</span>
+                                  <span className="text-sm">
+                                    {order.assigned_to || 'Select a driver'}
+                                  </span>
                                 </div>
                               </SelectValue>
                             </SelectTrigger>
@@ -1000,7 +1072,7 @@ function OrdersPageContent() {
                               <SelectItem value="unassigned">
                                 <span className="text-muted-foreground">Unassigned</span>
                               </SelectItem>
-                              {DRIVERS.map((driver) => (
+                              {DRIVERS.map(driver => (
                                 <SelectItem key={driver.value} value={driver.value}>
                                   {driver.label}
                                 </SelectItem>
@@ -1013,7 +1085,9 @@ function OrdersPageContent() {
                       {/* Dumpster Assignment */}
                       <div className="space-y-2">
                         <Label htmlFor={`dumpster-${order.id}`} className="text-sm font-semibold">
-                          {order.order_status === 'completed' ? 'Dumpsters Used' : 'Assigned Dumpsters'}
+                          {order.order_status === 'completed'
+                            ? 'Dumpsters Used'
+                            : 'Assigned Dumpsters'}
                         </Label>
                         {order.order_status === 'completed' ? (
                           // Show read-only dumpster info for completed orders
@@ -1038,9 +1112,12 @@ function OrdersPageContent() {
                         ) : (
                           // Show dropdown for non-completed orders
                           <Select
-                            value={dumpsters.find(d => d.current_order_id === order.id)?.id || "unassigned"}
-                            onValueChange={(value) => {
-                              const dumpsterId = value === "unassigned" ? null : value;
+                            value={
+                              dumpsters.find(d => d.current_order_id === order.id)?.id ||
+                              'unassigned'
+                            }
+                            onValueChange={value => {
+                              const dumpsterId = value === 'unassigned' ? null : value;
                               assignDumpsterToOrder(order.id, dumpsterId);
                             }}
                           >
@@ -1053,7 +1130,8 @@ function OrdersPageContent() {
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-3 w-3" />
                                   <span className="text-sm">
-                                    {dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
+                                    {dumpsters.find(d => d.current_order_id === order.id)?.name ||
+                                      'Select a dumpster'}
                                   </span>
                                 </div>
                               </SelectValue>
@@ -1063,7 +1141,11 @@ function OrdersPageContent() {
                                 <span className="text-muted-foreground">Unassigned</span>
                               </SelectItem>
                               {dumpsters
-                                .filter(d => d.name !== 'ARK-HOME' && (d.status === 'available' || d.current_order_id === order.id))
+                                .filter(
+                                  d =>
+                                    d.name !== 'ARK-HOME' &&
+                                    (d.status === 'available' || d.current_order_id === order.id)
+                                )
                                 .map(dumpster => (
                                   <SelectItem key={dumpster.id} value={dumpster.id}>
                                     <div className="flex items-center justify-between w-full">
@@ -1093,16 +1175,20 @@ function OrdersPageContent() {
 
                     {/* Invoice buttons */}
                     <div className="mt-4 space-y-3">
-                      <PaymentManager order={convertViewDataToOrder(order)} onUpdate={() => fetchOrders()} />
+                      <PaymentManager
+                        order={convertViewDataToOrder(order)}
+                        onUpdate={() => fetchOrders()}
+                      />
                     </div>
                   </div>
                 </div>
 
                 {/* Driver Action Buttons */}
                 <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
-                  <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>Quick Actions</h5>
+                  <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>
+                    Quick Actions
+                  </h5>
                   <div className="flex flex-wrap gap-3">
-
                     {/* Status-specific buttons */}
                     {order.order_status === 'scheduled' && (
                       <>
@@ -1120,7 +1206,8 @@ function OrdersPageContent() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Cancel Order</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Are you sure you want to cancel this order for {order.first_name} {order.last_name}? This action cannot be undone.
+                                Are you sure you want to cancel this order for {order.first_name}{' '}
+                                {order.last_name}? This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -1202,7 +1289,9 @@ function OrdersPageContent() {
                     )}
                     {(order.order_status === 'completed' || order.order_status === 'cancelled') && (
                       <div className="text-sm text-muted-foreground italic">
-                        {order.order_status === 'completed' ? '✅ Order completed' : '❌ Order cancelled'}
+                        {order.order_status === 'completed'
+                          ? '✅ Order completed'
+                          : '❌ Order cancelled'}
                       </div>
                     )}
                   </div>
@@ -1219,7 +1308,17 @@ function OrdersPageContent() {
       {/* Service Edit Dialog */}
       {selectedService && (
         <ServiceEditDialog
-          service={selectedService}
+          service={{
+            id: selectedService.id,
+            order_id: selectedService.order_id,
+            quantity: selectedService.quantity,
+            unit_price: selectedService.unit_price.toString(),
+            total_price: selectedService.total_price.toString(),
+            services: {
+              display_name: selectedService.services?.display_name || '',
+              description: selectedService.services?.description || undefined,
+            },
+          }}
           isOpen={serviceEditDialogOpen}
           onClose={() => {
             setServiceEditDialogOpen(false);

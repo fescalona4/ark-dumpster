@@ -48,8 +48,10 @@ function getStatusColor(status: string) {
 function getPriorityIndicator(status: string, target: string) {
   const today = new Date();
   const deliveryDate = new Date(target);
-  const daysUntilDelivery = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
+  const daysUntilDelivery = Math.ceil(
+    (deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
   if (daysUntilDelivery <= 0 && status !== 'completed' && status !== 'done') {
     return { color: 'border-l-red-500', urgency: 'overdue' };
   } else if (daysUntilDelivery <= 1) {
@@ -60,18 +62,14 @@ function getPriorityIndicator(status: string, target: string) {
   return { color: 'border-l-blue-500', urgency: 'normal' };
 }
 
-export function MobileOrderCard({ 
-  order, 
-  onTap, 
-  className 
-}: MobileOrderCardProps) {
+export function MobileOrderCard({ order, onTap, className }: MobileOrderCardProps) {
   const priority = getPriorityIndicator(order.status, order.target);
   const statusColor = getStatusColor(order.status);
   const contextMenuItems = useOrderContextMenu(order);
 
   return (
     <LongPressContextMenu items={contextMenuItems}>
-      <Card 
+      <Card
         className={cn(
           'mb-3 border-l-4 transition-all duration-200 hover:shadow-md active:scale-[0.98]',
           'touch-manipulation select-none',
@@ -80,80 +78,77 @@ export function MobileOrderCard({
         )}
         onClick={() => onTap?.(order)}
       >
-      <CardContent className="p-4">
-        {/* Header with customer name and status */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg leading-tight text-foreground truncate">
-              {order.header}
-            </h3>
-            <p className="text-sm text-muted-foreground mt-0.5 flex items-center">
-              <IconTruck className="h-4 w-4 mr-1 flex-shrink-0" />
-              {order.type}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge 
-              variant="outline" 
-              className={cn('text-xs font-medium', statusColor)}
-            >
-              {order.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
-            </Badge>
-            <Button 
-              variant="ghost" 
-              size="touch-icon" 
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <IconChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Key information row */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          {/* Delivery date */}
-          <div className="flex items-center text-sm">
-            <IconCalendar className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <span className="block text-xs text-muted-foreground">Delivery</span>
-              <span className="font-medium text-foreground truncate block">
-                {order.target || 'TBD'}
-              </span>
+        <CardContent className="p-4">
+          {/* Header with customer name and status */}
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-lg leading-tight text-foreground truncate">
+                {order.header}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-0.5 flex items-center">
+                <IconTruck className="h-4 w-4 mr-1 flex-shrink-0" />
+                {order.type}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Badge variant="outline" className={cn('text-xs font-medium', statusColor)}>
+                {order.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="touch-icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              >
+                <IconChevronRight className="h-5 w-5" />
+              </Button>
             </div>
           </div>
 
-          {/* Price */}
-          <div className="flex items-center text-sm justify-end">
-            <div className="text-right">
-              <span className="block text-xs text-muted-foreground">Price</span>
-              <span className="font-semibold text-lg text-green-600 dark:text-green-400">
-                {order.limit || 'Pending'}
-              </span>
+          {/* Key information row */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {/* Delivery date */}
+            <div className="flex items-center text-sm">
+              <IconCalendar className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <span className="block text-xs text-muted-foreground">Delivery</span>
+                <span className="font-medium text-foreground truncate block">
+                  {order.target || 'TBD'}
+                </span>
+              </div>
+            </div>
+
+            {/* Price */}
+            <div className="flex items-center text-sm justify-end">
+              <div className="text-right">
+                <span className="block text-xs text-muted-foreground">Price</span>
+                <span className="font-semibold text-lg text-green-600 dark:text-green-400">
+                  {order.limit || 'Pending'}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Contact information */}
-        {order.reviewer && order.reviewer !== 'Assign reviewer' && (
-          <div className="flex items-center text-sm text-muted-foreground pt-2 border-t border-muted">
-            <IconPhone className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="truncate">{order.reviewer}</span>
-          </div>
-        )}
+          {/* Contact information */}
+          {order.reviewer && order.reviewer !== 'Assign reviewer' && (
+            <div className="flex items-center text-sm text-muted-foreground pt-2 border-t border-muted">
+              <IconPhone className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">{order.reviewer}</span>
+            </div>
+          )}
 
-        {/* Priority indicator text for urgent items */}
-        {priority.urgency === 'overdue' && (
-          <div className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
-            ⚠️ OVERDUE - Needs immediate attention
-          </div>
-        )}
-        {priority.urgency === 'urgent' && (
-          <div className="mt-2 text-xs font-medium text-orange-600 dark:text-orange-400">
-            🔥 DUE TODAY - High priority
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {/* Priority indicator text for urgent items */}
+          {priority.urgency === 'overdue' && (
+            <div className="mt-2 text-xs font-medium text-red-600 dark:text-red-400">
+              ⚠️ OVERDUE - Needs immediate attention
+            </div>
+          )}
+          {priority.urgency === 'urgent' && (
+            <div className="mt-2 text-xs font-medium text-orange-600 dark:text-orange-400">
+              🔥 DUE TODAY - High priority
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </LongPressContextMenu>
   );
 }
@@ -180,15 +175,15 @@ export function SwipeableOrderCard(props: SwipeableOrderCardProps) {
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (startX === null) return;
-    
+
     const currentPosition = e.touches[0].clientX;
     setCurrentX(currentPosition);
-    
+
     const diff = currentPosition - startX;
-    
+
     if (Math.abs(diff) > 20) {
       e.preventDefault(); // Prevent scrolling when swiping
-      
+
       if (diff > 0) {
         setIsSwipingRight(true);
         setIsSwipingLeft(false);
@@ -201,9 +196,9 @@ export function SwipeableOrderCard(props: SwipeableOrderCardProps) {
 
   const handleTouchEnd = () => {
     if (startX === null || currentX === null) return;
-    
+
     const diff = currentX - startX;
-    
+
     if (Math.abs(diff) > SWIPE_THRESHOLD) {
       if (diff > 0 && props.onSwipeRight) {
         props.onSwipeRight(props.order.id);
@@ -211,7 +206,7 @@ export function SwipeableOrderCard(props: SwipeableOrderCardProps) {
         props.onSwipeLeft(props.order.id);
       }
     }
-    
+
     // Reset states
     setStartX(null);
     setCurrentX(null);
@@ -232,16 +227,17 @@ export function SwipeableOrderCard(props: SwipeableOrderCardProps) {
           Reschedule
         </div>
       )}
-      
+
       <div
         ref={cardRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
-          transform: startX !== null && currentX !== null 
-            ? `translateX(${(currentX - startX) * 0.3}px)` 
-            : 'none',
+          transform:
+            startX !== null && currentX !== null
+              ? `translateX(${(currentX - startX) * 0.3}px)`
+              : 'none',
           transition: startX === null ? 'transform 0.2s ease-out' : 'none',
         }}
       >
@@ -260,12 +256,12 @@ interface MobileOrderListProps {
   className?: string;
 }
 
-export function MobileOrderList({ 
-  orders, 
-  onOrderTap, 
-  onSwipeLeft, 
-  onSwipeRight, 
-  className 
+export function MobileOrderList({
+  orders,
+  onOrderTap,
+  onSwipeLeft,
+  onSwipeRight,
+  className,
 }: MobileOrderListProps) {
   return (
     <div className={cn('space-y-2 pb-4', className)}>

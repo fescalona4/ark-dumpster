@@ -22,7 +22,7 @@ export async function DELETE(
     return NextResponse.json({
       success: true,
       message: 'Payment deleted successfully',
-      payment: result.data
+      payment: result.data,
     });
   } catch (error) {
     console.error('Error deleting payment:', error);

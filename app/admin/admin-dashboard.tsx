@@ -56,7 +56,6 @@ interface OrderStats {
 export default function AdminDashboard() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [dumpsters, setDumpsters] = useState<Dumpster[]>([]);
   const [quoteStats, setQuoteStats] = useState<QuoteStats>({
     total: 0,
     pending: 0,
@@ -82,7 +81,6 @@ export default function AdminDashboard() {
   // Define status arrays
   const quoteStatuses = QUOTE_STATUSES;
   const orderStatuses = ORDER_STATUSES;
-  const dumpsterStatuses = DUMPSTER_STATUSES;
 
   useEffect(() => {
     fetchQuotes();
@@ -148,7 +146,9 @@ export default function AdminDashboard() {
           total: ordersData.length,
           pending: ordersData.filter(o => o.status === 'pending').length,
           scheduled: ordersData.filter(o => o.status === 'scheduled').length,
-          in_progress: ordersData.filter(o => ['on_way', 'in_progress', 'delivered', 'on_way_pickup'].includes(o.status)).length,
+          in_progress: ordersData.filter(o =>
+            ['on_way', 'in_progress', 'delivered', 'on_way_pickup'].includes(o.status)
+          ).length,
           completed: ordersData.filter(o => o.status === 'completed').length,
         };
         setOrderStats(stats);
@@ -169,7 +169,6 @@ export default function AdminDashboard() {
         console.error('Error fetching dumpsters:', error);
       } else {
         const dumpstersData = data || [];
-        setDumpsters(dumpstersData);
 
         // Calculate dumpster stats
         const stats = {
@@ -195,7 +194,11 @@ export default function AdminDashboard() {
     reviewer: quote.email,
   }));
 
-  console.log('Transformed quotes table data:', quotesTableData.length, quotesTableData.slice(0, 2));
+  console.log(
+    'Transformed quotes table data:',
+    quotesTableData.length,
+    quotesTableData.slice(0, 2)
+  );
 
   // Transform orders data for the data table
   const ordersTableData = orders.map((order, index) => ({
@@ -204,15 +207,26 @@ export default function AdminDashboard() {
     type: order.dumpster_size || 'Not specified',
     status: order.status, // Keep original status for filtering
     target: order.scheduled_delivery_date || order.dropoff_date || 'TBD',
-    limit: order.final_price ? `$${order.final_price}` : (order.quoted_price ? `$${order.quoted_price}` : 'Pending'),
+    limit: order.final_price
+      ? `$${order.final_price}`
+      : order.quoted_price
+        ? `$${order.quoted_price}`
+        : 'Pending',
     reviewer: order.order_number || order.email,
   }));
 
   console.log('Orders data:', orders.length);
   console.log('Order statuses in data:', [...new Set(orders.map(o => o.status))]);
   console.log('Order statuses from constants:', orderStatuses);
-  console.log('Sample order objects:', orders.slice(0, 2).map(o => ({ id: o.id, status: o.status, first_name: o.first_name })));
-  console.log('Transformed orders table data:', ordersTableData.length, ordersTableData.slice(0, 2));
+  console.log(
+    'Sample order objects:',
+    orders.slice(0, 2).map(o => ({ id: o.id, status: o.status, first_name: o.first_name }))
+  );
+  console.log(
+    'Transformed orders table data:',
+    ordersTableData.length,
+    ordersTableData.slice(0, 2)
+  );
 
   if (loading) {
     return (
@@ -245,10 +259,7 @@ export default function AdminDashboard() {
 
           {/* Data Flow Visualization */}
           <div className="px-4 lg:px-6">
-            <DataFlowVisualization 
-              quoteStats={quoteStats}
-              orderStats={orderStats}
-            />
+            <DataFlowVisualization quoteStats={quoteStats} orderStats={orderStats} />
           </div>
 
           {/* Dumpster Summary */}
@@ -256,17 +267,14 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-lg border p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Dumpster Fleet Status</h3>
-                <a
-                  href="/admin/dumpsters"
-                  className="text-sm text-primary hover:underline"
-                >
+                <a href="/admin/dumpsters" className="text-sm text-primary hover:underline">
                   View all →
                 </a>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold">
-                    <CountingNumber 
+                    <CountingNumber
                       number={dumpsterStats.total}
                       transition={{ stiffness: 90, damping: 50 }}
                       inView={true}
@@ -276,7 +284,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    <CountingNumber 
+                    <CountingNumber
                       number={dumpsterStats.available}
                       transition={{ stiffness: 90, damping: 50 }}
                       inView={true}
@@ -286,7 +294,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    <CountingNumber 
+                    <CountingNumber
                       number={dumpsterStats.in_use}
                       transition={{ stiffness: 90, damping: 50 }}
                       inView={true}

@@ -18,7 +18,7 @@ export interface SquareInvoiceResponse {
       customerId?: string;
     };
   };
-  error?: any;
+  error?: string;
   message?: string;
 }
 
@@ -41,11 +41,13 @@ export async function createOrGetSquareCustomer(order: Order): Promise<string> {
 }
 
 // Mock invoice creation
-export async function createSquareInvoice(request: SquareInvoiceRequest): Promise<SquareInvoiceResponse> {
+export async function createSquareInvoice(
+  request: SquareInvoiceRequest
+): Promise<SquareInvoiceResponse> {
   const { order } = request;
-  
+
   console.log('Creating Square invoice for order:', order.order_number);
-  
+
   // In development/testing, return a mock response
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
@@ -60,7 +62,7 @@ export async function createSquareInvoice(request: SquareInvoiceRequest): Promis
       },
     };
   }
-  
+
   // TODO: Implement actual Square API call here
   return {
     success: false,
@@ -72,7 +74,7 @@ export async function createSquareInvoice(request: SquareInvoiceRequest): Promis
 // Mock invoice sending
 export async function sendSquareInvoice(invoiceId: string): Promise<SquareInvoiceResponse> {
   console.log('Sending Square invoice:', invoiceId);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -83,7 +85,7 @@ export async function sendSquareInvoice(invoiceId: string): Promise<SquareInvoic
       },
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -94,7 +96,7 @@ export async function sendSquareInvoice(invoiceId: string): Promise<SquareInvoic
 // Mock invoice status check
 export async function getSquareInvoice(invoiceId: string): Promise<SquareInvoiceResponse> {
   console.log('Getting Square invoice:', invoiceId);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -105,7 +107,7 @@ export async function getSquareInvoice(invoiceId: string): Promise<SquareInvoice
       },
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -114,9 +116,12 @@ export async function getSquareInvoice(invoiceId: string): Promise<SquareInvoice
 }
 
 // Mock invoice update
-export async function updateSquareInvoice(invoiceId: string, updates: any): Promise<SquareInvoiceResponse> {
+export async function updateSquareInvoice(
+  invoiceId: string,
+  updates: Record<string, unknown>
+): Promise<SquareInvoiceResponse> {
   console.log('Updating Square invoice:', invoiceId, updates);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -127,7 +132,7 @@ export async function updateSquareInvoice(invoiceId: string, updates: any): Prom
       },
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -137,7 +142,7 @@ export async function updateSquareInvoice(invoiceId: string, updates: any): Prom
 // Mock invoice cancellation
 export async function cancelSquareInvoice(invoiceId: string): Promise<SquareInvoiceResponse> {
   console.log('Canceling Square invoice:', invoiceId);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -147,7 +152,7 @@ export async function cancelSquareInvoice(invoiceId: string): Promise<SquareInvo
       },
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -157,13 +162,13 @@ export async function cancelSquareInvoice(invoiceId: string): Promise<SquareInvo
 // Mock invoice deletion
 export async function deleteSquareInvoice(invoiceId: string): Promise<SquareInvoiceResponse> {
   console.log('Deleting Square invoice:', invoiceId);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -173,7 +178,7 @@ export async function deleteSquareInvoice(invoiceId: string): Promise<SquareInvo
 // Mock invoice listing
 export async function listSquareInvoices(locationId?: string, limit = 50, cursor?: string) {
   console.log('Listing Square invoices');
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -181,7 +186,7 @@ export async function listSquareInvoices(locationId?: string, limit = 50, cursor
       cursor: undefined,
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -196,7 +201,7 @@ export async function searchSquareInvoices(query: {
   statuses?: string[];
 }) {
   console.log('Searching Square invoices:', query);
-  
+
   if (process.env.NODE_ENV === 'development' || !process.env.SQUARE_ACCESS_TOKEN) {
     return {
       success: true,
@@ -204,7 +209,7 @@ export async function searchSquareInvoices(query: {
       cursor: undefined,
     };
   }
-  
+
   return {
     success: false,
     error: 'Square API not configured',
@@ -245,7 +250,7 @@ export function verifyWebhookSignature(
   if (process.env.NODE_ENV === 'development') {
     return true;
   }
-  
+
   // TODO: Implement actual signature verification
   return false;
 }

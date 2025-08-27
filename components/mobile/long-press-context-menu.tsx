@@ -1,7 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { IconEdit, IconPhone, IconMapPin, IconTrash, IconCopy, IconCheck, IconClock, IconX } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPhone,
+  IconMapPin,
+  IconTrash,
+  IconCopy,
+  IconCheck,
+  IconClock,
+  IconX,
+} from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -34,60 +43,63 @@ export function LongPressContextMenu({
   children,
   longPressDuration = 500,
   className,
-  disabled = false
+  disabled = false,
 }: LongPressContextMenuProps) {
   const [menuState, setMenuState] = React.useState<ContextMenuState>({
     isVisible: false,
     position: { x: 0, y: 0 },
     pressStartTime: null,
-    pressTimer: null
+    pressTimer: null,
   });
 
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   // Handle touch start - begin long press detection
-  const handleTouchStart = React.useCallback((e: React.TouchEvent) => {
-    if (disabled) return;
+  const handleTouchStart = React.useCallback(
+    (e: React.TouchEvent) => {
+      if (disabled) return;
 
-    const touch = e.touches[0];
-    const startTime = Date.now();
-    
-    const timer = setTimeout(() => {
-      // Calculate menu position
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      const touch = e.touches[0];
+      const startTime = Date.now();
 
-      const x = touch.clientX;
-      const y = touch.clientY;
+      const timer = setTimeout(() => {
+        // Calculate menu position
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
 
-      // Adjust position if menu would go off screen
-      const menuWidth = 200;
-      const menuHeight = items.length * 48 + 16; // 48px per item + padding
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+        const x = touch.clientX;
+        const y = touch.clientY;
 
-      const adjustedX = x + menuWidth > viewportWidth ? x - menuWidth : x;
-      const adjustedY = y + menuHeight > viewportHeight ? y - menuHeight : y;
+        // Adjust position if menu would go off screen
+        const menuWidth = 200;
+        const menuHeight = items.length * 48 + 16; // 48px per item + padding
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
 
-      // Haptic feedback if available
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
+        const adjustedX = x + menuWidth > viewportWidth ? x - menuWidth : x;
+        const adjustedY = y + menuHeight > viewportHeight ? y - menuHeight : y;
 
-      setMenuState({
-        isVisible: true,
-        position: { x: adjustedX, y: adjustedY },
+        // Haptic feedback if available
+        if ('vibrate' in navigator) {
+          navigator.vibrate(50);
+        }
+
+        setMenuState({
+          isVisible: true,
+          position: { x: adjustedX, y: adjustedY },
+          pressStartTime: startTime,
+          pressTimer: null,
+        });
+      }, longPressDuration);
+
+      setMenuState(prev => ({
+        ...prev,
         pressStartTime: startTime,
-        pressTimer: null
-      });
-    }, longPressDuration);
-
-    setMenuState(prev => ({
-      ...prev,
-      pressStartTime: startTime,
-      pressTimer: timer
-    }));
-  }, [disabled, longPressDuration, items.length]);
+        pressTimer: timer,
+      }));
+    },
+    [disabled, longPressDuration, items.length]
+  );
 
   // Handle touch end/cancel - cleanup timers
   const handleTouchEnd = React.useCallback(() => {
@@ -96,43 +108,49 @@ export function LongPressContextMenu({
       setMenuState(prev => ({
         ...prev,
         pressTimer: null,
-        pressStartTime: null
+        pressStartTime: null,
       }));
     }
   }, [menuState.pressTimer]);
 
   // Handle touch move - cancel long press if moved too much
-  const handleTouchMove = React.useCallback((e: React.TouchEvent) => {
-    if (!menuState.pressStartTime) return;
+  const handleTouchMove = React.useCallback(
+    (e: React.TouchEvent) => {
+      if (!menuState.pressStartTime) return;
 
-    const touch = e.touches[0];
-    const startTouch = e.touches[0]; // In real implementation, you'd store the start position
-    
-    // If moved more than 10px, cancel long press
-    // This is simplified - you'd want to compare with actual start position
-    if (menuState.pressTimer) {
-      clearTimeout(menuState.pressTimer);
-      setMenuState(prev => ({
-        ...prev,
-        pressTimer: null,
-        pressStartTime: null
-      }));
-    }
-  }, [menuState.pressStartTime, menuState.pressTimer]);
+      const touch = e.touches[0];
+      const startTouch = e.touches[0]; // In real implementation, you'd store the start position
+
+      // If moved more than 10px, cancel long press
+      // This is simplified - you'd want to compare with actual start position
+      if (menuState.pressTimer) {
+        clearTimeout(menuState.pressTimer);
+        setMenuState(prev => ({
+          ...prev,
+          pressTimer: null,
+          pressStartTime: null,
+        }));
+      }
+    },
+    [menuState.pressStartTime, menuState.pressTimer]
+  );
 
   // Close menu when clicking outside or on item
   const handleMenuClose = React.useCallback(() => {
     setMenuState(prev => ({
       ...prev,
-      isVisible: false
+      isVisible: false,
     }));
   }, []);
 
   // Handle menu item selection
-  const handleItemSelect = React.useCallback((item: ContextMenuItem) => {
-    item.action();
-    handleMenuClose();
-  }, [handleMenuClose]);
+  const handleItemSelect = React.useCallback(
+    (item: ContextMenuItem) => {
+      item.action();
+      handleMenuClose();
+    },
+    [handleMenuClose]
+  );
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -184,9 +202,9 @@ export function LongPressContextMenu({
               left: menuState.position.x,
               top: menuState.position.y,
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
-            {items.map((item) => (
+            {items.map(item => (
               <button
                 key={item.id}
                 onClick={() => handleItemSelect(item)}
@@ -197,15 +215,12 @@ export function LongPressContextMenu({
                   'disabled:opacity-50 disabled:cursor-not-allowed',
                   'flex items-center gap-3 touch-manipulation',
                   item.variant === 'destructive' && 'text-destructive hover:bg-destructive/10',
-                  item.variant === 'success' && 'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/20'
+                  item.variant === 'success' &&
+                    'text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950/20'
                 )}
               >
-                <span className="flex-shrink-0">
-                  {item.icon}
-                </span>
-                <span className="flex-1 truncate">
-                  {item.label}
-                </span>
+                <span className="flex-shrink-0">{item.icon}</span>
+                <span className="flex-1 truncate">{item.label}</span>
               </button>
             ))}
           </div>
@@ -216,77 +231,85 @@ export function LongPressContextMenu({
 }
 
 // Hook for creating common order context menu items
-export function useOrderContextMenu(order: { id: number; status: string; header: string; reviewer: string }) {
-  const contextMenuItems = React.useMemo((): ContextMenuItem[] => [
-    {
-      id: 'edit',
-      label: 'Edit Order',
-      icon: <IconEdit className="h-4 w-4" />,
-      action: () => {
-        console.log('Edit order:', order.id);
-        // Navigate to edit order page
-      }
-    },
-    {
-      id: 'call',
-      label: 'Call Customer',
-      icon: <IconPhone className="h-4 w-4" />,
-      action: () => {
-        if (order.reviewer && order.reviewer !== 'Assign reviewer') {
-          window.location.href = `tel:${order.reviewer}`;
-        }
+export function useOrderContextMenu(order: {
+  id: number;
+  status: string;
+  header: string;
+  reviewer: string;
+}) {
+  const contextMenuItems = React.useMemo(
+    (): ContextMenuItem[] => [
+      {
+        id: 'edit',
+        label: 'Edit Order',
+        icon: <IconEdit className="h-4 w-4" />,
+        action: () => {
+          console.log('Edit order:', order.id);
+          // Navigate to edit order page
+        },
       },
-      disabled: !order.reviewer || order.reviewer === 'Assign reviewer'
-    },
-    {
-      id: 'directions',
-      label: 'Get Directions',
-      icon: <IconMapPin className="h-4 w-4" />,
-      action: () => {
-        console.log('Get directions for order:', order.id);
-        // Open maps with order address
-      }
-    },
-    {
-      id: 'complete',
-      label: 'Mark Complete',
-      icon: <IconCheck className="h-4 w-4" />,
-      variant: 'success' as const,
-      action: () => {
-        console.log('Mark order complete:', order.id);
-        // Update order status to completed
+      {
+        id: 'call',
+        label: 'Call Customer',
+        icon: <IconPhone className="h-4 w-4" />,
+        action: () => {
+          if (order.reviewer && order.reviewer !== 'Assign reviewer') {
+            window.location.href = `tel:${order.reviewer}`;
+          }
+        },
+        disabled: !order.reviewer || order.reviewer === 'Assign reviewer',
       },
-      disabled: order.status === 'completed'
-    },
-    {
-      id: 'reschedule',
-      label: 'Reschedule',
-      icon: <IconClock className="h-4 w-4" />,
-      action: () => {
-        console.log('Reschedule order:', order.id);
-        // Open reschedule dialog
-      }
-    },
-    {
-      id: 'duplicate',
-      label: 'Duplicate Order',
-      icon: <IconCopy className="h-4 w-4" />,
-      action: () => {
-        console.log('Duplicate order:', order.id);
-        // Create copy of order
-      }
-    },
-    {
-      id: 'cancel',
-      label: 'Cancel Order',
-      icon: <IconX className="h-4 w-4" />,
-      variant: 'destructive' as const,
-      action: () => {
-        console.log('Cancel order:', order.id);
-        // Show confirmation and cancel order
-      }
-    }
-  ], [order]);
+      {
+        id: 'directions',
+        label: 'Get Directions',
+        icon: <IconMapPin className="h-4 w-4" />,
+        action: () => {
+          console.log('Get directions for order:', order.id);
+          // Open maps with order address
+        },
+      },
+      {
+        id: 'complete',
+        label: 'Mark Complete',
+        icon: <IconCheck className="h-4 w-4" />,
+        variant: 'success' as const,
+        action: () => {
+          console.log('Mark order complete:', order.id);
+          // Update order status to completed
+        },
+        disabled: order.status === 'completed',
+      },
+      {
+        id: 'reschedule',
+        label: 'Reschedule',
+        icon: <IconClock className="h-4 w-4" />,
+        action: () => {
+          console.log('Reschedule order:', order.id);
+          // Open reschedule dialog
+        },
+      },
+      {
+        id: 'duplicate',
+        label: 'Duplicate Order',
+        icon: <IconCopy className="h-4 w-4" />,
+        action: () => {
+          console.log('Duplicate order:', order.id);
+          // Create copy of order
+        },
+      },
+      {
+        id: 'cancel',
+        label: 'Cancel Order',
+        icon: <IconX className="h-4 w-4" />,
+        variant: 'destructive' as const,
+        action: () => {
+          console.log('Cancel order:', order.id);
+          // Show confirmation and cancel order
+        },
+      },
+    ],
+    [order]
+  );
 
   return contextMenuItems;
 }
@@ -302,7 +325,7 @@ export function LongPressIndicator({ isPressed, progress, size = 60 }: LongPress
   if (!isPressed) return null;
 
   const circumference = 2 * Math.PI * (size / 2 - 4);
-  const strokeDashoffset = circumference - (progress * circumference);
+  const strokeDashoffset = circumference - progress * circumference;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">

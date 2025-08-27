@@ -72,12 +72,12 @@ function getSessionId(): string {
   const sessionDuration = 30 * 60 * 1000; // 30 minutes in milliseconds
 
   let sessionId = localStorage.getItem(sessionIdKey);
-  let sessionTime = localStorage.getItem(sessionTimeKey);
+  const sessionTime = localStorage.getItem(sessionTimeKey);
 
   const now = Date.now();
 
   // Check if session exists and is still valid
-  if (sessionId && sessionTime && (now - parseInt(sessionTime)) < sessionDuration) {
+  if (sessionId && sessionTime && now - parseInt(sessionTime) < sessionDuration) {
     // Update session time to extend the session
     localStorage.setItem(sessionTimeKey, now.toString());
     return sessionId;
@@ -89,8 +89,8 @@ function getSessionId(): string {
   localStorage.setItem(sessionTimeKey, now.toString());
 
   // Clean up any old visit tracking data when starting a new session
-  const oldVisitKeys = Object.keys(localStorage).filter(key =>
-    key.startsWith('last_visit_') && !key.includes(sessionId)
+  const oldVisitKeys = Object.keys(localStorage).filter(
+    key => key.startsWith('last_visit_') && !key.includes(sessionId)
   );
   oldVisitKeys.forEach(key => localStorage.removeItem(key));
 
@@ -136,7 +136,7 @@ export async function trackPageVisit(pagePath: string) {
 
     // If we visited this exact page in the last 30 seconds, don't track it again
     // This prevents refresh spamming while still allowing legitimate re-visits
-    if (lastVisitTime && (now - parseInt(lastVisitTime)) < 30000) {
+    if (lastVisitTime && now - parseInt(lastVisitTime) < 30000) {
       return;
     }
 
@@ -149,7 +149,8 @@ export async function trackPageVisit(pagePath: string) {
     );
     sessionKeys.forEach(key => {
       const timestamp = localStorage.getItem(key);
-      if (timestamp && (now - parseInt(timestamp)) > 3600000) { // 1 hour
+      if (timestamp && now - parseInt(timestamp) > 3600000) {
+        // 1 hour
         localStorage.removeItem(key);
       }
     });
@@ -169,9 +170,7 @@ export async function trackPageVisit(pagePath: string) {
       city: geoData.city || null,
     };
 
-    const { error } = await supabase
-      .from('website_visits')
-      .insert(visitData);
+    const { error } = await supabase.from('website_visits').insert(visitData);
 
     if (error) {
       console.error('Analytics tracking error:', error);

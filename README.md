@@ -102,7 +102,7 @@ ark-dumpster/
 │   ├── admin/            # Admin-specific components
 │   ├── analytics/        # Analytics components and charts
 │   ├── data-tables/      # Advanced table components
-│   ├── dialogs/          # Dialog and modal components  
+│   ├── dialogs/          # Dialog and modal components
 │   ├── email/            # Email template components
 │   ├── forms/            # Form components and validation
 │   ├── invoices/         # Invoice-related components
@@ -351,6 +351,7 @@ orders {
 ### Other Platforms
 
 The application is compatible with any platform that supports Next.js:
+
 - Netlify
 - Railway
 - DigitalOcean App Platform
@@ -425,6 +426,7 @@ npm run analyze      # Analyze bundle size
 ### Status Tracking Systems
 
 #### Quote Status Flow
+
 - `pending` - New quote request awaiting review
 - `quoted` - Price provided to customer
 - `accepted` - Customer accepted quote (ready for order creation)
@@ -432,6 +434,7 @@ npm run analyze      # Analyze bundle size
 - `completed` - Quote process finalized
 
 #### Order Status Flow
+
 - `pending` - Order created, awaiting confirmation
 - `confirmed` - Order confirmed, scheduled for delivery
 - `delivered` - Dumpster delivered to customer

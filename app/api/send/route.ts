@@ -21,7 +21,7 @@ export async function GET() {
 export const POST = withRateLimit(async (request: NextRequest) => {
   try {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    
+
     if (isDevelopment) {
       console.log('Email API called');
     }
@@ -30,18 +30,26 @@ export const POST = withRateLimit(async (request: NextRequest) => {
 
     // SECURITY: Comprehensive input validation
     const validation = validateInput(emailApiSchema, rawBody);
-    
+
     if (!validation.success) {
       return Response.json(
-        { 
-          error: 'Input validation failed', 
-          details: validation.errors 
-        }, 
+        {
+          error: 'Input validation failed',
+          details: validation.errors,
+        },
         { status: 400 }
       );
     }
 
-    const { firstName, email, type = 'welcome', quoteDetails, subject, fullFormData, selectedServices } = validation.data;
+    const {
+      firstName,
+      email,
+      type = 'welcome',
+      quoteDetails,
+      subject,
+      fullFormData,
+      selectedServices,
+    } = validation.data;
 
     // Determine if company emails should be sent
     const sendCompanyEmails = process.env.SEND_COMPANY_EMAIL_NOTIFICATIONS !== 'false';
@@ -53,7 +61,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       if (isDevelopment) {
         console.log('Saving quote to database');
       }
-      
+
       dbResult = await saveQuoteToDatabase(fullFormData, selectedServices);
 
       if (!dbResult.success) {
@@ -69,7 +77,7 @@ export const POST = withRateLimit(async (request: NextRequest) => {
           { status: 500 }
         );
       }
-      
+
       if (isDevelopment) {
         console.log('Quote saved successfully');
       }
@@ -179,9 +187,12 @@ export const POST = withRateLimit(async (request: NextRequest) => {
   } catch (error) {
     const isDevelopment = process.env.NODE_ENV === 'development';
     if (isDevelopment) {
-      console.error('Unexpected error in email API:', error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        'Unexpected error in email API:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     }
-    
+
     return Response.json(
       {
         error: 'Failed to process request',

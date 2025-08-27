@@ -68,7 +68,7 @@ export function TableProvider<TData, TValue>({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onSortingChange: (updater) => {
+    onSortingChange: updater => {
       // @ts-expect-error updater is a function that returns a sorting object
       const newSorting = updater(sorting);
 
@@ -99,9 +99,7 @@ export type TableHeadProps = {
 
 export const TableHead = memo(({ header, className }: TableHeadProps) => (
   <TableHeadRaw className={className} key={header.id}>
-    {header.isPlaceholder
-      ? null
-      : flexRender(header.column.columnDef.header, header.getContext())}
+    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
   </TableHeadRaw>
 ));
 
@@ -112,12 +110,9 @@ export type TableHeaderGroupProps = {
   children: (props: { header: Header<unknown, unknown> }) => ReactNode;
 };
 
-export const TableHeaderGroup = ({
-  headerGroup,
-  children,
-}: TableHeaderGroupProps) => (
+export const TableHeaderGroup = ({ headerGroup, children }: TableHeaderGroupProps) => (
   <TableRowRaw key={headerGroup.id}>
-    {headerGroup.headers.map((header) => children({ header }))}
+    {headerGroup.headers.map(header => children({ header }))}
   </TableRowRaw>
 );
 
@@ -131,13 +126,12 @@ export const TableHeader = ({ className, children }: TableHeaderProps) => {
 
   return (
     <TableHeaderRaw className={className}>
-      {table?.getHeaderGroups().map((headerGroup) => children({ headerGroup }))}
+      {table?.getHeaderGroups().map(headerGroup => children({ headerGroup }))}
     </TableHeaderRaw>
   );
 };
 
-export interface TableColumnHeaderProps<TData, TValue>
-  extends HTMLAttributes<HTMLDivElement> {
+export interface TableColumnHeaderProps<TData, TValue> extends HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
 }
@@ -164,11 +158,7 @@ export function TableColumnHeader<TData, TValue>({
     <div className={cn('flex items-center space-x-2', className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            className="-ml-3 h-8 data-[state=open]:bg-accent"
-            size="sm"
-            variant="ghost"
-          >
+          <Button className="-ml-3 h-8 data-[state=open]:bg-accent" size="sm" variant="ghost">
             <span>{title}</span>
             {column.getIsSorted() === 'desc' ? (
               <ArrowDownIcon className="ml-2 h-4 w-4" />
@@ -212,12 +202,8 @@ export type TableRowProps = {
 };
 
 export const TableRow = ({ row, children, className }: TableRowProps) => (
-  <TableRowRaw
-    className={className}
-    data-state={row.getIsSelected() && 'selected'}
-    key={row.id}
-  >
-    {row.getVisibleCells().map((cell) => children({ cell }))}
+  <TableRowRaw className={className} data-state={row.getIsSelected() && 'selected'} key={row.id}>
+    {row.getVisibleCells().map(cell => children({ cell }))}
   </TableRowRaw>
 );
 
@@ -233,7 +219,7 @@ export const TableBody = ({ children, className }: TableBodyProps) => {
   return (
     <TableBodyRaw className={className}>
       {rows?.length ? (
-        rows.map((row) => children({ row }))
+        rows.map(row => children({ row }))
       ) : (
         <TableRowRaw>
           <TableCellRaw className="h-24 text-center" colSpan={columns.length}>

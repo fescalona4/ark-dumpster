@@ -60,10 +60,6 @@
     "deny": [],
     "ask": []
   },
-  "enabledMcpjsonServers": [
-    "memory",
-    "browser-server",
-    "supabase"
-  ],
+  "enabledMcpjsonServers": ["memory", "browser-server", "supabase"],
   "outputStyle": "default"
 }

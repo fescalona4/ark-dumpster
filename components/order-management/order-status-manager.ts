@@ -1,6 +1,6 @@
 /**
  * Shared Order Status Management Utilities
- * 
+ *
  * This module provides consistent order status management functions
  * that can be used across different pages to ensure data synchronization.
  */
@@ -35,14 +35,14 @@ export async function updateOrderStatus({
   orderId,
   newStatus,
   currentOrder,
-  dumpsters = []
+  dumpsters = [],
 }: OrderStatusUpdateOptions): Promise<OrderStatusUpdateResult> {
   try {
     // Prepare update data
     const updateData: Partial<Order> = {
       status: newStatus,
       ...(newStatus === 'delivered' ? { actual_delivery_date: new Date().toISOString() } : {}),
-      ...(newStatus === 'completed' ? { completed_at: new Date().toISOString() } : {})
+      ...(newStatus === 'completed' ? { completed_at: new Date().toISOString() } : {}),
     };
 
     // Update the order status
@@ -61,14 +61,14 @@ export async function updateOrderStatus({
       // Check both order.dumpster_id and find any dumpster with current_order_id matching this order
       const assignedDumpster = dumpsters.find(d => d.current_order_id === currentOrder.id);
       const dumpsterId = assignedDumpster?.id; // TODO: Update for multi-service
-      
+
       if (dumpsterId) {
         // Get dumpster info before freeing it
         const dumpster = dumpsters.find(d => d.id === dumpsterId);
         if (dumpster) {
           completedWithDumpster = {
             dumpsterId: dumpster.id,
-            dumpsterName: dumpster.name
+            dumpsterName: dumpster.name,
           };
         }
 
@@ -76,7 +76,7 @@ export async function updateOrderStatus({
         const orderUpdateData = {
           ...updateData,
           completed_with_dumpster_id: dumpsterId,
-          completed_with_dumpster_name: dumpster?.name || null
+          completed_with_dumpster_name: dumpster?.name || null,
         };
 
         // Update order with completed dumpster info
@@ -95,7 +95,7 @@ export async function updateOrderStatus({
           .update({
             status: 'available',
             current_order_id: null,
-            address: null
+            address: null,
           })
           .eq('id', dumpsterId);
 
@@ -112,14 +112,13 @@ export async function updateOrderStatus({
       success: true,
       updatedOrder: { ...updateData, id: orderId },
       freedDumpsterId,
-      completedWithDumpster
+      completedWithDumpster,
     };
-
   } catch (error) {
     console.error('Error updating order status:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to update order status'
+      error: error instanceof Error ? error.message : 'Failed to update order status',
     };
   }
 }

@@ -38,7 +38,7 @@ export function DumpsterAssignmentDialog({
   order,
   dumpsters,
   onAssign,
-  onProceedWithoutDumpster
+  onProceedWithoutDumpster,
 }: DumpsterAssignmentDialogProps) {
   const [selectedDumpsterId, setSelectedDumpsterId] = useState<string>('');
   const [isAssigning, setIsAssigning] = useState(false);
@@ -84,8 +84,12 @@ export function DumpsterAssignmentDialog({
             Dumpster Assignment Required
           </DialogTitle>
           <DialogDescription>
-            Order <strong>{order.order_number}</strong> for <strong>{order.first_name} {order.last_name}</strong>
-            doesn't have a dumpster assigned yet. Please select a dumpster to assign before proceeding "On My Way".
+            Order <strong>{order.order_number}</strong> for{' '}
+            <strong>
+              {order.first_name} {order.last_name}
+            </strong>
+            doesn't have a dumpster assigned yet. Please select a dumpster to assign before
+            proceeding "On My Way".
           </DialogDescription>
         </DialogHeader>
 
@@ -115,9 +119,7 @@ export function DumpsterAssignmentDialog({
                     {selectedDumpsterId && (
                       <div className="flex items-center gap-2">
                         <RiBox1Line className="h-4 w-4" />
-                        <span>
-                          {dumpsters.find(d => d.id === selectedDumpsterId)?.name}
-                        </span>
+                        <span>{dumpsters.find(d => d.id === selectedDumpsterId)?.name}</span>
                       </div>
                     )}
                   </SelectValue>
@@ -152,8 +154,8 @@ export function DumpsterAssignmentDialog({
                   <span className="text-sm font-medium">No Available Dumpsters</span>
                 </div>
                 <p className="text-sm text-orange-700 mt-1">
-                  All dumpsters are currently assigned to other orders. You may need to proceed without
-                  assigning a dumpster or wait for one to become available.
+                  All dumpsters are currently assigned to other orders. You may need to proceed
+                  without assigning a dumpster or wait for one to become available.
                 </p>
               </div>
             )}

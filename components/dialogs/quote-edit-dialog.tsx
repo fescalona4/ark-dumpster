@@ -20,10 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  RiEditLine,
-  RiSaveLine,
-} from '@remixicon/react';
+import { RiEditLine, RiSaveLine } from '@remixicon/react';
 
 interface Quote {
   id: string;
@@ -76,10 +73,10 @@ export function QuoteEditDialog({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Quote - {quote.first_name} {quote.last_name}</DialogTitle>
-          <DialogDescription>
-            Update all quote and customer information.
-          </DialogDescription>
+          <DialogTitle>
+            Edit Quote - {quote.first_name} {quote.last_name}
+          </DialogTitle>
+          <DialogDescription>Update all quote and customer information.</DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           {/* Customer Information Section */}
@@ -98,7 +95,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           first_name: e.target.value,
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -116,7 +113,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           last_name: e.target.value,
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -136,7 +133,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           phone: parseInt(e.target.value.replace(/\D/g, '')) || null,
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -155,7 +152,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           email: e.target.value,
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -174,7 +171,7 @@ export function QuoteEditDialog({
                       [quote.id]: {
                         ...prev[quote.id],
                         address: e.target.value,
-                      }
+                      },
                     }))
                   }
                   className="mt-1"
@@ -192,7 +189,7 @@ export function QuoteEditDialog({
                       [quote.id]: {
                         ...prev[quote.id],
                         address2: e.target.value,
-                      }
+                      },
                     }))
                   }
                   className="mt-1"
@@ -211,7 +208,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           city: e.target.value,
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -229,7 +226,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           state: e.target.value.toUpperCase().slice(0, 2),
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -248,7 +245,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           zip_code: e.target.value.replace(/\D/g, '').slice(0, 5),
-                        }
+                        },
                       }))
                     }
                     className="mt-1"
@@ -275,7 +272,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           dumpster_size: value,
-                        }
+                        },
                       }))
                     }
                   >
@@ -300,7 +297,7 @@ export function QuoteEditDialog({
                         [quote.id]: {
                           ...prev[quote.id],
                           time_needed: value,
-                        }
+                        },
                       }))
                     }
                   >
@@ -329,7 +326,7 @@ export function QuoteEditDialog({
                       [quote.id]: {
                         ...prev[quote.id],
                         dropoff_date: e.target.value,
-                      }
+                      },
                     }))
                   }
                   className="mt-1"
@@ -346,7 +343,7 @@ export function QuoteEditDialog({
                       [quote.id]: {
                         ...prev[quote.id],
                         message: e.target.value,
-                      }
+                      },
                     }))
                   }
                   className="mt-1"
@@ -370,10 +367,7 @@ export function QuoteEditDialog({
               <RiSaveLine className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
           </div>

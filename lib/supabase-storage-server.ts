@@ -20,7 +20,7 @@ export async function listImagesWithServiceRole(folder: string = '') {
     const { data, error } = await serverSupabase.storage.from(BUCKET_NAME).list(folder, {
       limit: 100,
       offset: 0,
-      sortBy: { column: 'name', order: 'asc' }
+      sortBy: { column: 'name', order: 'asc' },
     });
 
     if (error) {
@@ -30,9 +30,10 @@ export async function listImagesWithServiceRole(folder: string = '') {
 
     console.log(`✅ [SERVICE-ROLE] Found ${data.length} files in folder: ${folder}`);
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in listImagesWithServiceRole:', error);
-    return { data: null, error };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -57,9 +58,10 @@ export async function createSignedUrlWithServiceRole(imagePath: string, expiresI
 
     console.log(`✅ [SERVICE-ROLE] Created signed URL for: ${imagePath}`);
     return { data: data.signedUrl, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in createSignedUrlWithServiceRole:', error);
-    return { data: null, error };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -82,13 +84,11 @@ export async function uploadFileWithServiceRole(
   try {
     console.log(`📤 [SERVICE-ROLE] Uploading file to: ${filePath}`);
 
-    const { data, error } = await serverSupabase.storage
-      .from(BUCKET_NAME)
-      .upload(filePath, file, {
-        cacheControl: options?.cacheControl || '3600',
-        contentType: options?.contentType,
-        upsert: options?.upsert || false
-      });
+    const { data, error } = await serverSupabase.storage.from(BUCKET_NAME).upload(filePath, file, {
+      cacheControl: options?.cacheControl || '3600',
+      contentType: options?.contentType,
+      upsert: options?.upsert || false,
+    });
 
     if (error) {
       console.error('Error uploading file with service role:', error);
@@ -97,9 +97,10 @@ export async function uploadFileWithServiceRole(
 
     console.log(`✅ [SERVICE-ROLE] Uploaded file to: ${filePath}`);
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in uploadFileWithServiceRole:', error);
-    return { data: null, error };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -112,9 +113,7 @@ export async function deleteFilesWithServiceRole(filePaths: string[]) {
   try {
     console.log(`🗑️ [SERVICE-ROLE] Deleting files:`, filePaths);
 
-    const { data, error } = await serverSupabase.storage
-      .from(BUCKET_NAME)
-      .remove(filePaths);
+    const { data, error } = await serverSupabase.storage.from(BUCKET_NAME).remove(filePaths);
 
     if (error) {
       console.error('Error deleting files with service role:', error);
@@ -123,8 +122,9 @@ export async function deleteFilesWithServiceRole(filePaths: string[]) {
 
     console.log(`✅ [SERVICE-ROLE] Deleted ${data.length} files`);
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in deleteFilesWithServiceRole:', error);
-    return { data: null, error };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { data: null, error: errorMessage };
   }
 }

@@ -96,11 +96,11 @@ export function getSupabaseClient(
 ): SupabaseClient<Database> {
   // Server-side detection
   const isServerSide = typeof window === 'undefined';
-  
+
   if (isServerSide || useServiceRole) {
     return getSupabaseServiceClient(config);
   }
-  
+
   return getSupabaseAnonClient(config);
 }
 
@@ -113,7 +113,7 @@ export function getSupabaseProxyClient(
   config?: SupabaseConfig
 ): SupabaseClient<Database> {
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   if (!isDevelopment) {
     // In production, use normal client
     return getSupabaseClient(useServiceRole, config);
@@ -123,8 +123,8 @@ export function getSupabaseProxyClient(
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable');
   }
 
-  const apiKey = useServiceRole 
-    ? process.env.SUPABASE_SERVICE_ROLE_KEY 
+  const apiKey = useServiceRole
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
     : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!apiKey) {
@@ -133,14 +133,10 @@ export function getSupabaseProxyClient(
 
   // Use custom proxy URL for development
   const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy`;
-  
+
   const clientConfig = useServiceRole ? defaultServiceConfig : defaultAnonConfig;
-  
-  return createClient<Database>(
-    proxyUrl,
-    apiKey,
-    { ...clientConfig, ...config }
-  );
+
+  return createClient<Database>(proxyUrl, apiKey, { ...clientConfig, ...config });
 }
 
 /**
@@ -163,9 +159,7 @@ export class SupabaseQueryBuilder<T extends keyof Database['public']['Tables']> 
   /**
    * Select data with proper typing
    */
-  select<K extends keyof Database['public']['Tables'][T]['Row']>(
-    columns?: K[] | string
-  ) {
+  select<K extends keyof Database['public']['Tables'][T]['Row']>(columns?: K[] | string) {
     if (Array.isArray(columns)) {
       return this.client.from(this.tableName).select(columns.join(','));
     }
@@ -214,16 +208,16 @@ export async function checkDatabaseConnection(
   try {
     const client = getSupabaseClient(useServiceRole);
     const { error } = await client.from('quotes').select('count').limit(1);
-    
+
     if (error) {
       return { connected: false, error: error.message };
     }
-    
+
     return { connected: true };
   } catch (error) {
-    return { 
-      connected: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      connected: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

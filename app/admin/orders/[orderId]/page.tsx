@@ -1,13 +1,13 @@
 /**
  * Single Order Detail Page
- * 
+ *
  * Displays comprehensive information about a specific order
  * Matches the styling of the main orders page for consistency
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,11 +51,16 @@ import AuthGuard from '@/components/providers/auth-guard';
 import { Order } from '@/types/database';
 import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
-import { updateOrderStatus as updateOrderStatusShared, getStatusColor, getStatusIcon } from '@/components/order-management/order-status-manager';
+import {
+  updateOrderStatus as updateOrderStatusShared,
+  getStatusIcon,
+} from '@/components/order-management/order-status-manager';
 import { PaymentManager } from '@/components/admin/payment-manager';
 
 // Helper function to map order status to Status component status
-const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+const mapOrderStatusToStatusType = (
+  orderStatus: string
+): 'online' | 'offline' | 'maintenance' | 'degraded' => {
   switch (orderStatus) {
     case 'delivered':
     case 'completed':
@@ -70,7 +75,6 @@ const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' |
       return 'maintenance';
   }
 };
-import { DumpsterAssignmentDialog } from '@/components/dialogs/dumpster-assignment-dialog';
 
 export default function OrderDetailPage() {
   return (
@@ -90,16 +94,10 @@ function OrderDetailContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Dialog state for dumpster assignment
-  const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
   const [selectedOrderForDumpster, setSelectedOrderForDumpster] = useState<Order | null>(null);
+  const [dumpsterDialogOpen, setDumpsterDialogOpen] = useState(false);
 
-  useEffect(() => {
-    fetchOrder();
-    fetchDumpsters();
-  }, [orderId]);
-
-  const fetchDumpsters = async () => {
+  const fetchDumpsters = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('dumpsters')
@@ -112,16 +110,12 @@ function OrderDetailContent() {
     } catch (err) {
       console.error('Error fetching dumpsters:', err);
     }
-  };
+  }, []);
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      const { data, error } = await supabase.from('orders').select('*').eq('id', orderId).single();
 
       if (error) throw error;
 
@@ -134,7 +128,12 @@ function OrderDetailContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    fetchOrder();
+    fetchDumpsters();
+  }, [fetchOrder, fetchDumpsters]);
 
   const assignDriverToOrder = async (driverName: string | null) => {
     if (!order) return;
@@ -169,7 +168,7 @@ function OrderDetailContent() {
             .update({
               status: 'available',
               current_order_id: null,
-              address: null
+              address: null,
             })
             .eq('id', 'temp-id'); // TODO: Update for multi-service
 
@@ -187,7 +186,9 @@ function OrderDetailContent() {
         // Build the dumpster's address from the order
         let dumpsterAddress = order.address || '';
         if (order.city && order.state) {
-          dumpsterAddress = dumpsterAddress ? `${dumpsterAddress}, ${order.city}, ${order.state}` : `${order.city}, ${order.state}`;
+          dumpsterAddress = dumpsterAddress
+            ? `${dumpsterAddress}, ${order.city}, ${order.state}`
+            : `${order.city}, ${order.state}`;
         }
 
         // Update the dumpster to mark it as assigned and set its location
@@ -197,7 +198,7 @@ function OrderDetailContent() {
             status: 'in_use',
             current_order_id: orderId,
             address: dumpsterAddress,
-            last_assigned_at: new Date().toISOString()
+            last_assigned_at: new Date().toISOString(),
           })
           .eq('id', dumpsterId);
 
@@ -208,7 +209,6 @@ function OrderDetailContent() {
 
         // Refresh dumpsters to ensure consistency
         await fetchDumpsters();
-
       } else if (!dumpsterId) {
         // Clear the assignment
         const currentDumpster = dumpsters.find(d => d.current_order_id === orderId);
@@ -226,12 +226,11 @@ function OrderDetailContent() {
             .update({
               status: 'available',
               current_order_id: null,
-              address: null
+              address: null,
             })
             .eq('id', currentDumpster.id);
 
           if (dumpsterError) throw dumpsterError;
-
         }
 
         // TODO: Update for multi-service structure
@@ -253,7 +252,7 @@ function OrderDetailContent() {
       orderId: orderId as string,
       newStatus,
       currentOrder: order,
-      dumpsters
+      dumpsters,
     });
 
     if (result.success) {
@@ -272,7 +271,8 @@ function OrderDetailContent() {
     if (!order) return;
 
     // Check if dumpster is assigned
-    const hasAssignedDumpster = false || // TODO: Update for multi-service
+    const hasAssignedDumpster =
+      false || // TODO: Update for multi-service
       dumpsters.some(d => d.current_order_id === order.id);
 
     if (!hasAssignedDumpster) {
@@ -285,50 +285,25 @@ function OrderDetailContent() {
     }
   };
 
-  /**
-   * Handles proceeding without dumpster assignment (fallback)
-   */
-  const handleProceedWithoutDumpster = async () => {
-    if (selectedOrderForDumpster) {
-      await updateOrderStatus('on_way');
-      setDumpsterDialogOpen(false);
-      setSelectedOrderForDumpster(null);
-    }
-  };
-
-  /**
-   * Assigns dumpster and proceeds to "On My Way" status
-   */
-  const assignDumpsterAndProceed = async (orderId: string, dumpsterId: string) => {
-    if (!order) return;
-
-    await assignDumpsterToOrder(dumpsterId);
-    await updateOrderStatus('on_way');
-    setDumpsterDialogOpen(false);
-    setSelectedOrderForDumpster(null);
-  };
-
   const deleteOrder = async () => {
     if (!order) return;
 
     try {
       // First, if there's a dumpster assigned, free it up
-      if (false) { // TODO: Update for multi-service
+      if (false) {
+        // TODO: Update for multi-service
         await supabase
           .from('dumpsters')
           .update({
             status: 'available',
             current_order_id: null,
-            address: null
+            address: null,
           })
           .eq('id', 'temp-id'); // TODO: Update for multi-service
       }
 
       // Delete the order
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId);
+      const { error } = await supabase.from('orders').delete().eq('id', orderId);
 
       if (error) throw error;
 
@@ -339,7 +314,6 @@ function OrderDetailContent() {
       alert('Failed to delete order');
     }
   };
-
 
   const formatPhoneNumber = (phone: number | string | null) => {
     if (!phone) return '';
@@ -378,18 +352,12 @@ function OrderDetailContent() {
       {/* Header with back button */}
       <div className="mb-4">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push('/admin/orders')}
-          >
+          <Button variant="ghost" size="icon" onClick={() => router.push('/admin/orders')}>
             <RiArrowLeftLine className="h-5 w-5" />
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">Order {order.order_number}</h1>
-            <p className="text-sm text-muted-foreground">
-              View and manage order details
-            </p>
+            <p className="text-sm text-muted-foreground">View and manage order details</p>
           </div>
           <Badge variant="outline" className="gap-2">
             <RiTruckLine className="h-4 w-4" />
@@ -410,14 +378,14 @@ function OrderDetailContent() {
                 className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
               >
                 <RiDeleteBinLine className="h-4 w-4 mr-1" />
-
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Order</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to permanently delete this order for {order.first_name} {order.last_name}? This action cannot be undone and will remove all order data.
+                  Are you sure you want to permanently delete this order for {order.first_name}{' '}
+                  {order.last_name}? This action cannot be undone and will remove all order data.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -431,7 +399,10 @@ function OrderDetailContent() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Status status={mapOrderStatusToStatusType(order.status)} className="text-base px-4 py-2 font-semibold">
+          <Status
+            status={mapOrderStatusToStatusType(order.status)}
+            className="text-base px-4 py-2 font-semibold"
+          >
             <StatusIndicator />
             <StatusLabel className="ml-2">
               <span className="mr-2 text-lg">{getStatusIcon(order.status)}</span>
@@ -489,7 +460,9 @@ function OrderDetailContent() {
                       <div>{order.address}</div>
                       {order.address2 && <div>{order.address2}</div>}
                       {order.city && order.state && (
-                        <div>{order.city}, {order.state} {order.zip_code}</div>
+                        <div>
+                          {order.city}, {order.state} {order.zip_code}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -497,13 +470,17 @@ function OrderDetailContent() {
                 {order.scheduled_delivery_date && (
                   <div className="flex items-center gap-2">
                     <RiCalendarLine className="h-4 w-4" />
-                    <span>Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy')}</span>
+                    <span>
+                      Delivery: {format(new Date(order.scheduled_delivery_date), 'MMM dd, yyyy')}
+                    </span>
                   </div>
                 )}
                 {order.scheduled_pickup_date && (
                   <div className="flex items-center gap-2">
                     <RiCalendarLine className="h-4 w-4" />
-                    <span>Pickup: {format(new Date(order.scheduled_pickup_date), 'MMM dd, yyyy')}</span>
+                    <span>
+                      Pickup: {format(new Date(order.scheduled_pickup_date), 'MMM dd, yyyy')}
+                    </span>
                   </div>
                 )}
                 {false && ( // TODO: Update for multi-service
@@ -552,9 +529,9 @@ function OrderDetailContent() {
                   ) : (
                     // Show dropdown for non-completed orders
                     <Select
-                      value={order.assigned_to || "unassigned"}
-                      onValueChange={(value) => {
-                        const driverName = value === "unassigned" ? null : value;
+                      value={order.assigned_to || 'unassigned'}
+                      onValueChange={value => {
+                        const driverName = value === 'unassigned' ? null : value;
                         assignDriverToOrder(driverName);
                       }}
                     >
@@ -562,7 +539,9 @@ function OrderDetailContent() {
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             <RiTruckLine className="h-3 w-3" />
-                            <span className="text-sm">{order.assigned_to || 'Select a driver'}</span>
+                            <span className="text-sm">
+                              {order.assigned_to || 'Select a driver'}
+                            </span>
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -570,7 +549,7 @@ function OrderDetailContent() {
                         <SelectItem value="unassigned">
                           <span className="text-muted-foreground">Unassigned</span>
                         </SelectItem>
-                        {DRIVERS.map((driver) => (
+                        {DRIVERS.map(driver => (
                           <SelectItem key={driver.value} value={driver.value}>
                             {driver.label}
                           </SelectItem>
@@ -602,9 +581,11 @@ function OrderDetailContent() {
                   ) : (
                     // Show dropdown for non-completed orders
                     <Select
-                      value={dumpsters.find(d => d.current_order_id === order.id)?.id || "unassigned"}
-                      onValueChange={(value) => {
-                        const dumpsterId = value === "unassigned" ? null : value;
+                      value={
+                        dumpsters.find(d => d.current_order_id === order.id)?.id || 'unassigned'
+                      }
+                      onValueChange={value => {
+                        const dumpsterId = value === 'unassigned' ? null : value;
                         assignDumpsterToOrder(dumpsterId);
                       }}
                     >
@@ -615,7 +596,8 @@ function OrderDetailContent() {
                             <span className="text-sm">
                               {false // TODO: Update for multi-service
                                 ? 'Select a dumpster'
-                                : dumpsters.find(d => d.current_order_id === order.id)?.name || 'Select a dumpster'}
+                                : dumpsters.find(d => d.current_order_id === order.id)?.name ||
+                                  'Select a dumpster'}
                             </span>
                           </div>
                         </SelectValue>
@@ -625,7 +607,11 @@ function OrderDetailContent() {
                           <span className="text-muted-foreground">Unassigned</span>
                         </SelectItem>
                         {dumpsters
-                          .filter(d => d.name !== 'ARK-HOME' && (d.status === 'available' || d.current_order_id === order.id))
+                          .filter(
+                            d =>
+                              d.name !== 'ARK-HOME' &&
+                              (d.status === 'available' || d.current_order_id === order.id)
+                          )
                           .map(dumpster => (
                             <SelectItem key={dumpster.id} value={dumpster.id}>
                               <div className="flex items-center justify-between w-full">
@@ -656,7 +642,6 @@ function OrderDetailContent() {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
 
@@ -697,10 +682,7 @@ function OrderDetailContent() {
                 <>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                      >
+                      <Button variant="destructive" size="sm">
                         ❌ Cancel
                       </Button>
                     </AlertDialogTrigger>
@@ -708,7 +690,8 @@ function OrderDetailContent() {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Cancel Order</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Are you sure you want to cancel this order for {order.first_name} {order.last_name}? This action cannot be undone.
+                          Are you sure you want to cancel this order for {order.first_name}{' '}
+                          {order.last_name}? This action cannot be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -751,11 +734,7 @@ function OrderDetailContent() {
               )}
               {order.status === 'delivered' && (
                 <>
-                  <Button
-                    onClick={() => updateOrderStatus('on_way')}
-                    variant="outline"
-                    size="sm"
-                  >
+                  <Button onClick={() => updateOrderStatus('on_way')} variant="outline" size="sm">
                     ↩️ Back to On Way
                   </Button>
                   <Button
@@ -786,14 +765,10 @@ function OrderDetailContent() {
                 </>
               )}
               {order.status === 'completed' && (
-                <div className="text-sm text-green-600 font-medium">
-                  ✅ Order Completed
-                </div>
+                <div className="text-sm text-green-600 font-medium">✅ Order Completed</div>
               )}
               {order.status === 'cancelled' && (
-                <div className="text-sm text-red-600 font-medium">
-                  ❌ Order Cancelled
-                </div>
+                <div className="text-sm text-red-600 font-medium">❌ Order Cancelled</div>
               )}
             </div>
           </div>
@@ -816,14 +791,18 @@ function OrderDetailContent() {
               <div className="flex items-center gap-3 text-sm">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-muted-foreground">Delivered:</span>
-                <span>{format(new Date(order.actual_delivery_date), "MMM dd, yyyy 'at' h:mm a")}</span>
+                <span>
+                  {format(new Date(order.actual_delivery_date), "MMM dd, yyyy 'at' h:mm a")}
+                </span>
               </div>
             )}
             {order.actual_pickup_date && (
               <div className="flex items-center gap-3 text-sm">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <span className="text-muted-foreground">Picked Up:</span>
-                <span>{format(new Date(order.actual_pickup_date), "MMM dd, yyyy 'at' h:mm a")}</span>
+                <span>
+                  {format(new Date(order.actual_pickup_date), "MMM dd, yyyy 'at' h:mm a")}
+                </span>
               </div>
             )}
             {order.completed_at && (

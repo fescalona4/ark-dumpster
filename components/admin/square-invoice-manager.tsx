@@ -19,13 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { CalendarIcon, CreditCard, Send, RefreshCw, X, FileText, CheckCircle, Clock, Eye, DollarSign } from 'lucide-react';
+import {
+  CalendarIcon,
+  CreditCard,
+  Send,
+  RefreshCw,
+  X,
+  FileText,
+  Clock,
+  Eye,
+  DollarSign,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -207,7 +216,9 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
               <CreditCard className="h-5 w-5" />
               Square Invoice
             </h3>
-            <Badge className={cn('flex items-center gap-1', getStatusColor(order.square_payment_status))}>
+            <Badge
+              className={cn('flex items-center gap-1', getStatusColor(order.square_payment_status))}
+            >
               {getStatusIcon(order.square_payment_status)}
               {order.square_payment_status || 'Unknown'}
             </Badge>
@@ -218,15 +229,17 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
               <span className="text-gray-600">Invoice ID:</span>
               <span className="font-mono text-xs">{order.square_invoice_id}</span>
             </div>
-            
-            {order.square_paid_amount !== null && order.square_paid_amount !== undefined && order.square_paid_amount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount Paid:</span>
-                <span className="font-semibold text-green-600">
-                  ${order.square_paid_amount.toFixed(2)}
-                </span>
-              </div>
-            )}
+
+            {order.square_paid_amount !== null &&
+              order.square_paid_amount !== undefined &&
+              order.square_paid_amount > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Amount Paid:</span>
+                  <span className="font-semibold text-green-600">
+                    ${order.square_paid_amount.toFixed(2)}
+                  </span>
+                </div>
+              )}
 
             {order.invoice_sent_at && (
               <div className="flex justify-between">
@@ -265,12 +278,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
             )}
 
             {order.square_payment_status === 'DRAFT' && (
-              <Button
-                size="sm"
-                onClick={handleSendInvoice}
-                disabled={isSending}
-                className="flex-1"
-              >
+              <Button size="sm" onClick={handleSendInvoice} disabled={isSending} className="flex-1">
                 {isSending ? 'Sending...' : 'Send Invoice'}
               </Button>
             )}
@@ -284,16 +292,17 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
               <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
             </Button>
 
-            {order.square_payment_status !== 'PAID' && order.square_payment_status !== 'CANCELED' && (
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={handleCancelInvoice}
-                disabled={isCanceling}
-              >
-                Cancel
-              </Button>
-            )}
+            {order.square_payment_status !== 'PAID' &&
+              order.square_payment_status !== 'CANCELED' && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleCancelInvoice}
+                  disabled={isCanceling}
+                >
+                  Cancel
+                </Button>
+              )}
           </div>
         </div>
       ) : (
@@ -304,9 +313,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
             <p className="text-sm text-gray-600 mb-4">
               Create a Square invoice to enable online payments
             </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              Create Square Invoice
-            </Button>
+            <Button onClick={() => setShowCreateDialog(true)}>Create Square Invoice</Button>
           </div>
         </div>
       )}
@@ -338,12 +345,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dueDate}
-                    onSelect={setDueDate}
-                    initialFocus
-                  />
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} initialFocus />
                 </PopoverContent>
               </Popover>
               <p className="text-xs text-gray-500">Default: 30 days from today</p>
@@ -351,7 +353,12 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
 
             <div className="space-y-2">
               <Label>Delivery Method</Label>
-              <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+              <Select
+                value={paymentMethod}
+                onValueChange={(value: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY') =>
+                  setPaymentMethod(value)
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -367,7 +374,7 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
               <Label>Custom Message (Optional)</Label>
               <Textarea
                 value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
+                onChange={e => setCustomMessage(e.target.value)}
                 placeholder="Add a message to include with the invoice..."
                 rows={3}
               />
@@ -378,7 +385,8 @@ export function SquareInvoiceManager({ order, onUpdate }: SquareInvoiceManagerPr
                 <strong>Invoice Amount:</strong> Will be calculated from order services
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Tax will be calculated automatically based on Square settings and service configuration
+                Tax will be calculated automatically based on Square settings and service
+                configuration
               </p>
             </div>
           </div>

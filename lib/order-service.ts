@@ -1,6 +1,6 @@
 /**
  * Order Service - Handles multi-service order operations
- * 
+ *
  * This service provides functions for creating and managing orders
  * with the new multi-service structure that supports:
  * - Multiple dumpsters per order
@@ -9,16 +9,16 @@
  */
 
 import { supabase } from '@/lib/supabase';
-import { 
-  OrderCreateData, 
-  ServiceSelection, 
-  Order, 
-  OrderService, 
-  Service, 
+import {
+  OrderCreateData,
+  ServiceSelection,
+  Order,
+  OrderService,
+  Service,
   ServiceCategory,
   DumpsterAssignmentData,
   OrderWithServices,
-  FullOrder 
+  FullOrder,
 } from '@/types/database';
 
 // =============================================================================
@@ -28,7 +28,9 @@ import {
 /**
  * Creates a new order with multiple services
  */
-export async function createOrderWithServices(orderData: OrderCreateData): Promise<{ order: Order; services: OrderService[] }> {
+export async function createOrderWithServices(
+  orderData: OrderCreateData
+): Promise<{ order: Order; services: OrderService[] }> {
   if (!orderData.services || orderData.services.length === 0) {
     throw new Error('At least one service is required to create an order');
   }
@@ -55,8 +57,7 @@ export async function createOrderWithServices(orderData: OrderCreateData): Promi
     };
 
     // Generate order number and create order
-    const { data: orderNumber, error: orderNumError } = await supabase
-      .rpc('generate_order_number');
+    const { data: orderNumber, error: orderNumError } = await supabase.rpc('generate_order_number');
 
     if (orderNumError) {
       throw new Error(`Failed to generate order number: ${orderNumError.message}`);
@@ -78,15 +79,12 @@ export async function createOrderWithServices(orderData: OrderCreateData): Promi
 
     // Update quote status if this was created from a quote
     if (orderData.quoteId) {
-      await supabase
-        .from('quotes')
-        .update({ status: 'accepted' })
-        .eq('id', orderData.quoteId);
+      await supabase.from('quotes').update({ status: 'accepted' }).eq('id', orderData.quoteId);
     }
 
     return {
       order,
-      services: orderServices
+      services: orderServices,
     };
   } catch (error) {
     console.error('Error creating order with services:', error);
@@ -97,7 +95,10 @@ export async function createOrderWithServices(orderData: OrderCreateData): Promi
 /**
  * Creates order services for an existing order
  */
-export async function createOrderServices(orderId: string, services: ServiceSelection[]): Promise<OrderService[]> {
+export async function createOrderServices(
+  orderId: string,
+  services: ServiceSelection[]
+): Promise<OrderService[]> {
   const createdServices: OrderService[] = [];
 
   for (const serviceSelection of services) {
@@ -146,7 +147,9 @@ export async function createOrderServices(orderId: string, services: ServiceSele
 /**
  * Converts a quote to a multi-service order (legacy support)
  */
-export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Order; services: OrderService[] }> {
+export async function convertQuoteToOrder(
+  quoteId: string
+): Promise<{ order: Order; services: OrderService[] }> {
   // Get the quote data
   const { data: quote, error: quoteError } = await supabase
     .from('quotes')
@@ -166,13 +169,15 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
   // Get services from quote_services table
   const { data: quoteServices, error: quoteServicesError } = await supabase
     .from('quote_services')
-    .select(`
+    .select(
+      `
       *,
       services!inner(
         display_name,
         description
       )
-    `)
+    `
+    )
     .eq('quote_id', quoteId);
 
   if (quoteServicesError) {
@@ -197,22 +202,24 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
         original_quote_service_id: qs.id,
         dropoff_time: quote.dropoff_time,
         time_needed: quote.time_needed,
-      }
+      },
     }));
     services.push(...quotedServices);
   } else {
     // No services configured - this should not happen with the new system
-    throw new Error('Quote has no services configured. Please add services to the quote before converting to an order.');
+    throw new Error(
+      'Quote has no services configured. Please add services to the quote before converting to an order.'
+    );
   }
 
   console.log('Quote conversion:', {
     quoteId,
     servicesCount: services.length,
-    services: services.map(s => ({ 
-      service_id: s.service_id, 
-      quantity: s.quantity, 
-      unit_price: s.unit_price 
-    }))
+    services: services.map(s => ({
+      service_id: s.service_id,
+      quantity: s.quantity,
+      unit_price: s.unit_price,
+    })),
   });
 
   // Create the order data
@@ -231,7 +238,7 @@ export async function convertQuoteToOrder(quoteId: string): Promise<{ order: Ord
     priority: quote.priority,
     scheduledDeliveryDate: quote.dropoff_date,
     internalNotes: quote.quote_notes,
-    services: services
+    services: services,
   };
 
   return await createOrderWithServices(orderData);
@@ -317,9 +324,7 @@ export async function assignDumpsterToOrderService(
     status: 'assigned' as const,
   };
 
-  const { error: assignError } = await supabase
-    .from('order_dumpsters')
-    .insert([assignmentRecord]);
+  const { error: assignError } = await supabase.from('order_dumpsters').insert([assignmentRecord]);
 
   if (assignError) {
     throw new Error(`Failed to assign dumpster: ${assignError.message}`);
@@ -336,7 +341,8 @@ export async function assignDumpsterToOrderService(
 export async function getOrderWithServices(orderId: string): Promise<FullOrder | null> {
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select(`
+    .select(
+      `
       *,
       services:order_services (
         *,
@@ -350,7 +356,8 @@ export async function getOrderWithServices(orderId: string): Promise<FullOrder |
         )
       ),
       payments (*)
-    `)
+    `
+    )
     .eq('id', orderId)
     .single();
 
@@ -364,26 +371,26 @@ export async function getOrderWithServices(orderId: string): Promise<FullOrder |
 /**
  * Gets orders with service summaries
  */
-export async function getOrdersWithServiceSummary(filters: {
-  status?: string;
-  assignedTo?: string;
-  email?: string;
-  limit?: number;
-  offset?: number;
-} = {}): Promise<OrderWithServices[]> {
-  let query = supabase
-    .from('order_summary_with_services')
-    .select('*');
+export async function getOrdersWithServiceSummary(
+  filters: {
+    status?: string;
+    assignedTo?: string;
+    email?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<OrderWithServices[]> {
+  let query = supabase.from('order_summary_with_services').select('*');
 
   // Apply filters
   if (filters.status) {
     query = query.eq('order_status', filters.status);
   }
-  
+
   if (filters.assignedTo) {
     query = query.eq('assigned_to', filters.assignedTo);
   }
-  
+
   if (filters.email) {
     query = query.eq('email', filters.email);
   }
@@ -392,9 +399,9 @@ export async function getOrdersWithServiceSummary(filters: {
   if (filters.limit) {
     query = query.limit(filters.limit);
   }
-  
+
   if (filters.offset) {
-    query = query.range(filters.offset, (filters.offset + (filters.limit || 50)) - 1);
+    query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1);
   }
 
   // Order by creation date
@@ -406,7 +413,7 @@ export async function getOrdersWithServiceSummary(filters: {
     throw new Error(`Failed to fetch orders: ${error.message}`);
   }
 
-  return orders as OrderWithServices[] || [];
+  return (orders as OrderWithServices[]) || [];
 }
 
 /**
@@ -415,10 +422,12 @@ export async function getOrdersWithServiceSummary(filters: {
 export async function getAvailableServices(): Promise<(Service & { category: ServiceCategory })[]> {
   const { data: services, error } = await supabase
     .from('services')
-    .select(`
+    .select(
+      `
       *,
       category:service_categories (*)
-    `)
+    `
+    )
     .eq('is_active', true)
     .order('sort_order');
 
@@ -426,7 +435,7 @@ export async function getAvailableServices(): Promise<(Service & { category: Ser
     throw new Error(`Failed to fetch services: ${error.message}`);
   }
 
-  return services as (Service & { category: ServiceCategory })[] || [];
+  return (services as (Service & { category: ServiceCategory })[]) || [];
 }
 
 /**
@@ -435,8 +444,9 @@ export async function getAvailableServices(): Promise<(Service & { category: Ser
 export async function getAvailableDumpsters(service_id?: string): Promise<any[]> {
   if (service_id) {
     // Use the database function to get filtered results
-    const { data: dumpsters, error } = await supabase
-      .rpc('get_available_dumpsters_for_service', { service_uuid: service_id });
+    const { data: dumpsters, error } = await supabase.rpc('get_available_dumpsters_for_service', {
+      service_uuid: service_id,
+    });
 
     if (error) {
       throw new Error(`Failed to fetch available dumpsters: ${error.message}`);
@@ -449,7 +459,9 @@ export async function getAvailableDumpsters(service_id?: string): Promise<any[]>
       .from('dumpsters')
       .select('*')
       .eq('status', 'available')
-      .not('id', 'in', 
+      .not(
+        'id',
+        'in',
         supabase
           .from('order_dumpsters')
           .select('dumpster_id')
@@ -491,9 +503,9 @@ export async function calculateOrderTotal(services: ServiceSelection[]): Promise
     if (!error && service) {
       const unitPrice = serviceSelection.unit_price || service.base_price;
       const serviceTotal = serviceSelection.quantity * unitPrice;
-      
+
       subtotal += serviceTotal;
-      
+
       if (service.is_taxable) {
         tax += serviceTotal * (service.tax_rate || 0);
       }
@@ -503,7 +515,7 @@ export async function calculateOrderTotal(services: ServiceSelection[]): Promise
   return {
     subtotal,
     tax,
-    total: subtotal + tax
+    total: subtotal + tax,
   };
 }
 
@@ -528,7 +540,7 @@ export async function getOrderStats(): Promise<{
     total: data.length,
     by_status: {} as Record<string, number>,
     with_multiple_services: 0,
-    average_services_per_order: 0
+    average_services_per_order: 0,
   };
 
   let totalServices = 0;
@@ -536,12 +548,12 @@ export async function getOrderStats(): Promise<{
   for (const order of data) {
     // Count by status
     stats.by_status[order.status] = (stats.by_status[order.status] || 0) + 1;
-    
+
     // Count multiple services
     if (order.has_multiple_services) {
       stats.with_multiple_services++;
     }
-    
+
     // Sum services for average
     totalServices += order.service_count || 0;
   }

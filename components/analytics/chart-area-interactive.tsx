@@ -30,9 +30,11 @@ import { getDailyVisits, getAnalytics } from '@/lib/analytics';
 
 export const description = 'An interactive area chart showing website visits by device type';
 
-interface DeviceStat {
-  device_type: string;
-  visits: number;
+interface ChartDataPoint {
+  date: string;
+  desktop?: number;
+  mobile?: number;
+  tablet?: number;
 }
 
 const chartConfig = {
@@ -56,7 +58,7 @@ const chartConfig = {
 export function ChartAreaInteractive() {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState('7d');
-  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [chartData, setChartData] = React.useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -74,20 +76,23 @@ export function ChartAreaInteractive() {
         const days = parseInt(timeRange.replace('d', ''));
         const [dailyVisits, analyticsData] = await Promise.all([
           getDailyVisits(days),
-          getAnalytics(days)
+          getAnalytics(days),
         ]);
 
         // Calculate device stats from analytics data
         const deviceStats: Record<string, number> = {};
         if (analyticsData) {
-          analyticsData.forEach((visit: any) => {
+          analyticsData.forEach((visit: { device_type: string }) => {
             const deviceType = visit.device_type || 'desktop';
             deviceStats[deviceType] = (deviceStats[deviceType] || 0) + 1;
           });
         }
 
         // Calculate device ratios
-        const totalDeviceVisits = Object.values(deviceStats).reduce((sum: number, count: number) => sum + count, 0);
+        const totalDeviceVisits = Object.values(deviceStats).reduce(
+          (sum: number, count: number) => sum + count,
+          0
+        );
         const deviceRatios = {
           desktop: totalDeviceVisits > 0 ? (deviceStats.desktop || 0) / totalDeviceVisits : 0.6,
           mobile: totalDeviceVisits > 0 ? (deviceStats.mobile || 0) / totalDeviceVisits : 0.3,
@@ -118,7 +123,7 @@ export function ChartAreaInteractive() {
             desktop: Math.max(0, desktop),
             mobile: Math.max(0, mobile),
             tablet: Math.max(0, tablet),
-            total: totalVisits
+            total: totalVisits,
           };
         });
 
@@ -142,7 +147,9 @@ export function ChartAreaInteractive() {
       <CardHeader>
         <CardTitle>Visitors</CardTitle>
         <CardDescription>
-          <span className="hidden @[540px]/card:block">Total visits from different device types</span>
+          <span className="hidden @[540px]/card:block">
+            Total visits from different device types
+          </span>
           <span className="@[540px]/card:hidden">Device breakdown</span>
         </CardDescription>
         <CardAction>

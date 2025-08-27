@@ -2,7 +2,6 @@ import type { NextConfig } from 'next';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-
 const nextConfig: NextConfig = {
   images: {
     // SECURITY: Restrict image sources to trusted domains only
@@ -24,15 +23,18 @@ const nextConfig: NextConfig = {
         hostname: 'maps.gstatic.com',
       },
       // Development only
-      ...(isDevelopment ? [{
-        protocol: 'http' as const,
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/image-proxy**',
-      }] : []),
+      ...(isDevelopment
+        ? [
+            {
+              protocol: 'http' as const,
+              hostname: 'localhost',
+              port: '3000',
+              pathname: '/api/image-proxy**',
+            },
+          ]
+        : []),
     ],
   },
-
 
   experimental: {
     optimizePackageImports: ['@remixicon/react', '@radix-ui/react-icons', '@tabler/icons-react'],
@@ -43,7 +45,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   devIndicators: false,
-  
+
   // Disable service worker in development
   ...(isDevelopment && {
     headers: async () => [

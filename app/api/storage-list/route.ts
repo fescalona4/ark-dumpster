@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProxyAgent } from 'undici';
 
 // Corporate proxy configuration
-const proxyUrl = process.env.HTTP_PROXY || process.env.HTTPS_PROXY || 'http://proxy.ebiz.verizon.com:80';
+const proxyUrl =
+  process.env.HTTP_PROXY || process.env.HTTPS_PROXY || 'http://proxy.ebiz.verizon.com:80';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -34,14 +35,14 @@ export async function GET(request: NextRequest) {
       limit: 100,
       offset: 0,
       sortBy: { column: 'name', order: 'asc' },
-      prefix: folder || undefined  // Try with undefined instead of empty string
+      prefix: folder || undefined, // Try with undefined instead of empty string
     });
 
     console.log('📝 Request body:', requestBody);
 
     console.log('🔧 Proxy settings:', {
       HTTP_PROXY: process.env.HTTP_PROXY,
-      HTTPS_PROXY: process.env.HTTPS_PROXY
+      HTTPS_PROXY: process.env.HTTPS_PROXY,
     });
 
     console.log('🔗 Using proxy:', proxyUrl);
@@ -55,13 +56,13 @@ export async function GET(request: NextRequest) {
     let response = await fetch(listUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
+        Authorization: `Bearer ${supabaseKey}`,
         'Content-Type': 'application/json',
-        'apikey': supabaseKey
+        apikey: supabaseKey,
       },
       body: requestBody,
-      // @ts-ignore
-      dispatcher: agent
+      // @ts-expect-error - undici types don't include dispatcher option
+      dispatcher: agent,
     });
 
     console.log(`✅ POST request status: ${response.status}`);
@@ -72,11 +73,11 @@ export async function GET(request: NextRequest) {
       response = await fetch(getUrl, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${supabaseKey}`,
-          'apikey': supabaseKey
+          Authorization: `Bearer ${supabaseKey}`,
+          apikey: supabaseKey,
         },
-        // @ts-ignore
-        dispatcher: agent
+        // @ts-expect-error - undici types don't include dispatcher option
+        dispatcher: agent,
       });
 
       console.log(`✅ GET request status: ${response.status}`);
@@ -93,15 +94,14 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     console.log(`📁 Raw response:`, JSON.stringify(data, null, 2));
-    console.log(`📁 Found ${Array.isArray(data) ? data.length : 'non-array'} files in folder "${folder}"`);
+    console.log(
+      `📁 Found ${Array.isArray(data) ? data.length : 'non-array'} files in folder "${folder}"`
+    );
 
     return NextResponse.json(data);
-
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     console.error('💥 Proxy storage list error:', error);
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

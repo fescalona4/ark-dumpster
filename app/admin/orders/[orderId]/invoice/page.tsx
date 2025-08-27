@@ -177,9 +177,7 @@ function InvoicePageContent() {
                   Back to Orders
                 </Button>
               </Link>
-              <h1 className="text-xl font-semibold">
-                Invoice for Order {order.order_number}
-              </h1>
+              <h1 className="text-xl font-semibold">Invoice for Order {order.order_number}</h1>
             </div>
             <div className="flex items-center space-x-2">
               <Button onClick={handleDownload} variant="outline" size="sm">

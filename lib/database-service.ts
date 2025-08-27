@@ -1,6 +1,6 @@
-import { } from // createServerSupabaseClient, // TODO: Use for server-side operations
-  // createServerSupabaseClientSafe, // TODO: Use for safe server operations
-  '@/lib/supabase-server';
+import {} from // createServerSupabaseClient, // TODO: Use for server-side operations
+// createServerSupabaseClientSafe, // TODO: Use for safe server operations
+'@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 
 export interface QuoteFormData {
@@ -37,10 +37,13 @@ export interface SaveQuoteResult {
   data?: any;
 }
 
-export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServices?: SelectedService[]): Promise<SaveQuoteResult> {
+export async function saveQuoteToDatabase(
+  formData: QuoteFormData,
+  selectedServices?: SelectedService[]
+): Promise<SaveQuoteResult> {
   try {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    
+
     // Only log in development
     if (isDevelopment) {
       console.log('Saving quote to database');
@@ -73,7 +76,8 @@ export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServi
     if (isDevelopment) {
       // Use custom API proxy in development to bypass corporate firewall
       const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy`;
-      const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const apiKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       supabase = createClient(proxyUrl, apiKey, {
         auth: {
@@ -141,7 +145,7 @@ export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServi
     }
 
     const savedQuote = quoteData?.[0];
-    
+
     // Save selected services if provided
     if (selectedServices && selectedServices.length > 0 && savedQuote?.id) {
       const servicesData = selectedServices.map(service => ({
@@ -151,12 +155,10 @@ export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServi
         unit_price: service.unit_price,
         total_price: service.total_price,
         notes: service.notes || null,
-        status: 'pending'
+        status: 'pending',
       }));
 
-      const { error: servicesError } = await supabase
-        .from('quote_services')
-        .insert(servicesData);
+      const { error: servicesError } = await supabase.from('quote_services').insert(servicesData);
 
       if (servicesError) {
         if (isDevelopment) {
@@ -166,7 +168,7 @@ export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServi
         // The quote is saved, just log the error
       }
     }
-    
+
     if (isDevelopment) {
       console.log('Quote saved successfully');
     }
@@ -180,7 +182,10 @@ export async function saveQuoteToDatabase(formData: QuoteFormData, selectedServi
   } catch (error) {
     const isDevelopment = process.env.NODE_ENV === 'development';
     if (isDevelopment) {
-      console.error('Unexpected database error:', error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        'Unexpected database error:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     }
     return {
       success: false,

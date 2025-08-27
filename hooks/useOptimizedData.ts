@@ -52,55 +52,57 @@ export function useOptimizedData<T>(
   const abortControllerRef = useRef<AbortController | null>(null);
   const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const loadData = useCallback(async (page: number, append = false) => {
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  const loadData = useCallback(
+    async (page: number, append = false) => {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    abortControllerRef.current = new AbortController();
-
-    setState(prev => ({
-      ...prev,
-      loading: true,
-      error: null,
-    }));
-
-    try {
-      const result = await fetcher(page, pageSize);
-      const totalPages = Math.ceil(result.total / pageSize);
+      abortControllerRef.current = new AbortController();
 
       setState(prev => ({
         ...prev,
-        items: append ? [...prev.items, ...result.items] : result.items,
-        totalCount: result.total,
-        hasMore: page < totalPages,
-        loading: false,
-        currentPage: page,
-        totalPages,
+        loading: true,
+        error: null,
       }));
 
-      // Preload next page on mobile
-      if (preloadNext && isMobile && page < totalPages) {
-        setTimeout(() => {
-          fetcher(page + 1, pageSize).catch(() => {
-            // Silently fail preloading
-          });
-        }, 1000);
-      }
+      try {
+        const result = await fetcher(page, pageSize);
+        const totalPages = Math.ceil(result.total / pageSize);
 
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return; // Request was cancelled
-      }
+        setState(prev => ({
+          ...prev,
+          items: append ? [...prev.items, ...result.items] : result.items,
+          totalCount: result.total,
+          hasMore: page < totalPages,
+          loading: false,
+          currentPage: page,
+          totalPages,
+        }));
 
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load data',
-      }));
-    }
-  }, [fetcher, pageSize, preloadNext, isMobile]);
+        // Preload next page on mobile
+        if (preloadNext && isMobile && page < totalPages) {
+          setTimeout(() => {
+            fetcher(page + 1, pageSize).catch(() => {
+              // Silently fail preloading
+            });
+          }, 1000);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          return; // Request was cancelled
+        }
+
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to load data',
+        }));
+      }
+    },
+    [fetcher, pageSize, preloadNext, isMobile]
+  );
 
   const loadMore = useCallback(() => {
     if (state.loading || !state.hasMore) return;
@@ -111,10 +113,13 @@ export function useOptimizedData<T>(
     loadData(1, false);
   }, [loadData]);
 
-  const goToPage = useCallback((page: number) => {
-    if (page < 1 || page > state.totalPages || state.loading) return;
-    loadData(page, false);
-  }, [loadData, state.totalPages, state.loading]);
+  const goToPage = useCallback(
+    (page: number) => {
+      if (page < 1 || page > state.totalPages || state.loading) return;
+      loadData(page, false);
+    },
+    [loadData, state.totalPages, state.loading]
+  );
 
   // Initial load
   useEffect(() => {
@@ -125,7 +130,7 @@ export function useOptimizedData<T>(
   useEffect(() => {
     if (refreshInterval) {
       refreshTimerRef.current = setInterval(refresh, refreshInterval);
-      
+
       return () => {
         if (refreshTimerRef.current) {
           clearInterval(refreshTimerRef.current);
@@ -157,18 +162,14 @@ export function useOptimizedData<T>(
 }
 
 // Hook for virtual scrolling (performance optimization for large lists)
-export function useVirtualScrolling<T>(
-  items: T[],
-  itemHeight: number,
-  containerHeight: number
-) {
+export function useVirtualScrolling<T>(items: T[], itemHeight: number, containerHeight: number) {
   const [scrollTop, setScrollTop] = useState(0);
-  
+
   const visibleRange = useMemo(() => {
     const start = Math.floor(scrollTop / itemHeight);
     const visibleCount = Math.ceil(containerHeight / itemHeight);
     const end = Math.min(start + visibleCount + 5, items.length); // Add buffer
-    
+
     return { start: Math.max(0, start - 2), end }; // Add buffer above
   }, [scrollTop, itemHeight, containerHeight, items.length]);
 
@@ -197,38 +198,41 @@ export function useImagePreloader(imageUrls: string[], priority: boolean = false
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
 
-  const preloadImage = useCallback((url: string) => {
-    if (loadedImages.has(url) || loadingImages.has(url)) {
-      return Promise.resolve();
-    }
+  const preloadImage = useCallback(
+    (url: string) => {
+      if (loadedImages.has(url) || loadingImages.has(url)) {
+        return Promise.resolve();
+      }
 
-    setLoadingImages(prev => new Set(prev).add(url));
+      setLoadingImages(prev => new Set(prev).add(url));
 
-    return new Promise<void>((resolve, reject) => {
-      const img = new Image();
-      
-      img.onload = () => {
-        setLoadedImages(prev => new Set(prev).add(url));
-        setLoadingImages(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(url);
-          return newSet;
-        });
-        resolve();
-      };
+      return new Promise<void>((resolve, reject) => {
+        const img = new Image();
 
-      img.onerror = () => {
-        setLoadingImages(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(url);
-          return newSet;
-        });
-        reject(new Error(`Failed to load image: ${url}`));
-      };
+        img.onload = () => {
+          setLoadedImages(prev => new Set(prev).add(url));
+          setLoadingImages(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(url);
+            return newSet;
+          });
+          resolve();
+        };
 
-      img.src = url;
-    });
-  }, [loadedImages, loadingImages]);
+        img.onerror = () => {
+          setLoadingImages(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(url);
+            return newSet;
+          });
+          reject(new Error(`Failed to load image: ${url}`));
+        };
+
+        img.src = url;
+      });
+    },
+    [loadedImages, loadingImages]
+  );
 
   useEffect(() => {
     if (priority) {
@@ -236,7 +240,7 @@ export function useImagePreloader(imageUrls: string[], priority: boolean = false
       imageUrls.slice(0, 3).forEach(url => {
         preloadImage(url);
       });
-      
+
       // Load remaining images with delay
       setTimeout(() => {
         imageUrls.slice(3).forEach(url => {
@@ -266,7 +270,7 @@ export function useConnectionAware() {
   useEffect(() => {
     if ('connection' in navigator) {
       const connection = (navigator as any).connection;
-      
+
       const updateConnection = () => {
         setConnectionInfo({
           effectiveType: connection.effectiveType || '4g',
@@ -285,9 +289,11 @@ export function useConnectionAware() {
   }, []);
 
   const isSlowConnection = useMemo(() => {
-    return connectionInfo.effectiveType === 'slow-2g' || 
-           connectionInfo.effectiveType === '2g' ||
-           connectionInfo.saveData;
+    return (
+      connectionInfo.effectiveType === 'slow-2g' ||
+      connectionInfo.effectiveType === '2g' ||
+      connectionInfo.saveData
+    );
   }, [connectionInfo]);
 
   const shouldReduceData = useMemo(() => {
@@ -317,10 +323,7 @@ export function useOptimizedRendering<T>(
       return;
     }
 
-    const nextBatch = items.slice(
-      renderedItems.length,
-      renderedItems.length + maxRenderBatch
-    );
+    const nextBatch = items.slice(renderedItems.length, renderedItems.length + maxRenderBatch);
 
     setRenderedItems(prev => [...prev, ...nextBatch]);
 

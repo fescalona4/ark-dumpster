@@ -36,7 +36,8 @@ export default function DumpstersPage() {
 
       const { data, error } = await supabase
         .from('dumpsters')
-        .select(`
+        .select(
+          `
           *,
           orders!current_order_id (
             id,
@@ -44,7 +45,8 @@ export default function DumpstersPage() {
             first_name,
             last_name
           )
-        `)
+        `
+        )
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -159,10 +161,7 @@ export default function DumpstersPage() {
         return;
       }
 
-      const { error } = await supabase
-        .from('dumpsters')
-        .delete()
-        .eq('id', originalDumpster.id);
+      const { error } = await supabase.from('dumpsters').delete().eq('id', originalDumpster.id);
 
       if (error) {
         console.error('Error deleting dumpster:', error);
@@ -233,7 +232,6 @@ export default function DumpstersPage() {
     }
   };
 
-
   // Transform dumpsters data for the data table
   const dumpstersTableData = dumpsters
     .map((dumpster, index) => {
@@ -243,7 +241,9 @@ export default function DumpstersPage() {
       if (dumpster.current_order_id && dumpster.orders) {
         const order = Array.isArray(dumpster.orders) ? dumpster.orders[0] : dumpster.orders;
         if (order) {
-          const customerName = order.last_name ? `${order.first_name} ${order.last_name}` : order.first_name;
+          const customerName = order.last_name
+            ? `${order.first_name} ${order.last_name}`
+            : order.first_name;
           assignmentInfo = `Order #${order.order_number} - ${customerName}`;
           isAssigned = true;
         }
@@ -285,7 +285,11 @@ export default function DumpstersPage() {
     })
     .sort((a, b) => a.sortableDistance - b.sortableDistance); // Sort by distance
 
-  console.log('Transformed dumpsters table data:', dumpstersTableData.length, dumpstersTableData.slice(0, 2));
+  console.log(
+    'Transformed dumpsters table data:',
+    dumpstersTableData.length,
+    dumpstersTableData.slice(0, 2)
+  );
 
   if (loading) {
     return (
@@ -314,8 +318,6 @@ export default function DumpstersPage() {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-6">
         <div className="flex flex-col gap-6 py-6">
-
-
           {/* Stats Cards */}
           <div className="grid grid-cols-3 gap-4 px-6">
             <div className="bg-card rounded-lg border p-6">
@@ -323,7 +325,9 @@ export default function DumpstersPage() {
               <div className="text-sm text-muted-foreground">Total Dumpsters</div>
             </div>
             <div className="bg-card rounded-lg border p-6">
-              <div className="text-2xl font-bold text-green-600 mb-1">{dumpsterStats.available}</div>
+              <div className="text-2xl font-bold text-green-600 mb-1">
+                {dumpsterStats.available}
+              </div>
               <div className="text-sm text-muted-foreground">Available</div>
             </div>
             <div className="bg-card rounded-lg border p-6">
@@ -346,19 +350,15 @@ export default function DumpstersPage() {
               />
             </div>
 
-
             {/* Dumpsters Map */}
             <div className="px-6">
               <h2 className="text-lg font-semibold mb-4">Dumpster Locations</h2>
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing {dumpsters.filter(d => d.address || d.last_known_location).length} of {dumpsters.length} dumpsters with location data on the map.
+                  Showing {dumpsters.filter(d => d.address || d.last_known_location).length} of{' '}
+                  {dumpsters.length} dumpsters with location data on the map.
                 </div>
-                <DumpstersMap
-                  dumpsters={dumpsters}
-                  height="600px"
-                  className="border rounded-lg"
-                />
+                <DumpstersMap dumpsters={dumpsters} height="600px" className="border rounded-lg" />
               </div>
             </div>
           </div>

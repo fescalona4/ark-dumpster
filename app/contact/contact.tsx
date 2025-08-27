@@ -187,11 +187,9 @@ const Contacts = () => {
         let description;
 
         if (!result.userEmailSent) {
-          description =
-            `Thank you, ${formData.firstName}! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.`;
+          description = `Thank you, ${formData.firstName}! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.`;
         } else {
-          description =
-            `Thank you, ${formData.firstName}! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.`;
+          description = `Thank you, ${formData.firstName}! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.`;
         }
 
         // Add development info if email was skipped
@@ -360,7 +358,9 @@ const Contacts = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <Label htmlFor="firstName" className="text-white">First Name *</Label>
+                        <Label htmlFor="firstName" className="text-white">
+                          First Name *
+                        </Label>
                         <Input
                           placeholder="First name"
                           id="firstName"
@@ -371,7 +371,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="lastName" className="text-white">Last Name *</Label>
+                        <Label htmlFor="lastName" className="text-white">
+                          Last Name *
+                        </Label>
                         <Input
                           placeholder="Last name"
                           id="lastName"
@@ -382,7 +384,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="phone" className="text-white">Phone Number *</Label>
+                        <Label htmlFor="phone" className="text-white">
+                          Phone Number *
+                        </Label>
                         <Input
                           type="tel"
                           placeholder="(555) 123-4567"
@@ -394,7 +398,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-white">Email Address *</Label>
+                        <Label htmlFor="email" className="text-white">
+                          Email Address *
+                        </Label>
                         <Input
                           type="email"
                           placeholder="john.doe@example.com"
@@ -412,12 +418,16 @@ const Contacts = () => {
                   <div className="space-y-6">
                     <div className="border-b border-white/20 pb-4">
                       <h3 className="text-lg font-semibold text-white">Service Location</h3>
-                      <p className="text-sm text-white/70 mt-1">Where should we deliver the dumpster?</p>
+                      <p className="text-sm text-white/70 mt-1">
+                        Where should we deliver the dumpster?
+                      </p>
                     </div>
                     <div className="grid gap-6">
                       <div className="grid md:grid-cols-3 gap-6">
                         <div className="md:col-span-2">
-                          <Label htmlFor="address" className="text-white">Street Address *</Label>
+                          <Label htmlFor="address" className="text-white">
+                            Street Address *
+                          </Label>
                           <GooglePlacesAutocomplete
                             id="address"
                             placeholder="123 Main Street"
@@ -428,7 +438,9 @@ const Contacts = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="address2" className="text-white truncate">Apt/Suite (Optional)</Label>
+                          <Label htmlFor="address2" className="text-white truncate">
+                            Apt/Suite (Optional)
+                          </Label>
                           <Input
                             placeholder="Apt, suite, unit, etc."
                             id="address2"
@@ -441,7 +453,9 @@ const Contacts = () => {
                       </div>
                       <div className="grid md:grid-cols-3 gap-6">
                         <div>
-                          <Label htmlFor="city" className="text-white">City *</Label>
+                          <Label htmlFor="city" className="text-white">
+                            City *
+                          </Label>
                           <Input
                             placeholder="City"
                             id="city"
@@ -452,7 +466,9 @@ const Contacts = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="state" className="text-white">State *</Label>
+                          <Label htmlFor="state" className="text-white">
+                            State *
+                          </Label>
                           <Input
                             placeholder="FL"
                             id="state"
@@ -464,7 +480,9 @@ const Contacts = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="zipCode" className="text-white">ZIP Code *</Label>
+                          <Label htmlFor="zipCode" className="text-white">
+                            ZIP Code *
+                          </Label>
                           <Input
                             type="tel"
                             placeholder="12345"
@@ -485,7 +503,9 @@ const Contacts = () => {
                   <div className="space-y-6">
                     <div className="border-b border-white/20 pb-4">
                       <h3 className="text-lg font-semibold text-white">Service Details</h3>
-                      <p className="text-sm text-white/70 mt-1">When do you need the dumpster and for how long?</p>
+                      <p className="text-sm text-white/70 mt-1">
+                        When do you need the dumpster and for how long?
+                      </p>
                     </div>
                     <div className="grid gap-6">
                       <div className="grid md:grid-cols-3 gap-6">
@@ -496,7 +516,9 @@ const Contacts = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="timeNeeded" className="text-white">Rental Duration *</Label>
+                          <Label htmlFor="timeNeeded" className="text-white">
+                            Rental Duration *
+                          </Label>
                           <Select
                             value={formData.timeNeeded}
                             onValueChange={value => handleSelectChange('timeNeeded', value)}
@@ -517,7 +539,9 @@ const Contacts = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="dumpsterSize" className="text-white">Dumpster Size *</Label>
+                          <Label htmlFor="dumpsterSize" className="text-white">
+                            Dumpster Size *
+                          </Label>
                           <Select
                             value={formData.dumpsterSize}
                             onValueChange={value => handleSelectChange('dumpsterSize', value)}
@@ -537,7 +561,9 @@ const Contacts = () => {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="message" className="text-white">Project Details</Label>
+                        <Label htmlFor="message" className="text-white">
+                          Project Details
+                        </Label>
                         <Textarea
                           id="message"
                           placeholder="Tell us about your project and what type of materials you'll be disposing of..."
@@ -546,7 +572,9 @@ const Contacts = () => {
                           className="mt-1.5 bg-white shadow-none"
                           rows={4}
                         />
-                        <p className="text-xs text-white/60 mt-1">Help us provide an accurate quote by describing your project</p>
+                        <p className="text-xs text-white/60 mt-1">
+                          Help us provide an accurate quote by describing your project
+                        </p>
                       </div>
                     </div>
                   </div>

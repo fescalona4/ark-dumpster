@@ -123,7 +123,10 @@ const Testimonials = () => (
 
 const TestimonialList = ({ testimonials }: { testimonials: Testimonial[] }) =>
   testimonials.map((testimonial: Testimonial) => (
-    <div key={testimonial.id} className="flex flex-col outline outline-border px-6 py-8 backdrop-blur-sm">
+    <div
+      key={testimonial.id}
+      className="flex flex-col outline outline-border px-6 py-8 backdrop-blur-sm"
+    >
       <div className="flex gap-1.5">
         <RiStarFill className="w-4 h-4 fill-orange-400" />
         <RiStarFill className="w-4 h-4 fill-orange-400" />

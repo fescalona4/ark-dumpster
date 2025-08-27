@@ -106,10 +106,12 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => {
-              handleSignOut();
-              handleMenuItemClick();
-            }}>
+            <DropdownMenuItem
+              onClick={() => {
+                handleSignOut();
+                handleMenuItemClick();
+              }}
+            >
               <IconLogout />
               Log out
             </DropdownMenuItem>

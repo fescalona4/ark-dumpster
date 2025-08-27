@@ -173,7 +173,7 @@ body {
     padding: 0;
     height: 100%;
   }
-  
+
   /* Fix for mobile viewport issues */
   @supports (padding: max(0px)) {
     body {

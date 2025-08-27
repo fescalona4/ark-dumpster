@@ -34,19 +34,17 @@ export async function POST(
 
     if (!orders || orders.length === 0) {
       console.error('No order found with ID:', orderId);
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
     const order = orders[0];
 
     // Check if payments already exist for this order
     const existingPayments = await getOrderPayments(orderId);
-    const activePayment = existingPayments.payments.find(p => 
-      p.method === 'SQUARE_INVOICE' && 
-      ['DRAFT', 'PENDING', 'SENT', 'VIEWED', 'PARTIALLY_PAID'].includes(p.status)
+    const activePayment = existingPayments.payments.find(
+      p =>
+        p.method === 'SQUARE_INVOICE' &&
+        ['DRAFT', 'PENDING', 'SENT', 'VIEWED', 'PARTIALLY_PAID'].includes(p.status)
     );
 
     if (activePayment) {
@@ -58,7 +56,7 @@ export async function POST(
           id: activePayment.square_invoice_id,
           status: activePayment.status,
           publicUrl: activePayment.public_payment_url,
-        }
+        },
       });
     }
 
@@ -103,16 +101,13 @@ export async function GET(
 
     // Get payments for this order
     const paymentsResult = await getOrderPayments(orderId);
-    
+
     if (!paymentsResult.success) {
-      return NextResponse.json(
-        { error: 'Failed to fetch payments' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
-    const squarePayment = paymentsResult.payments.find(p => 
-      p.method === 'SQUARE_INVOICE' && p.square_invoice_id
+    const squarePayment = paymentsResult.payments.find(
+      p => p.method === 'SQUARE_INVOICE' && p.square_invoice_id
     );
 
     if (!squarePayment) {
@@ -169,17 +164,15 @@ export async function DELETE(
 
     // Get payments for this order
     const paymentsResult = await getOrderPayments(orderId);
-    
+
     if (!paymentsResult.success) {
-      return NextResponse.json(
-        { error: 'Failed to fetch payments' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
-    const squarePayment = paymentsResult.payments.find(p => 
-      p.method === 'SQUARE_INVOICE' && 
-      ['DRAFT', 'PENDING', 'SENT', 'VIEWED', 'PARTIALLY_PAID'].includes(p.status)
+    const squarePayment = paymentsResult.payments.find(
+      p =>
+        p.method === 'SQUARE_INVOICE' &&
+        ['DRAFT', 'PENDING', 'SENT', 'VIEWED', 'PARTIALLY_PAID'].includes(p.status)
     );
 
     if (!squarePayment) {

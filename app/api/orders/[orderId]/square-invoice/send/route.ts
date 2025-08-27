@@ -12,16 +12,13 @@ export async function POST(
 
     // Get payments for this order
     const paymentsResult = await getOrderPayments(orderId);
-    
+
     if (!paymentsResult.success) {
-      return NextResponse.json(
-        { error: 'Failed to fetch payments' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch payments' }, { status: 500 });
     }
 
-    const squarePayment = paymentsResult.payments.find(p => 
-      p.method === 'SQUARE_INVOICE' && p.square_invoice_id
+    const squarePayment = paymentsResult.payments.find(
+      p => p.method === 'SQUARE_INVOICE' && p.square_invoice_id
     );
 
     if (!squarePayment) {
@@ -41,7 +38,7 @@ export async function POST(
           id: squarePayment.square_invoice_id,
           status: squarePayment.status,
           publicUrl: squarePayment.public_payment_url,
-        }
+        },
       });
     }
 

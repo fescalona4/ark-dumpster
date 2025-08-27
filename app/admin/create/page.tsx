@@ -23,7 +23,8 @@ import { DropoffCalendar } from '@/components/forms/dropoffCalendar';
 import { Notification } from '@/components/ui/notification';
 import AuthGuard from '@/components/providers/auth-guard';
 import GooglePlacesAutocomplete from '@/components/forms/google-places-autocomplete';
-import { AddServicesDialog } from '@/components/dialogs/add-services-dialog';
+import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
+import { Service } from '@/types/database';
 
 export default function CreateQuotePage() {
   return (
@@ -62,14 +63,7 @@ function CreateQuoteContent() {
     timeNeeded: '1-day',
     message: '',
   });
-  const [selectedServices, setSelectedServices] = useState<{
-    service_id: string;
-    service: any;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    notes: string;
-  }[]>([]);
+  const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -187,7 +181,9 @@ function CreateQuoteContent() {
           subject: 'New Service Quote Request (Admin Created) - ARK Dumpster',
           skipEmail: true, // Always skip email for admin-created quotes
           quoteDetails: {
-            service: selectedServices.map(s => `${s.service.display_name} (Qty: ${s.quantity})`).join(', '),
+            service: selectedServices
+              .map(s => `${s.service?.display_name || 'Unknown'} (Qty: ${s.quantity})`)
+              .join(', '),
             location:
               `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
             date: formData.serviceDate || 'TBD',
@@ -212,8 +208,8 @@ function CreateQuoteContent() {
           description: `Quote for ${formData.firstName} ${formData.lastName} has been created and is ready for review.`,
           action: {
             label: 'View Quotes',
-            onClick: () => window.location.href = '/admin/quotes'
-          }
+            onClick: () => (window.location.href = '/admin/quotes'),
+          },
         });
 
         // Reset form
@@ -280,7 +276,9 @@ function CreateQuoteContent() {
             <div className="space-y-6">
               <div className="border-b border-border pb-4">
                 <h3 className="text-lg font-semibold text-foreground">Customer Information</h3>
-                <p className="text-sm text-muted-foreground mt-1">Contact details for the quote request</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Contact details for the quote request
+                </p>
               </div>
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -336,7 +334,9 @@ function CreateQuoteContent() {
             <div className="space-y-6">
               <div className="border-b border-border pb-4">
                 <h3 className="text-lg font-semibold text-foreground">Service Location</h3>
-                <p className="text-sm text-muted-foreground mt-1">Where should the dumpster be delivered?</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Where should the dumpster be delivered?
+                </p>
               </div>
               <div className="grid gap-6">
                 <div className="grid md:grid-cols-3 gap-6">
@@ -352,7 +352,9 @@ function CreateQuoteContent() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="address2" className="truncate">Apt/Suite (Optional)</Label>
+                    <Label htmlFor="address2" className="truncate">
+                      Apt/Suite (Optional)
+                    </Label>
                     <Input
                       placeholder="Apt, suite, unit, etc."
                       id="address2"
@@ -409,7 +411,9 @@ function CreateQuoteContent() {
             <div className="space-y-6">
               <div className="border-b border-border pb-4">
                 <h3 className="text-lg font-semibold text-foreground">Service Details</h3>
-                <p className="text-sm text-muted-foreground mt-1">When do you need the dumpster and for how long?</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  When do you need the dumpster and for how long?
+                </p>
               </div>
               <div className="grid gap-6">
                 <div className="grid md:grid-cols-3 gap-6">
@@ -446,10 +450,9 @@ function CreateQuoteContent() {
                   <div className="mt-1.5 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">
-                        {selectedServices.length === 0 
-                          ? 'No services selected' 
-                          : `${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''} selected`
-                        }
+                        {selectedServices.length === 0
+                          ? 'No services selected'
+                          : `${selectedServices.length} service${selectedServices.length !== 1 ? 's' : ''} selected`}
                       </span>
                       <AddServicesDialog
                         onServicesAdded={setSelectedServices}
@@ -459,19 +462,27 @@ function CreateQuoteContent() {
                     </div>
                     {selectedServices.length > 0 && (
                       <div className="space-y-2 p-3 bg-muted/30 rounded-md">
-                        {selectedServices.map((service) => (
-                          <div key={service.service_id} className="flex items-center justify-between text-sm">
-                            <span>{service.service.display_name}</span>
+                        {selectedServices.map(service => (
+                          <div
+                            key={service.service_id}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span>{service.service?.display_name || 'Unknown'}</span>
                             <div className="text-right">
-                              <div className="font-medium">Qty: {service.quantity} × ${service.unit_price}</div>
-                              <div className="text-green-600">${service.total_price.toFixed(2)}</div>
+                              <div className="font-medium">
+                                Qty: {service.quantity} × ${service.unit_price}
+                              </div>
+                              <div className="text-green-600">
+                                ${service.total_price.toFixed(2)}
+                              </div>
                             </div>
                           </div>
                         ))}
                         <div className="pt-2 border-t border-border/50 flex justify-between font-medium">
                           <span>Total:</span>
                           <span className="text-green-600">
-                            ${selectedServices.reduce((sum, s) => sum + s.total_price, 0).toFixed(2)}
+                            $
+                            {selectedServices.reduce((sum, s) => sum + s.total_price, 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -488,7 +499,9 @@ function CreateQuoteContent() {
                     className="mt-1.5"
                     rows={4}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Help us provide an accurate quote by describing your project</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Help us provide an accurate quote by describing your project
+                  </p>
                 </div>
               </div>
             </div>
@@ -520,7 +533,6 @@ function CreateQuoteContent() {
                   'Create Quote'
                 )}
               </Button>
-
             </div>
           </form>
         </CardContent>

@@ -35,7 +35,7 @@ async function getCarouselImages(): Promise<CarouselImage[]> {
       // Create carousel images with duplicates for seamless scrolling
       const baseImages = imageFiles.map((file: any) => ({
         name: file.name,
-        url: getImageUrl(`carousel/${file.name}`)
+        url: getImageUrl(`carousel/${file.name}`),
       }));
 
       // Duplicate images for seamless infinite scroll
@@ -128,7 +128,7 @@ export default async function Carousel({ className }: CarouselProps) {
                           objectPosition: 'center',
                           objectFit: 'cover',
                         }}
-                      // unoptimized
+                        // unoptimized
                       />
                     </div>
                   </div>
