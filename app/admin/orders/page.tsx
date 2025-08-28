@@ -29,6 +29,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -49,11 +55,14 @@ import {
   RiRefreshLine,
   RiMoneyDollarCircleLine,
   RiDeleteBinLine,
+  RiMore2Line,
+  RiEditLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
 import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
 import { ServiceEditDialog } from '@/components/dialogs/service-edit-dialog';
+import { OrderEditDialog } from '@/components/dialogs/order-edit-dialog';
 import { PaymentManager } from '@/components/admin/payment-manager';
 import { useRouter } from 'next/navigation';
 import {
@@ -69,6 +78,7 @@ import {
   updateOrderStatus as updateOrderStatusShared,
   getStatusIcon,
 } from '@/components/order-management/order-status-manager';
+import { toast } from 'sonner';
 
 // Helper function to map order status to Status component status
 const mapOrderStatusToStatusType = (
@@ -149,6 +159,14 @@ function OrdersPageContent() {
   const [selectedService, setSelectedService] = useState<OrderServiceWithRelations | null>(null);
   const [serviceEditDialogOpen, setServiceEditDialogOpen] = useState(false);
 
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedOrderToDelete, setSelectedOrderToDelete] = useState<string | null>(null);
+
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
+  const [editForms, setEditForms] = useState<{ [key: string]: Partial<OrderViewData> }>({});
+
 
   /**
    * Fetches dumpsters from the database
@@ -191,12 +209,12 @@ function OrdersPageContent() {
         let filteredOrders = (ordersData || []) as unknown as OrderViewData[];
         if (statusFilter === 'open') {
           // Open orders exclude completed and cancelled orders
-          filteredOrders = filteredOrders.filter(order => 
+          filteredOrders = filteredOrders.filter(order =>
             order.order_status !== 'completed' && order.order_status !== 'cancelled'
           );
         } else if (statusFilter === 'completed') {
           // Completed section includes both completed and cancelled orders
-          filteredOrders = filteredOrders.filter(order => 
+          filteredOrders = filteredOrders.filter(order =>
             order.order_status === 'completed' || order.order_status === 'cancelled'
           );
         }
@@ -293,7 +311,7 @@ function OrdersPageContent() {
       } as any,
       dumpster_assignments: [],
     } as unknown as OrderServiceWithRelations;
-    
+
     setSelectedService(serviceForDialog);
     setServiceEditDialogOpen(true);
   };
@@ -411,10 +429,10 @@ function OrdersPageContent() {
         orders.map(order =>
           order.id === orderId
             ? {
-                ...order,
-                ...result.updatedOrder,
-                order_status: result.updatedOrder?.status || order.order_status,
-              }
+              ...order,
+              ...result.updatedOrder,
+              order_status: result.updatedOrder?.status || order.order_status,
+            }
             : order
         )
       );
@@ -425,11 +443,11 @@ function OrdersPageContent() {
           dumpsters.map(d =>
             d.id === result.freedDumpsterId
               ? {
-                  ...d,
-                  status: 'available' as const,
-                  current_order_id: undefined,
-                  address: undefined,
-                }
+                ...d,
+                status: 'available' as const,
+                current_order_id: undefined,
+                address: undefined,
+              }
               : d
           )
         );
@@ -508,6 +526,61 @@ function OrdersPageContent() {
     } catch (err) {
       console.error('Unexpected error deleting order:', err);
       alert('Failed to delete order');
+    }
+  };
+
+  /**
+   * Handles delete from dropdown menu
+   */
+  const handleDelete = async (orderId: string) => {
+    await deleteOrder(orderId);
+    setDeleteDialogOpen(false);
+    setSelectedOrderToDelete(null);
+  };
+
+  /**
+   * Saves order customer information
+   */
+  const saveOrder = async (orderId: string) => {
+    const editForm = editForms[orderId];
+    if (!editForm) return;
+
+    try {
+      const updateData = {
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
+        email: editForm.email,
+        phone: editForm.phone,
+        address: editForm.address,
+        address2: editForm.address2,
+        city: editForm.city,
+        state: editForm.state,
+        zip_code: editForm.zip_code,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', orderId)
+        .select();
+
+      if (error) {
+        console.error('Error updating order:', error);
+        toast.error('Failed to save order. Please try again.');
+      } else {
+        // Update the orders list with the new data
+        setOrders(orders.map(o => (o.id === orderId ? { ...o, ...data[0] } : o)));
+        // Clear the edit form
+        setEditForms(prev => ({
+          ...prev,
+          [orderId]: {},
+        }));
+        toast.success('Order updated successfully!');
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('An unexpected error occurred while saving the order.');
     }
   };
 
@@ -611,11 +684,11 @@ function OrdersPageContent() {
           dumpsters.map(d =>
             d.id === dumpsterId
               ? {
-                  ...d,
-                  status: 'in_use',
-                  current_order_id: orderId,
-                  last_assigned_at: new Date().toISOString(),
-                }
+                ...d,
+                status: 'in_use',
+                current_order_id: orderId,
+                last_assigned_at: new Date().toISOString(),
+              }
               : d
           )
         );
@@ -766,38 +839,8 @@ function OrdersPageContent() {
               role="article"
               aria-labelledby={`order-${order.id}-title`}
             >
-              {/* Status badge and delete button positioned in top right */}
+              {/* Status badge positioned in top right */}
               <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-11 min-w-[44px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 touch-manipulation"
-                    >
-                      <RiDeleteBinLine className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Order</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to permanently delete this order for{' '}
-                        {order.first_name} {order.last_name}? This action cannot be undone and will
-                        remove all order data.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteOrder(order.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Delete Order
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
                 <Status
                   status={mapOrderStatusToStatusType(order.order_status)}
                   className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
@@ -814,18 +857,20 @@ function OrdersPageContent() {
                 <div className="flex items-start justify-between">
                   <div>
                     {/* Order number */}
-                    <div className="text-sm font-bold text-foreground mb-1">
-                      <button
-                        onClick={() => router.push(`/admin/orders/${order.id}`)}
-                        className="hover:text-blue-600 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                        aria-label={`View details for order ${order.order_number}`}
-                      >
-                        Order {order.order_number}
-                      </button>
+                    <div className="flex items-center mb-6">
+                      <div className="text-lg font-bold text-foreground">
+                        <button
+                          onClick={() => router.push(`/admin/orders/${order.id}`)}
+                          className="hover:text-blue-500 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                          aria-label={`View details for order ${order.order_number}`}
+                        >
+                          Order {order.order_number}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Customer name */}
-                    <CardTitle id={`order-${order.id}-title`} className="text-lg mb-2 font-bold">
+                    <CardTitle id={`order-${order.id}-title`} className="text-lg mb-2 font-semibold">
                       {order.first_name} {order.last_name || ''}
                     </CardTitle>
 
@@ -837,7 +882,7 @@ function OrdersPageContent() {
                             <RiPhoneLine className="h-4 w-4 flex-shrink-0" />
                             <a
                               href={`tel:${order.phone}`}
-                              className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                              className="text-blue-500 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                               onClick={e => {
                                 e.stopPropagation();
                                 handleQuickCall(order.phone ? parseInt(order.phone) : 0);
@@ -852,7 +897,7 @@ function OrdersPageContent() {
                           <RiMailLine className="h-4 w-4 flex-shrink-0" />
                           <a
                             href={`mailto:${order.email}`}
-                            className="text-blue-600 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                            className="text-blue-500 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                             aria-label={`Email ${order.first_name} ${order.last_name} at ${order.email}`}
                           >
                             {order.email}
@@ -860,7 +905,7 @@ function OrdersPageContent() {
                         </div>
                         {order.address && (
                           <div className="flex items-start gap-2">
-                            <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
+                            <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
                               <button
                                 onClick={e => {
@@ -871,7 +916,7 @@ function OrdersPageContent() {
                                     order.state || undefined
                                   );
                                 }}
-                                className="text-left hover:underline font-medium text-blue-600 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                className="text-left hover:underline font-medium text-blue-500 touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                                 aria-label={`Navigate to ${order.address || ''}${order.city && order.state ? `, ${order.city}, ${order.state}` : ''}`}
                               >
                                 <div>{order.address}</div>
@@ -918,7 +963,7 @@ function OrdersPageContent() {
                     <div className="space-y-2 text-sm">
                       {/* All Services in unified list */}
                       {order.services_summary ||
-                      (orderServices[order.id] && orderServices[order.id].length > 0) ? (
+                        (orderServices[order.id] && orderServices[order.id].length > 0) ? (
                         <div className="space-y-2">
                           {/* Main services from summary */}
                           {order.services_summary &&
@@ -941,19 +986,11 @@ function OrdersPageContent() {
                                       orderService.services?.display_name === service.trim()
                                   );
 
-                                  if (mainService && mainService.total_price !== 0) {
-                                    return (
-                                      <span className={`font-medium ${mainService.total_price > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        ${mainService.total_price.toFixed(2)}
-                                      </span>
-                                    );
-                                  } else {
-                                    return (
-                                      <span className="text-blue-600 font-medium text-xs">
-                                        Main Service
-                                      </span>
-                                    );
-                                  }
+                                  return (
+                                    <span className={`font-medium ${mainService.total_price > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      ${mainService.total_price.toFixed(0)}
+                                    </span>
+                                  );
                                 })()}
                               </button>
                             ))}
@@ -990,7 +1027,7 @@ function OrdersPageContent() {
                                     </div>
                                   </div>
                                   <span className="text-green-600 font-medium">
-                                    ${service.total_price.toFixed(2)}
+                                    ${service.total_price.toFixed(0)}
                                   </span>
                                 </button>
                               ))}
@@ -1004,17 +1041,17 @@ function OrdersPageContent() {
 
                       {/* Total Summary */}
                       {orderServices[order.id] && orderServices[order.id].length > 0 && (
-                        <div className="pt-2 border-t">
-                          <div className="flex justify-between items-center font-bold text-base">
+                        <div className="pt-2 border-t pl-1">
+                          <div className="flex justify-between items-center font-semibold text-base">
                             <span className="flex items-center gap-2">
                               <RiMoneyDollarCircleLine className="h-4 w-4 text-green-600" />
                               Services Total:
                             </span>
-                            <span className="text-green-600">
+                            <span className="text-green-600 pr-2">
                               $
                               {orderServices[order.id]
                                 .reduce((sum, s) => sum + s.total_price, 0)
-                                .toFixed(2)}
+                                .toFixed(0)}
                             </span>
                           </div>
                         </div>
@@ -1043,7 +1080,40 @@ function OrdersPageContent() {
 
                   {/* Order Management */}
                   <div className="bg-muted/30 p-3 rounded-lg">
-                    <h4 className="font-semibold mb-2 text-base">Order Details</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-base">Order Details</h4>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="lg"
+                            className="h-8 w-8 p-0 rounded-full hover:bg-muted"
+                          >
+                            <RiMore2Line className="h-4 w-4 font-extrabold" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setEditDialogOpen(order.id)}
+                            className="cursor-pointer"
+                          >
+                            <RiEditLine className="mr-2 h-4 w-4" />
+                            Edit Order
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedOrderToDelete(order.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <RiDeleteBinLine className="mr-2 h-4 w-4" />
+                            Delete Order
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     <div className="space-y-3 text-sm">
                       {order.quoted_price && (
                         <div className="flex items-center gap-2 font-bold text-green-600">
@@ -1210,9 +1280,6 @@ function OrdersPageContent() {
 
                 {/* Driver Action Buttons */}
                 <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
-                  <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>
-                    Quick Actions
-                  </h5>
                   <div className="flex flex-wrap gap-3">
                     {/* Status-specific buttons */}
                     {order.order_status === 'scheduled' && (
@@ -1353,6 +1420,43 @@ function OrdersPageContent() {
           type="order"
         />
       )}
+
+      {/* Order Edit Dialog */}
+      {editDialogOpen && (
+        <OrderEditDialog
+          order={orders.find(o => o.id === editDialogOpen)!}
+          editForms={editForms}
+          setEditForms={setEditForms}
+          onSave={saveOrder}
+          isOpen={!!editDialogOpen}
+          onOpenChange={open => setEditDialogOpen(open ? editDialogOpen : null)}
+        />
+      )}
+
+      {/* Delete Order Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedOrderToDelete) {
+                  handleDelete(selectedOrderToDelete);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
