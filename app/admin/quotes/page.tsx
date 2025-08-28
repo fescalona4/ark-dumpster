@@ -32,6 +32,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -69,6 +75,9 @@ import {
   RiInformationLine,
   RiRefreshLine,
   RiAddCircleLine,
+  RiMore2Line,
+  RiEditLine,
+  RiMore2Fill,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -137,7 +146,7 @@ function QuotesPageContent() {
 
   // Dialog state for popup customer/service info editing
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
-  // const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null); // TODO: Implement delete functionality
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
   // Date-time picker dialog state
   const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
@@ -697,37 +706,8 @@ function QuotesPageContent() {
                 role="article"
                 aria-labelledby={`quote-${quote.id}-title`}
               >
-                {/* Status badge and delete button positioned in top right */}
+                {/* Status badge positioned in top right */}
                 <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-11 min-w-[44px] text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300 touch-manipulation"
-                      >
-                        <RiDeleteBin2Line className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Quote</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this quote from {quote.first_name}{' '}
-                          {quote.last_name}? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteQuote(quote.id)}
-                          className="bg-red-600 hover:bg-red-700"
-                        >
-                          Delete Quote
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                   <Status
                     status={mapQuoteStatusToStatusType(quote.status)}
                     className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
@@ -740,9 +720,11 @@ function QuotesPageContent() {
                 <CardHeader className="pb-4 pr-24 md:pr-32">
                   <div className="flex items-start justify-between">
                     <div>
-                      {/* Quote number */}
-                      <div className="text-lg font-bold text-foreground mb-6">
-                        Quote #{quote.id.slice(-4).toUpperCase()}
+                      {/* Quote number with actions dropdown */}
+                      <div className="flex items-center mb-6">
+                        <div className="text-lg font-bold text-foreground">
+                          Quote #{quote.id.slice(-4).toUpperCase()}
+                        </div>
                       </div>
 
                       {/* Customer name */}
@@ -984,6 +966,34 @@ function QuotesPageContent() {
                             <p>Edit customer and service information</p>
                           </TooltipContent>
                         </Tooltip>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="lg"
+                              className="h-8 w-8 p-0 rounded-full hover:bg-muted"
+                            >
+                              <RiMore2Fill className="h-4 w-4 font-extrabold" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setEditDialogOpen(quote.id)}
+                              className="cursor-pointer"
+                            >
+                              <RiEditLine className="mr-2 h-4 w-4" />
+                              Edit Quote
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setDeleteDialogOpen(quote.id)}
+                              className="cursor-pointer text-red-600 focus:text-red-600"
+                            >
+                              <RiDeleteBin2Line className="mr-2 h-4 w-4" />
+                              Delete Quote
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                       <div className="space-y-3 text-sm">
                         {/* Status Assignment */}
@@ -1046,7 +1056,7 @@ function QuotesPageContent() {
                             <Label className="text-sm font-semibold">
                               Dropoff Date
                               <span
-                                className="text-red-500 ml-1"
+                                className="text-red-500"
                                 title="Required for creating orders"
                               >
                                 *
@@ -1166,7 +1176,7 @@ function QuotesPageContent() {
                             <Label className="text-sm font-semibold">
                               Dropoff Time
                               <span
-                                className="text-red-500 ml-1"
+                                className="text-red-500"
                                 title="Required for creating orders"
                               >
                                 *
@@ -1225,9 +1235,6 @@ function QuotesPageContent() {
 
                   {/* Action Buttons */}
                   <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
-                    <h5 className="font-semibold text-base mb-3" role="heading" aria-level={3}>
-                      Quick Actions
-                    </h5>
                     <div className="flex flex-wrap gap-3">
                       <Button
                         variant="outline"
@@ -1348,6 +1355,42 @@ function QuotesPageContent() {
           type="quote"
         />
       )}
+
+      {/* Delete Quote Confirmation Dialog */}
+      <AlertDialog
+        open={deleteDialogOpen !== null}
+        onOpenChange={(open) => !open && setDeleteDialogOpen(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Quote</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialogOpen && (() => {
+                const quote = quotes.find(q => q.id === deleteDialogOpen);
+                return quote
+                  ? `Are you sure you want to delete this quote from ${quote.first_name} ${quote.last_name || ''}? This action cannot be undone.`
+                  : 'Are you sure you want to delete this quote? This action cannot be undone.';
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteDialogOpen) {
+                  deleteQuote(deleteDialogOpen);
+                  setDeleteDialogOpen(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete Quote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

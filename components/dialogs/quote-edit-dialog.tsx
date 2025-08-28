@@ -67,9 +67,9 @@ export function QuoteEditDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        {/* <Button variant="outline" size="sm">
           <RiEditLine className="h-4 w-4" />
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
