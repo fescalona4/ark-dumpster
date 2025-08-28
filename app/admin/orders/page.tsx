@@ -57,6 +57,11 @@ import {
   RiDeleteBinLine,
   RiMore2Line,
   RiEditLine,
+  RiCloseLine,
+  RiCheckLine,
+  RiArrowLeftLine,
+  RiTimeLine,
+  RiFlagLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -76,8 +81,8 @@ import { Dumpster } from '@/types/dumpster';
 import { DRIVERS } from '@/lib/drivers';
 import {
   updateOrderStatus as updateOrderStatusShared,
-  getStatusIcon,
 } from '@/components/order-management/order-status-manager';
+import { StatusIcon } from '@/components/order-management/status-icons';
 import { toast } from 'sonner';
 
 // Helper function to map order status to Status component status
@@ -846,8 +851,8 @@ function OrdersPageContent() {
                   className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
                 >
                   <StatusIndicator />
-                  <StatusLabel className="ml-2">
-                    <span className="mr-2 text-lg">{getStatusIcon(order.order_status)}</span>
+                  <StatusLabel className="flex items-center">
+                    <StatusIcon status={order.order_status} className="h-5 w-5 mr-1 pb-0.5" />
                     {order.order_status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                   </StatusLabel>
                 </Status>
@@ -987,8 +992,8 @@ function OrdersPageContent() {
                                   );
 
                                   return (
-                                    <span className={`font-medium ${mainService.total_price > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                      ${mainService.total_price.toFixed(0)}
+                                    <span className={`font-medium ${mainService?.total_price > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                      ${mainService?.total_price?.toFixed(0)}
                                     </span>
                                   );
                                 })()}
@@ -1291,7 +1296,8 @@ function OrdersPageContent() {
                               size="sm"
                               className="min-h-[44px] px-4 touch-manipulation font-semibold"
                             >
-                              ❌ Cancel
+                              <RiCloseLine className="h-4 w-4" />
+                              Cancel
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -1318,7 +1324,8 @@ function OrdersPageContent() {
                           className="bg-indigo-600 hover:bg-indigo-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
-                          🚛 On My Way
+                          <RiTruckLine className="h-4 w-4" />
+                          On My Way
                         </Button>
                       </>
                     )}
@@ -1330,14 +1337,16 @@ function OrdersPageContent() {
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
                         >
-                          ↩️ Back to Scheduled
+                          <RiArrowLeftLine className="h-4 w-4" />
+                          Back to Scheduled
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'delivered')}
                           className="bg-green-600 hover:bg-green-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
-                          ✅ Delivered
+                          <RiCheckLine className="h-4 w-4" />
+                          Delivered
                         </Button>
                       </>
                     )}
@@ -1349,14 +1358,16 @@ function OrdersPageContent() {
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
                         >
-                          ↩️ Back to On Way
+                          <RiArrowLeftLine className="h-4 w-4" />
+                          Back to On Way
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'on_way_pickup')}
                           className="bg-yellow-600 hover:bg-yellow-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
-                          🚛 On Way to Pickup
+                          <RiTruckLine className="h-4 w-4" />
+                          On Way to Pickup
                         </Button>
                       </>
                     )}
@@ -1368,22 +1379,24 @@ function OrdersPageContent() {
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
                         >
-                          ↩️ Back to Delivered
+                          <RiArrowLeftLine className="h-4 w-4" />
+                          Back to Delivered
                         </Button>
                         <Button
                           onClick={() => updateOrderStatus(order.id, 'completed')}
                           className="bg-gray-600 hover:bg-gray-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
-                          🏁 Complete Order
+                          <RiFlagLine className="h-4 w-4" />
+                          Complete Order
                         </Button>
                       </>
                     )}
                     {(order.order_status === 'completed' || order.order_status === 'cancelled') && (
                       <div className="text-sm text-muted-foreground italic">
                         {order.order_status === 'completed'
-                          ? '✅ Order completed'
-                          : '❌ Order cancelled'}
+                          ? 'Order completed'
+                          : 'Order cancelled'}
                       </div>
                     )}
                   </div>

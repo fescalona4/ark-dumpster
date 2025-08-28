@@ -138,17 +138,10 @@ export function getStatusColor(status: string): string {
   return colors[status] || 'bg-gray-100 text-gray-800';
 }
 
-/**
- * Helper function to get status icon
- */
-export function getStatusIcon(status: string): string {
-  const icons: { [key: string]: string } = {
-    scheduled: '📅',
-    on_way: '🚛',
-    delivered: '✅',
-    on_way_pickup: '🚛',
-    completed: '✅',
-    cancelled: '❌',
-  };
-  return icons[status] || '📋';
+export interface StatusIconConfig {
+  iconName: string;
+  className: string;
 }
+
+// Re-export from status-icons.tsx for backward compatibility
+export { getStatusIcon, StatusIcon } from './status-icons';
