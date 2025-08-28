@@ -68,6 +68,7 @@ import {
   RiSearchLine,
   RiInformationLine,
   RiRefreshLine,
+  RiAddCircleLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -740,21 +741,14 @@ function QuotesPageContent() {
                   <div className="flex items-start justify-between">
                     <div>
                       {/* Quote number */}
-                      <div className="text-sm font-bold text-foreground mb-1">
+                      <div className="text-lg font-bold text-foreground mb-6">
                         Quote #{quote.id.slice(-4).toUpperCase()}
                       </div>
 
                       {/* Customer name */}
-                      <CardTitle id={`quote-${quote.id}-title`} className="text-lg mb-2 font-bold">
+                      <CardTitle id={`quote-${quote.id}-title`} className="text-lg mb-2 font-semibold">
                         {quote.first_name} {quote.last_name || ''}
                       </CardTitle>
-
-                      {/* Priority badge */}
-                      <div className="mb-4">
-                        <Badge className={`${getPriorityColor(quote.priority)} px-3 py-1`}>
-                          {quote.priority}
-                        </Badge>
-                      </div>
 
                       {/* Contact info */}
                       <div className="text-sm text-muted-foreground space-y-1">
@@ -764,7 +758,7 @@ function QuotesPageContent() {
                               <RiPhoneLine className="h-4 w-4 flex-shrink-0" />
                               <a
                                 href={`tel:${quote.phone}`}
-                                className="text-blue-600 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                                className="text-blue-500 hover:underline font-medium touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                                 aria-label={`Call ${quote.first_name} ${quote.last_name} at ${formatPhoneNumber(quote.phone)}`}
                               >
                                 {formatPhoneNumber(quote.phone)}
@@ -775,7 +769,7 @@ function QuotesPageContent() {
                             <RiMailLine className="h-4 w-4 flex-shrink-0" />
                             <a
                               href={`mailto:${quote.email}`}
-                              className="text-blue-600 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                              className="text-blue-500 hover:underline truncate touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
                               aria-label={`Email ${quote.first_name} ${quote.last_name} at ${quote.email}`}
                             >
                               {quote.email}
@@ -783,11 +777,11 @@ function QuotesPageContent() {
                           </div>
                           {(quote.address || quote.address2 || quote.city || quote.state) && (
                             <div className="flex items-start gap-2">
-                              <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0 text-blue-600" />
+                              <RiMapPinLine className="h-4 w-4 mt-0.5 flex-shrink-0" />
                               <div className="flex-1">
                                 <div>
                                   {quote.address && (
-                                    <div className="font-medium text-blue-600">{quote.address}</div>
+                                    <div className="font-medium text-blue-500">{quote.address}</div>
                                   )}
                                   {quote.address2 && (
                                     <div className="text-muted-foreground">{quote.address2}</div>
@@ -805,7 +799,7 @@ function QuotesPageContent() {
 
                           {/* Delivery and Duration info - moved here from services section */}
                           {quote.dropoff_date && (
-                            <div className="flex items-center gap-2 pt-1">
+                            <div className="flex items-center gap-2">
                               <RiCalendarLine className="h-4 w-4" />
                               <span>
                                 Delivery:{' '}
@@ -882,19 +876,11 @@ function QuotesPageContent() {
                                       `Dumpster Rental - ${quote.dumpster_size}`
                                   );
 
-                                  if (mainService && mainService.total_price > 0) {
-                                    return (
-                                      <span className="text-green-600 font-medium">
-                                        ${mainService.total_price.toFixed(2)}
-                                      </span>
-                                    );
-                                  } else {
-                                    return (
-                                      <span className="text-blue-600 font-medium text-xs">
-                                        Main Service
-                                      </span>
-                                    );
-                                  }
+                                  return (
+                                    <span className="text-green-600 font-medium">
+                                      ${mainService?.total_price?.toFixed(0)}
+                                    </span>
+                                  );
                                 })()}
                               </button>
                             )}
@@ -929,7 +915,7 @@ function QuotesPageContent() {
                                       </div>
                                     </div>
                                     <span className="text-green-600 font-medium">
-                                      ${service.total_price.toFixed(2)}
+                                      ${service.total_price.toFixed(0)}
                                     </span>
                                   </button>
                                 ))}
@@ -943,26 +929,26 @@ function QuotesPageContent() {
 
                         {/* Total Summary */}
                         {quoteServices[quote.id] && quoteServices[quote.id].length > 0 && (
-                          <div className="pt-2 border-t">
-                            <div className="flex justify-between items-center font-bold text-base">
+                          <div className="pt-2 border-t pl-1">
+                            <div className="flex justify-between items-center font-semibold text-base">
                               <span className="flex items-center gap-2">
                                 <RiMoneyDollarCircleLine className="h-4 w-4 text-green-600" />
                                 Services Total:
                               </span>
-                              <span className="text-green-600">
+                              <span className="text-green-600 pr-2">
                                 $
                                 {quoteServices[quote.id]
                                   .reduce((sum, s) => sum + s.total_price, 0)
-                                  .toFixed(2)}
+                                  .toFixed(0)}
                               </span>
                             </div>
                           </div>
                         )}
                       </div>
                       {quote.message && (
-                        <div className="mt-4">
-                          <h5 className="font-medium mb-2">Customer Message</h5>
-                          <p className="text-sm bg-muted/50 p-3 rounded">{quote.message}</p>
+                        <div className="mt-6">
+                          <h6 className="font-medium mb-1 text-sm pl-1">Customer Message:</h6>
+                          <p className="text-sm bg-muted/50 p-3 rounded font-light">{quote.message}</p>
                         </div>
                       )}
 
@@ -1074,8 +1060,8 @@ function QuotesPageContent() {
                                 <Button
                                   variant="outline"
                                   className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
-                                      ? 'text-muted-foreground border-red-300 hover:border-red-400'
-                                      : ''
+                                    ? 'text-muted-foreground border-red-300 hover:border-red-400'
+                                    : ''
                                     }`}
                                 >
                                   <RiCalendarLine className="mr-2 h-4 w-4" />
@@ -1189,8 +1175,8 @@ function QuotesPageContent() {
                             <Button
                               variant="outline"
                               className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
-                                  ? 'text-muted-foreground border-red-300 hover:border-red-400'
-                                  : ''
+                                ? 'text-muted-foreground border-red-300 hover:border-red-400'
+                                : ''
                                 }`}
                               onClick={() => setDateTimeDialogOpen(quote.id)}
                             >
@@ -1252,12 +1238,12 @@ function QuotesPageContent() {
                       >
                         {savingQuotes.has(quote.id) ? (
                           <>
-                            <Spinner variant="circle" size={16} className="mr-2" />
+                            <Spinner variant="circle" size={16} />
                             Saving...
                           </>
                         ) : (
                           <>
-                            <RiSaveLine className="mr-2 h-4 w-4" />
+                            <RiSaveLine className="h-4 w-4" />
                             Save Quote
                           </>
                         )}
@@ -1277,11 +1263,14 @@ function QuotesPageContent() {
                           >
                             {creatingOrders.has(quote.id) ? (
                               <>
-                                <Spinner variant="circle" size={16} className="mr-2" />
+                                <Spinner variant="circle" size={16} />
                                 Creating Order...
                               </>
                             ) : (
-                              'Create Order'
+                              <>
+                                <RiAddCircleLine className="h-4 w-4" />
+                                Create Order
+                              </>
                             )}
                           </Button>
                         </TooltipTrigger>
