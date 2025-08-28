@@ -163,8 +163,14 @@ export async function createSquareInvoiceWithPayment(
     try {
       console.log('Creating Square Order with itemized services...');
       
-      // Create line items for each service
-      const lineItems = orderServices.map((orderService: any, index: number) => {
+      // Separate positive and negative services
+      const positiveServices = orderServices.filter((service: any) => service.unit_price >= 0);
+      const negativeServices = orderServices.filter((service: any) => service.unit_price < 0);
+      
+      console.log(`Found ${positiveServices.length} regular services and ${negativeServices.length} discount services`);
+      
+      // Create line items only for positive services
+      const lineItems = positiveServices.map((orderService: any, index: number) => {
         const serviceName = orderService.service?.display_name || orderService.service?.name || `Service ${index + 1}`;
         // Use custom description from request, then saved invoice_description, then service description or notes
         const serviceDescription = request.serviceDescriptions?.[orderService.id] || 
@@ -189,14 +195,45 @@ export async function createSquareInvoiceWithPayment(
         return lineItem;
       });
       
-      console.log(`Created ${lineItems.length} line items for Square order`);
+      // Create discounts from negative services
+      const discounts = negativeServices.map((orderService: any, index: number) => {
+        const discountName = orderService.service?.display_name || orderService.service?.name || `Discount ${index + 1}`;
+        const discountDescription = request.serviceDescriptions?.[orderService.id] || 
+                                   orderService.invoice_description ||
+                                   orderService.service?.description || 
+                                   orderService.notes || '';
+        
+        const discount = {
+          name: discountName,
+          type: 'FIXED_AMOUNT',
+          amountMoney: {
+            amount: BigInt(Math.abs(Math.round(orderService.unit_price * 100))), // Use absolute value
+            currency: 'USD',
+          },
+          scope: 'ORDER',
+        };
+        
+        console.log(`Discount ${index + 1}:`, JSON.stringify(discount, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value, 2));
+        
+        return discount;
+      });
+      
+      console.log(`Created ${lineItems.length} line items and ${discounts.length} discounts for Square order`);
+
+      const orderData: any = {
+        locationId: process.env.SQUARE_LOCATION_ID,
+        lineItems,
+      };
+      
+      // Add discounts if any exist
+      if (discounts.length > 0) {
+        orderData.discounts = discounts;
+      }
 
       const orderRequest = {
         idempotencyKey: `order_${order.id}_${Date.now()}`,
-        order: {
-          locationId: process.env.SQUARE_LOCATION_ID,
-          lineItems,
-        },
+        order: orderData,
       };
 
       console.log('Order request:', JSON.stringify(orderRequest, (key, value) =>
@@ -404,13 +441,26 @@ export async function sendSquareInvoiceWithPayment(
       }
 
       console.log('Using invoice version:', invoice.version);
+      console.log(`Sending invoice via ${deliveryMethod} (invoice deliveryMethod: ${invoice.deliveryMethod})`);
 
-      // Send the invoice via Square API with version
+      // Send the invoice via Square API with version and delivery method
+      // Note: The invoice's deliveryMethod stays as created, but requestMethod overrides it for sending
+      console.log('Publishing invoice with params:', {
+        invoiceId: payment.square_invoice_id,
+        version: invoice.version,
+        requestMethod: deliveryMethod
+      });
+      
       const sendResponse = await invoicesApi.publish({
         invoiceId: payment.square_invoice_id,
         version: invoice.version,
         requestMethod: deliveryMethod as any,
       } as any);
+
+      // Log the response to see what Square returned
+      const responseForLogging = JSON.stringify(sendResponse, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value, 2);
+      console.log('Square publish response:', responseForLogging);
 
       if ((sendResponse as any).invoice) {
         // Mark payment as sent in our system

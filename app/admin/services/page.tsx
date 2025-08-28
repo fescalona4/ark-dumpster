@@ -160,7 +160,7 @@ function ServicesPageContent() {
     fetchCategories();
   }, [fetchServices, fetchCategories]);
 
-  // Filter services
+  // Filter and sort services
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
       // Search filter
@@ -186,7 +186,7 @@ function ServicesPageContent() {
       if (statusFilter === 'inactive' && service.is_active) return false;
 
       return true;
-    });
+    }).sort((a, b) => a.sort_order - b.sort_order);
   }, [services, searchQuery, categoryFilter, statusFilter]);
 
   // Handle service save
@@ -333,38 +333,14 @@ function ServicesPageContent() {
       cell: ({ row }) => {
         const service = row.original;
         return (
-          <div>
-            <div className="font-medium">{service.display_name}</div>
-            <div className="text-sm text-muted-foreground">{service.name}</div>
+          <div className="max-w-[200px]">
+            <div className="font-medium truncate">{service.display_name}</div>
+            <div className="text-sm text-muted-foreground truncate">{service.name}</div>
             {service.description && (
               <div className="text-sm text-muted-foreground mt-1 line-clamp-2">
                 {service.description}
               </div>
             )}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'category.display_name',
-      header: ({ column }) => <TableColumnHeader column={column} title="Category" />,
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.category?.display_name || 'No Category'}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'base_price',
-      header: ({ column }) => <TableColumnHeader column={column} title="Price" />,
-      cell: ({ row }) => {
-        const service = row.original;
-        return (
-          <div>
-            <div className="font-medium">${service.base_price.toFixed(2)}</div>
-            <div className="text-sm text-muted-foreground capitalize">
-              {service.price_type}
-            </div>
           </div>
         );
       },
@@ -385,12 +361,28 @@ function ServicesPageContent() {
       },
     },
     {
-      accessorKey: 'dumpster_size',
-      header: 'Size',
+      accessorKey: 'base_price',
+      header: ({ column }) => <TableColumnHeader column={column} title="Price" />,
       cell: ({ row }) => {
-        const size = row.original.dumpster_size;
-        return size ? <Badge variant="secondary">{size}</Badge> : '-';
+        const service = row.original;
+        return (
+          <div>
+            <div className="font-medium">${service.base_price.toFixed(2)}</div>
+            <div className="text-sm text-muted-foreground capitalize">
+              {service.price_type}
+            </div>
+          </div>
+        );
       },
+    },
+    {
+      accessorKey: 'category.display_name',
+      header: ({ column }) => <TableColumnHeader column={column} title="Category" />,
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.category?.display_name || 'No Category'}
+        </Badge>
+      ),
     },
     {
       id: 'actions',

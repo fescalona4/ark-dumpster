@@ -645,7 +645,7 @@ function OrderDetailContent() {
             </div>
           </div>
 
-          {/* Payment Manager */}
+          {/* Payment Management - Using PaymentManager (modern, multi-payment-method component) */}
           <div className="mt-6 pt-4 border-t">
             <PaymentManager order={order} onUpdate={fetchOrder} />
           </div>

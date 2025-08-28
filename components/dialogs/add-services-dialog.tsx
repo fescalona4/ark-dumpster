@@ -296,16 +296,16 @@ export function AddServicesDialog({
   const filteredServices =
     selectedCategoryId === 'all'
       ? services.sort((a, b) => {
-          // Show dumpster services first (services with dumpster_size property)
-          const aIsDumpster = a.dumpster_size !== null;
-          const bIsDumpster = b.dumpster_size !== null;
+        // Show dumpster services first (services with dumpster_size property)
+        const aIsDumpster = a.dumpster_size !== null;
+        const bIsDumpster = b.dumpster_size !== null;
 
-          if (aIsDumpster && !bIsDumpster) return -1;
-          if (!aIsDumpster && bIsDumpster) return 1;
+        if (aIsDumpster && !bIsDumpster) return -1;
+        if (!aIsDumpster && bIsDumpster) return 1;
 
-          // Within same category type, sort by original sort_order
-          return a.sort_order - b.sort_order;
-        })
+        // Within same category type, sort by original sort_order
+        return a.sort_order - b.sort_order;
+      })
       : services.filter(s => s.category_id === selectedCategoryId);
 
   const totalAmount = selectedServices.reduce((sum, s) => sum + s.total_price, 0);
@@ -369,7 +369,9 @@ export function AddServicesDialog({
                       )}
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">${service.base_price}</div>
+                      <div className={`font-medium ${service.base_price < 0 ? 'text-green-600' : ''}`}>
+                        ${service.base_price < 0 ? service.base_price : service.base_price}
+                      </div>
                       <div className="text-xs text-muted-foreground">{service.price_type}</div>
                     </div>
                   </div>
@@ -420,8 +422,7 @@ export function AddServicesDialog({
                           <Label className="text-xs">Unit Price ($)</Label>
                           <Input
                             type="number"
-                            min="0"
-                            step="0.01"
+                            step="10"
                             value={selectedService.unit_price}
                             onChange={e =>
                               updateServiceUnitPrice(
@@ -438,7 +439,7 @@ export function AddServicesDialog({
                             type="text"
                             value={`$${selectedService.total_price.toFixed(2)}`}
                             readOnly
-                            className="h-9 bg-muted"
+                            className={`h-9 bg-muted ${selectedService.total_price < 0 ? 'text-green-600' : ''}`}
                           />
                         </div>
                       </div>
@@ -460,7 +461,9 @@ export function AddServicesDialog({
                   <div className="pt-2 border-t">
                     <div className="flex justify-between items-center font-medium">
                       <span>Total Amount:</span>
-                      <span className="text-lg text-green-600">${totalAmount.toFixed(2)}</span>
+                      <span className={`text-lg ${totalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        ${totalAmount.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>

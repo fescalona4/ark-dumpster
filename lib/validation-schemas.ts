@@ -128,8 +128,8 @@ const selectedServiceSchema = z.object({
     })
     .passthrough(), // Allow additional properties
   quantity: z.number().positive('Quantity must be positive'),
-  unit_price: z.number().nonnegative('Unit price must be non-negative'),
-  total_price: z.number().nonnegative('Total price must be non-negative'),
+  unit_price: z.number(),
+  total_price: z.number(),
   notes: z.string().optional(),
 });
 

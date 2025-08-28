@@ -81,10 +81,7 @@ export const PUT = withRateLimit(async (request: NextRequest) => {
     delete updateData.created_at;
     delete updateData.category;
 
-    // Validate price if provided
-    if (updateData.base_price !== undefined && updateData.base_price < 0) {
-      throw new ValidationError('Base price cannot be negative');
-    }
+    // Validate price if provided - allow negative values for discounts
 
     // Validate sort order if provided
     if (updateData.sort_order !== undefined && updateData.sort_order < 0) {

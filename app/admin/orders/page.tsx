@@ -931,9 +931,9 @@ function OrdersPageContent() {
                                       orderService.services?.display_name === service.trim()
                                   );
 
-                                  if (mainService && mainService.total_price > 0) {
+                                  if (mainService && mainService.total_price !== 0) {
                                     return (
-                                      <span className="text-green-600 font-medium">
+                                      <span className={`font-medium ${mainService.total_price > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         ${mainService.total_price.toFixed(2)}
                                       </span>
                                     );
@@ -1188,7 +1188,7 @@ function OrdersPageContent() {
                       </div>
                     </div>
 
-                    {/* Invoice buttons */}
+                    {/* Payment Management - Using PaymentManager (modern, multi-payment-method component) */}
                     <div className="mt-4 space-y-3">
                       <PaymentManager
                         order={convertViewDataToOrder(order)}

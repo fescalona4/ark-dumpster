@@ -151,7 +151,7 @@ export function ServiceAdminDialog({
       setCategoriesLoading(true);
       const response = await fetch('/api/service-categories?include_inactive=true');
       const data = await response.json();
-      
+
       if (data.success) {
         setCategories(data.data.categories || []);
       }
@@ -179,8 +179,8 @@ export function ServiceAdminDialog({
         alert('Category is required');
         return;
       }
-      if (formData.base_price === undefined || formData.base_price < 0) {
-        alert('Base price is required and cannot be negative');
+      if (formData.base_price === undefined) {
+        alert('Base price is required');
         return;
       }
 
@@ -218,7 +218,7 @@ export function ServiceAdminDialog({
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name *</Label>
@@ -229,7 +229,7 @@ export function ServiceAdminDialog({
                 placeholder="internal-service-name"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="display_name">Display Name *</Label>
               <Input
@@ -295,15 +295,14 @@ export function ServiceAdminDialog({
         {/* Pricing */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Pricing</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="base_price">Base Price *</Label>
               <Input
                 id="base_price"
                 type="number"
-                min="0"
-                step="0.01"
+                step="10"
                 value={formData.base_price || 0}
                 onChange={(e) => updateFormData('base_price', parseFloat(e.target.value) || 0)}
               />
@@ -333,7 +332,7 @@ export function ServiceAdminDialog({
         {/* Dumpster-Specific Fields */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Dumpster-Specific Options</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dumpster_size">Dumpster Size</Label>
@@ -374,7 +373,7 @@ export function ServiceAdminDialog({
                 id="extra_day_price"
                 type="number"
                 min="0"
-                step="0.01"
+                step="10"
                 value={formData.extra_day_price || ''}
                 onChange={(e) => updateFormData('extra_day_price', e.target.value ? parseFloat(e.target.value) : null)}
               />
@@ -386,7 +385,7 @@ export function ServiceAdminDialog({
                 id="included_weight_tons"
                 type="number"
                 min="0"
-                step="0.1"
+                step="10"
                 value={formData.included_weight_tons || ''}
                 onChange={(e) => updateFormData('included_weight_tons', e.target.value ? parseFloat(e.target.value) : null)}
               />
@@ -399,7 +398,7 @@ export function ServiceAdminDialog({
               id="extra_weight_price"
               type="number"
               min="0"
-              step="0.01"
+              step="10"
               value={formData.extra_weight_price_per_ton || ''}
               onChange={(e) => updateFormData('extra_weight_price_per_ton', e.target.value ? parseFloat(e.target.value) : null)}
             />
@@ -409,7 +408,7 @@ export function ServiceAdminDialog({
         {/* Service Settings */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Service Settings</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="max_quantity">Max Quantity</Label>
@@ -442,7 +441,7 @@ export function ServiceAdminDialog({
               type="number"
               min="0"
               max="100"
-              step="0.01"
+              step="10"
               value={formData.tax_rate || 0}
               onChange={(e) => updateFormData('tax_rate', parseFloat(e.target.value) || 0)}
             />

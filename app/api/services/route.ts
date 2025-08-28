@@ -88,6 +88,15 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       );
     }
 
+    // Validate UUID format for category_id
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(body.category_id)) {
+      return createErrorResponse(
+        ERROR_CODES.VALIDATION_ERROR,
+        'Invalid category_id format'
+      );
+    }
+
     // Create the service
     const { data: service, error } = await supabase
       .from('services')
@@ -101,7 +110,14 @@ export const POST = withRateLimit(async (request: NextRequest) => {
       .single();
 
     if (error) {
-      throw new DatabaseError(`Failed to create service: ${error.message}`);
+      console.error('Service creation error:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        body: body
+      });
+      throw new DatabaseError(`Failed to create service: ${error.message} (Code: ${error.code})`);
     }
 
     return createSuccessResponse({

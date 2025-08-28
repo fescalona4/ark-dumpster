@@ -258,7 +258,7 @@ export function ServiceEditDialog({
                 <Input
                   id="unit-price"
                   type="number"
-                  step="0.01"
+                  step="10"
                   min="0"
                   value={unitPrice}
                   onChange={e => setUnitPrice(parseFloat(e.target.value) || 0)}

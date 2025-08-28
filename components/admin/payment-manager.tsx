@@ -1,3 +1,23 @@
+/**
+ * PAYMENT MANAGER COMPONENT
+ * 
+ * PURPOSE: Modern, comprehensive payment management component
+ * SCOPE: Handles ALL payment types (Square invoices, cash, check, etc.)
+ * 
+ * CURRENTLY USED IN:
+ * - /app/admin/orders/page.tsx (main orders list)
+ * - /app/admin/orders/[orderId]/page.tsx (individual order details)
+ * 
+ * FEATURES:
+ * - Multiple payment methods support
+ * - Modern dialog-based UI with proper confirmation dialogs
+ * - Comprehensive payment lifecycle management (create, send, cancel, delete)
+ * - Integration with the payments table and Square API
+ * 
+ * NOTE: This is the ONLY component for payment management.
+ * Legacy SquareInvoiceManager has been removed.
+ */
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -58,6 +78,8 @@ import {
   Trash2,
   MoreVertical,
   Plus,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -81,6 +103,7 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [confirmAction, setConfirmAction] = useState<'cancel' | 'delete' | null>(null);
+  const [copiedPaymentLink, setCopiedPaymentLink] = useState(false);
   const [dueDate, setDueDate] = useState<Date>(new Date(Date.now() + 24 * 60 * 60 * 1000));
   const [paymentMethod, setPaymentMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
   const [orderServices, setOrderServices] = useState<OrderService[]>([]);
@@ -325,82 +348,97 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
     }
   };
 
+  // Copy payment link to clipboard
+  const handleCopyPaymentLink = async () => {
+    if (!selectedPayment?.public_payment_url) return;
+
+    try {
+      await navigator.clipboard.writeText(selectedPayment.public_payment_url);
+      setCopiedPaymentLink(true);
+      toast.success('Payment link copied to clipboard!');
+      setTimeout(() => setCopiedPaymentLink(false), 2000);
+    } catch (error) {
+      toast.error('Failed to copy payment link');
+    }
+  };
+
   // Show confirmation dialog for cancel/delete
   const showCancelConfirmation = () => {
     if (!selectedPayment) return;
-    
+
     const action = selectedPayment.status === PaymentStatus.DRAFT ? 'delete' : 'cancel';
     setConfirmAction(action);
     setShowConfirmDialog(true);
   };
 
-  // Cancel Square invoice
-  const handleCancelInvoice = async () => {
+  // Handle both cancel invoice and permanent delete actions
+  const handleConfirmAction = async () => {
     if (!selectedPayment || !confirmAction) return;
-
-    setIsCanceling(true);
-    setShowConfirmDialog(false);
     
-    try {
-      const response = await fetch(
-        `/api/orders/${order.id}/square-invoice?reason=${confirmAction === 'delete' ? 'Deleted' : 'Canceled'} by admin`,
-        {
+    // For canceled invoices, we permanently delete from payments table
+    if (confirmAction === 'delete' && selectedPayment.status === PaymentStatus.CANCELED) {
+      setIsDeleting(true);
+      setShowConfirmDialog(false);
+      try {
+        const response = await fetch(`/api/payments/${selectedPayment.id}`, {
           method: 'DELETE',
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete invoice');
         }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to ${confirmAction} invoice`);
+        toast.success('Invoice permanently deleted');
+        setShowInvoiceDialog(false);
+        await loadPayments();
+        onUpdate?.();
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        toast.error('Failed to delete invoice');
+      } finally {
+        setIsDeleting(false);
+        setConfirmAction(null);
       }
-
-      toast.success(data.message || `Invoice ${confirmAction}d successfully`);
-      setShowInvoiceDialog(false);
-      await loadPayments();
-      onUpdate?.();
-    } catch (error) {
-      console.error(`Error ${confirmAction}ing invoice:`, error);
-      toast.error(`Failed to ${confirmAction} invoice`);
-    } finally {
-      setIsCanceling(false);
-      setConfirmAction(null);
+    } else {
+      // For draft/active invoices, cancel via Square API
+      setIsCanceling(true);
+      setShowConfirmDialog(false);
+      try {
+        const response = await fetch(
+          `/api/orders/${order.id}/square-invoice?reason=${confirmAction === 'delete' ? 'Deleted' : 'Canceled'} by admin`,
+          {
+            method: 'DELETE',
+          }
+        );
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || `Failed to ${confirmAction} invoice`);
+        }
+        toast.success(data.message || `Invoice ${confirmAction}d successfully`);
+        setShowInvoiceDialog(false);
+        await loadPayments();
+        onUpdate?.();
+      } catch (error) {
+        console.error(`Error ${confirmAction}ing invoice:`, error);
+        toast.error(`Failed to ${confirmAction} invoice`);
+      } finally {
+        setIsCanceling(false);
+        setConfirmAction(null);
+      }
     }
   };
 
-  // Delete payment (only for canceled payments)
-  const handleDeletePayment = async () => {
+  // Cancel Square invoice (legacy function, now redirects to handleConfirmAction)
+  const handleCancelInvoice = () => {
+    handleConfirmAction();
+  };
+
+  // Show confirmation dialog for permanent delete
+  const showDeleteConfirmation = () => {
     if (!selectedPayment) return;
-    if (
-      !confirm(
-        'Are you sure you want to permanently delete this canceled invoice? This action cannot be undone.'
-      )
-    )
-      return;
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/payments/${selectedPayment.id}`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete payment');
-      }
-
-      toast.success('Payment deleted successfully');
-      setShowInvoiceDialog(false);
-      await loadPayments();
-      onUpdate?.();
-    } catch (error) {
-      console.error('Error deleting payment:', error);
-      toast.error('Failed to delete payment');
-    } finally {
-      setIsDeleting(false);
-    }
+    setConfirmAction('delete');
+    setShowConfirmDialog(true);
   };
+
 
   const openInvoiceDialog = (payment: Payment) => {
     setSelectedPayment(payment);
@@ -571,7 +609,28 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   Refresh Status
                 </Button>
 
-                {/* Send Invoice - Third (only for DRAFT status) */}
+                {/* Copy Payment Link - Third (only when public URL exists) */}
+                {selectedPayment.public_payment_url && (
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={handleCopyPaymentLink}
+                  >
+                    {copiedPaymentLink ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2 text-green-600" />
+                        Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Link
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {/* Send Invoice - Fourth (only for DRAFT status) */}
                 {selectedPayment.status === PaymentStatus.DRAFT && (
                   <SendInvoiceDialog
                     orderId={order.id}
@@ -606,8 +665,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                     disabled={isCanceling}
                   >
                     <X className="h-4 w-4 mr-2" />
-                    {isCanceling 
-                      ? (selectedPayment.status === PaymentStatus.DRAFT ? 'Deleting...' : 'Canceling...') 
+                    {isCanceling
+                      ? (selectedPayment.status === PaymentStatus.DRAFT ? 'Deleting...' : 'Canceling...')
                       : (selectedPayment.status === PaymentStatus.DRAFT ? 'Delete Invoice' : 'Cancel Invoice')
                     }
                   </Button>
@@ -617,11 +676,11 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   <Button
                     variant="destructive"
                     className="w-full justify-start"
-                    onClick={handleDeletePayment}
+                    onClick={showDeleteConfirmation}
                     disabled={isDeleting}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    {isDeleting ? 'Deleting...' : 'Delete Invoice Permanently'}
+                    {isDeleting ? 'Deleting...' : 'Delete Invoice'}
                   </Button>
                 )}
               </div>
@@ -809,15 +868,17 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
                   {confirmAction === 'delete' ? 'Delete Invoice' : 'Cancel Invoice'}
                 </DialogTitle>
                 <DialogDescription className="mt-1">
-                  {confirmAction === 'delete' 
+                  {confirmAction === 'delete' && selectedPayment?.status === PaymentStatus.DRAFT
                     ? 'This will permanently delete the draft invoice. This action cannot be undone.'
+                    : confirmAction === 'delete' && selectedPayment?.status === PaymentStatus.CANCELED
+                    ? 'This will permanently delete this canceled invoice from the system. This action cannot be undone.'
                     : 'This will cancel the invoice and it will no longer be payable by the customer.'
                   }
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
-          
+
           {selectedPayment && (
             <div className="py-4">
               <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 space-y-2">
@@ -844,8 +905,8 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
           )}
 
           <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowConfirmDialog(false);
                 setConfirmAction(null);
@@ -853,12 +914,12 @@ export function PaymentManager({ order, onUpdate }: PaymentManagerProps) {
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleCancelInvoice}
-              disabled={isCanceling}
+            <Button
+              variant="destructive"
+              onClick={handleConfirmAction}
+              disabled={isCanceling || isDeleting}
             >
-              {isCanceling 
+              {(isCanceling || isDeleting)
                 ? (confirmAction === 'delete' ? 'Deleting...' : 'Canceling...')
                 : (confirmAction === 'delete' ? 'Delete Invoice' : 'Cancel Invoice')
               }
