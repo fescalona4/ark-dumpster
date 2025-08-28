@@ -17,9 +17,8 @@ interface DataFlowVisualizationProps {
   quoteStats: {
     total: number;
     pending: number;
-    quoted: number;
-    accepted: number;
     completed: number;
+    cancelled: number;
   };
   orderStats: {
     total: number;
@@ -222,9 +221,8 @@ interface MobileDataFlowVisualizationProps {
   quoteStats: {
     total: number;
     pending: number;
-    quoted: number;
-    accepted: number;
     completed: number;
+    cancelled: number;
   };
   orderStats: {
     total: number;

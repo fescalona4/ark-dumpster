@@ -14,9 +14,8 @@ import { CountingNumber } from '@/components/ui/counting-number';
 interface QuoteStats {
   total: number;
   pending: number;
-  quoted: number;
-  accepted: number;
   completed: number;
+  cancelled: number;
 }
 
 interface OrderStats {
