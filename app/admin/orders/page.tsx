@@ -127,7 +127,7 @@ function OrdersPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   // Filter state
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('open');
 
   // Mobile interaction state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -183,10 +183,25 @@ function OrdersPageContent() {
         }
 
         // Use the new service to get orders with service summaries
-        const filters = statusFilter !== 'all' ? { status: statusFilter } : {};
+        let filters = {};
+        // Always get all orders and filter client-side for better control
         const ordersData = await getOrdersWithServiceSummary(filters);
 
-        setOrders((ordersData || []) as unknown as OrderViewData[]);
+        // Apply client-side filtering
+        let filteredOrders = (ordersData || []) as unknown as OrderViewData[];
+        if (statusFilter === 'open') {
+          // Open orders exclude completed and cancelled orders
+          filteredOrders = filteredOrders.filter(order => 
+            order.order_status !== 'completed' && order.order_status !== 'cancelled'
+          );
+        } else if (statusFilter === 'completed') {
+          // Completed section includes both completed and cancelled orders
+          filteredOrders = filteredOrders.filter(order => 
+            order.order_status === 'completed' || order.order_status === 'cancelled'
+          );
+        }
+
+        setOrders(filteredOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch orders');
@@ -689,15 +704,8 @@ function OrdersPageContent() {
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Orders</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="on_way">On Way</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="on_way_pickup">On Way to Pickup</SelectItem>
-              <SelectItem value="picked_up">Picked Up</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="open">Open Orders</SelectItem>
+              <SelectItem value="completed">Completed Orders</SelectItem>
             </SelectContent>
           </Select>
 
@@ -733,9 +741,11 @@ function OrdersPageContent() {
               <RiTruckLine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No orders found</h3>
               <p className="text-muted-foreground">
-                {statusFilter === 'all'
-                  ? 'Orders will appear here when quotes are converted to orders.'
-                  : `No orders with status "${statusFilter}" found.`}
+                {statusFilter === 'open'
+                  ? 'No open orders found. Orders will appear here when quotes are converted to orders.'
+                  : statusFilter === 'completed'
+                    ? 'No completed or cancelled orders found.'
+                    : 'Orders will appear here when quotes are converted to orders.'}
               </p>
             </div>
           </CardContent>

@@ -37,7 +37,7 @@ interface Quote {
   dropoff_date: string | null;
   time_needed: string | null;
   message: string | null;
-  status: 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
+  status: 'pending' | 'completed' | 'cancelled';
   quoted_price: number | null;
   quote_notes: string | null;
   created_at: string;

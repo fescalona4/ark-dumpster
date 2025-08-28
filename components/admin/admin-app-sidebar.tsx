@@ -59,11 +59,6 @@ const navData = {
       icon: IconTools,
     },
     {
-      title: 'Invoices',
-      url: '/admin/invoices',
-      icon: IconReceipt,
-    },
-    {
       title: 'Analytics',
       url: '/admin/analytics',
       icon: IconChartBar,

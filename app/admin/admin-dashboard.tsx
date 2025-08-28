@@ -4,14 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminSectionCards } from '@/components/admin/admin-section-cards';
 import { DataFlowVisualization } from '@/components/admin/data-flow-visualization';
-import { QuotesDataTable } from '@/components/data-tables/quotes-data-table';
-import { OrdersDataTable } from '@/components/data-tables/orders-data-table';
 import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
 import { CountingNumber } from '@/components/ui/counting-number';
 import { Spinner } from '@/components/ui/spinner';
 import { Order } from '@/types/order';
 import { Dumpster, DumpsterStats } from '@/types/dumpster';
-import { QUOTE_STATUSES, ORDER_STATUSES, DUMPSTER_STATUSES } from '@/lib/constants';
 
 interface Quote {
   id: string;
@@ -27,7 +24,7 @@ interface Quote {
   dropoff_date: string | null;
   time_needed: string | null;
   message: string | null;
-  status: 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
+  status: 'pending' | 'completed' | 'cancelled';
   quoted_price: number | null;
   quote_notes: string | null;
   created_at: string;
@@ -40,9 +37,8 @@ interface Quote {
 interface QuoteStats {
   total: number;
   pending: number;
-  quoted: number;
-  accepted: number;
   completed: number;
+  cancelled: number;
 }
 
 interface OrderStats {
@@ -59,9 +55,8 @@ export default function AdminDashboard() {
   const [quoteStats, setQuoteStats] = useState<QuoteStats>({
     total: 0,
     pending: 0,
-    quoted: 0,
-    accepted: 0,
     completed: 0,
+    cancelled: 0,
   });
   const [orderStats, setOrderStats] = useState<OrderStats>({
     total: 0,
@@ -78,9 +73,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Define status arrays
-  const quoteStatuses = QUOTE_STATUSES;
-  const orderStatuses = ORDER_STATUSES;
 
   useEffect(() => {
     fetchQuotes();
@@ -114,9 +106,8 @@ export default function AdminDashboard() {
         const stats = {
           total: quotesData.length,
           pending: quotesData.filter(q => q.status === 'pending').length,
-          quoted: quotesData.filter(q => q.status === 'quoted').length,
-          accepted: quotesData.filter(q => q.status === 'accepted').length,
           completed: quotesData.filter(q => q.status === 'completed').length,
+          cancelled: quotesData.filter(q => q.status === 'cancelled').length,
         };
         setQuoteStats(stats);
       }
@@ -183,50 +174,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Transform quotes data for the data table
-  const quotesTableData = quotes.map((quote, index) => ({
-    id: index + 1, // Use numeric index for DataTable compatibility
-    header: `${quote.first_name} ${quote.last_name || ''}`.trim(),
-    type: quote.dumpster_size || 'Not specified',
-    status: quote.status, // Keep original status for filtering
-    target: quote.dropoff_date || 'TBD',
-    limit: quote.quoted_price ? `$${quote.quoted_price}` : 'Pending',
-    reviewer: quote.email,
-  }));
-
-  console.log(
-    'Transformed quotes table data:',
-    quotesTableData.length,
-    quotesTableData.slice(0, 2)
-  );
-
-  // Transform orders data for the data table
-  const ordersTableData = orders.map((order, index) => ({
-    id: index + 1, // Use numeric index for DataTable compatibility
-    header: `${order.first_name} ${order.last_name || ''}`.trim(),
-    type: order.dumpster_size || 'Not specified',
-    status: order.status, // Keep original status for filtering
-    target: order.scheduled_delivery_date || order.dropoff_date || 'TBD',
-    limit: order.final_price
-      ? `$${order.final_price}`
-      : order.quoted_price
-        ? `$${order.quoted_price}`
-        : 'Pending',
-    reviewer: order.order_number || order.email,
-  }));
-
-  console.log('Orders data:', orders.length);
-  console.log('Order statuses in data:', [...new Set(orders.map(o => o.status))]);
-  console.log('Order statuses from constants:', orderStatuses);
-  console.log(
-    'Sample order objects:',
-    orders.slice(0, 2).map(o => ({ id: o.id, status: o.status, first_name: o.first_name }))
-  );
-  console.log(
-    'Transformed orders table data:',
-    ordersTableData.length,
-    ordersTableData.slice(0, 2)
-  );
 
   if (loading) {
     return (
@@ -306,17 +253,6 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Quotes Table */}
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold px-4 lg:px-6">Recent Quotes</h2>
-            <QuotesDataTable data={quotesTableData} statuses={quoteStatuses} />
-          </div>
-
-          {/* Orders Table */}
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold px-4 lg:px-6">Recent Orders</h2>
-            <OrdersDataTable data={ordersTableData} statuses={orderStatuses} />
-          </div>
 
           <div className="px-4 lg:px-6">
             <div className="bg-card rounded-lg border">

@@ -7,7 +7,7 @@
 // ENUMS AND UNION TYPES
 // =============================================================================
 
-export type QuoteStatus = 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
+export type QuoteStatus = 'pending' | 'completed' | 'cancelled';
 export type QuotePriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export type OrderStatus =

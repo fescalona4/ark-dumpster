@@ -79,7 +79,7 @@ export async function createOrderWithServices(
 
     // Update quote status if this was created from a quote
     if (orderData.quoteId) {
-      await supabase.from('quotes').update({ status: 'accepted' }).eq('id', orderData.quoteId);
+      await supabase.from('quotes').update({ status: 'completed' }).eq('id', orderData.quoteId);
     }
 
     return {

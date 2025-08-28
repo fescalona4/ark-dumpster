@@ -94,7 +94,7 @@ interface Quote {
   dropoff_time: string | null;
   time_needed: string | null;
   message: string | null;
-  status: 'pending' | 'quoted' | 'accepted' | 'declined' | 'completed';
+  status: 'pending' | 'completed' | 'cancelled';
   quoted_price: number | null;
   quote_notes: string | null;
   created_at: string;
@@ -550,16 +550,13 @@ function QuotesPageContent() {
     quoteStatus: string
   ): 'online' | 'offline' | 'maintenance' | 'degraded' => {
     switch (quoteStatus) {
-      case 'accepted':
       case 'completed':
         return 'online';
-      case 'declined':
+      case 'cancelled':
         return 'offline';
       case 'pending':
-        return 'degraded';
-      case 'quoted':
       default:
-        return 'maintenance';
+        return 'degraded';
     }
   };
 
@@ -633,10 +630,8 @@ function QuotesPageContent() {
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="quoted">Quoted</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="declined">Declined</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1008,10 +1003,8 @@ function QuotesPageContent() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="quoted">Quoted</SelectItem>
-                              <SelectItem value="accepted">Accepted</SelectItem>
-                              <SelectItem value="declined">Declined</SelectItem>
                               <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

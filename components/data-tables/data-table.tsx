@@ -805,17 +805,11 @@ function TableCellViewer({
         <SelectItem key="pending" value="Pending">
           Pending
         </SelectItem>,
-        <SelectItem key="quoted" value="Quoted">
-          Quoted
-        </SelectItem>,
-        <SelectItem key="accepted" value="Accepted">
-          Accepted
-        </SelectItem>,
-        <SelectItem key="declined" value="Declined">
-          Declined
-        </SelectItem>,
         <SelectItem key="completed" value="Completed">
           Completed
+        </SelectItem>,
+        <SelectItem key="cancelled" value="Cancelled">
+          Cancelled
         </SelectItem>,
       ];
     } else {

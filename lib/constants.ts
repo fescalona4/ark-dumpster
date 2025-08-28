@@ -4,7 +4,7 @@
  */
 
 // Quote status values
-export const QUOTE_STATUSES = ['pending', 'quoted', 'accepted', 'declined', 'completed'] as const;
+export const QUOTE_STATUSES = ['pending', 'completed', 'cancelled'] as const;
 
 // Order status values
 export const ORDER_STATUSES = [
