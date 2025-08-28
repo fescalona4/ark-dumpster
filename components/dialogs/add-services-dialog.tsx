@@ -318,9 +318,12 @@ export function AddServicesDialog({
           Add Services
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="add-services-description">
         <DialogHeader>
           <DialogTitle>Add Services to {type === 'quote' ? 'Quote' : 'Order'}</DialogTitle>
+          <p id="add-services-description" className="text-sm text-muted-foreground">
+            Select services from the available options below and configure quantities and pricing as needed.
+          </p>
         </DialogHeader>
 
         {loading ? (
@@ -331,9 +334,9 @@ export function AddServicesDialog({
           <div className="space-y-6">
             {/* Category Filter */}
             <div className="space-y-2">
-              <Label>Filter by Category</Label>
+              <Label htmlFor="category-filter">Filter by Category</Label>
               <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="category-filter" className="w-full" aria-label="Filter services by category">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,6 +399,7 @@ export function AddServicesDialog({
                           size="sm"
                           onClick={() => removeService(selectedService.service_id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          aria-label={`Remove ${selectedService.service?.display_name || 'service'} from selection`}
                         >
                           <RiDeleteBin2Line className="h-4 w-4" />
                         </Button>
@@ -416,6 +420,7 @@ export function AddServicesDialog({
                               )
                             }
                             className="h-9"
+                            aria-label={`Quantity for ${selectedService.service?.display_name || 'service'}`}
                           />
                         </div>
                         <div className="space-y-1">
@@ -431,6 +436,7 @@ export function AddServicesDialog({
                               )
                             }
                             className="h-9"
+                            aria-label={`Unit price for ${selectedService.service?.display_name || 'service'}`}
                           />
                         </div>
                         <div className="space-y-1">

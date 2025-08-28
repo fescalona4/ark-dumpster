@@ -60,6 +60,7 @@ function CreateQuoteContent() {
     message: '',
   });
   const [selectedServices, setSelectedServices] = useState<SelectedService[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -88,6 +89,11 @@ function CreateQuoteContent() {
     }
 
     setFormData(prev => ({ ...prev, [id]: formattedValue }));
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[id]) {
+      setFieldErrors(prev => ({ ...prev, [id]: '' }));
+    }
   };
 
   const handlePlaceSelect = (placeData: {
@@ -102,16 +108,27 @@ function CreateQuoteContent() {
       ...prev,
       address: placeData.fullAddress || placeData.address || prev.address,
     }));
+    
+    // Clear address field error when place is selected
+    if (fieldErrors.address) {
+      setFieldErrors(prev => ({ ...prev, address: '' }));
+    }
   };
 
   const handleSelectChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear field error when selection is made
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setNotification(null);
+    setFieldErrors({});
 
     try {
       // Validate required fields
@@ -130,6 +147,12 @@ function CreateQuoteContent() {
       );
 
       if (missingFields.length > 0) {
+        const errors: {[key: string]: string} = {};
+        missingFields.forEach(({ field, label }) => {
+          errors[field] = `${label} is required`;
+        });
+        setFieldErrors(errors);
+        
         const fieldNames = missingFields.map(({ label }) => label).join(', ');
         setNotification({
           type: 'warning',
@@ -248,7 +271,7 @@ function CreateQuoteContent() {
           <CardTitle>Quote Request Form</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-8" noValidate>
             {/* Section 1: Customer Information */}
             <div className="space-y-6">
               <div className="border-b border-border pb-4">
@@ -265,9 +288,11 @@ function CreateQuoteContent() {
                     id="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="mt-1.5 h-11"
-                    required
+                    className={`mt-1.5 h-11 ${fieldErrors.firstName ? 'border-red-500' : ''}`}
                   />
+                  {fieldErrors.firstName && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.firstName}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="lastName">Last Name *</Label>
@@ -276,9 +301,11 @@ function CreateQuoteContent() {
                     id="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="mt-1.5 h-11"
-                    required
+                    className={`mt-1.5 h-11 ${fieldErrors.lastName ? 'border-red-500' : ''}`}
                   />
+                  {fieldErrors.lastName && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.lastName}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone Number *</Label>
@@ -288,9 +315,11 @@ function CreateQuoteContent() {
                     id="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="mt-1.5 h-11"
-                    required
+                    className={`mt-1.5 h-11 ${fieldErrors.phone ? 'border-red-500' : ''}`}
                   />
+                  {fieldErrors.phone && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.phone}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="email">Email Address *</Label>
@@ -300,9 +329,11 @@ function CreateQuoteContent() {
                     id="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="mt-1.5 h-11"
-                    required
+                    className={`mt-1.5 h-11 ${fieldErrors.email ? 'border-red-500' : ''}`}
                   />
+                  {fieldErrors.email && (
+                    <p className="text-sm text-red-500 mt-1">{fieldErrors.email}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -316,9 +347,11 @@ function CreateQuoteContent() {
                   placeholder="123 Main Street, City, State 12345"
                   value={formData.address}
                   onPlaceSelect={handlePlaceSelect}
-                  className="mt-1.5 h-11"
-                  required
+                  className={`mt-1.5 h-11 ${fieldErrors.address ? 'border-red-500' : ''}`}
                 />
+                {fieldErrors.address && (
+                  <p className="text-sm text-red-500 mt-1">{fieldErrors.address}</p>
+                )}
               </div>
             </div>
 
@@ -337,15 +370,17 @@ function CreateQuoteContent() {
                       value={formData.serviceDate}
                       onChange={date => handleSelectChange('serviceDate', date)}
                     />
+                    {fieldErrors.serviceDate && (
+                      <p className="text-sm text-red-500 mt-1">{fieldErrors.serviceDate}</p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="timeNeeded">Rental Duration *</Label>
                     <Select
                       value={formData.timeNeeded}
                       onValueChange={value => handleSelectChange('timeNeeded', value)}
-                      required
                     >
-                      <SelectTrigger className="mt-1.5 w-full !h-11">
+                      <SelectTrigger className={`mt-1.5 w-full !h-11 ${fieldErrors.timeNeeded ? 'border-red-500' : ''}`}>
                         <SelectValue placeholder="Select duration" />
                       </SelectTrigger>
                       <SelectContent>
@@ -358,6 +393,9 @@ function CreateQuoteContent() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                    {fieldErrors.timeNeeded && (
+                      <p className="text-sm text-red-500 mt-1">{fieldErrors.timeNeeded}</p>
+                    )}
                   </div>
                 </div>
                 <div>

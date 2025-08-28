@@ -195,7 +195,8 @@ function QuotesPageContent() {
       let query = supabase.from('quotes').select('*').order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        // Make the status filter case-insensitive to handle potential case mismatches
+        query = query.eq('status', statusFilter.toLowerCase());
       }
 
       const { data, error } = await query;

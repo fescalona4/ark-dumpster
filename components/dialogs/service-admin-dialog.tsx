@@ -202,12 +202,12 @@ export function ServiceAdminDialog({
   };
 
   const dialogContent = (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="service-dialog-description">
       <DialogHeader>
         <DialogTitle>
           {isEditing ? 'Edit Service' : 'Create New Service'}
         </DialogTitle>
-        <DialogDescription>
+        <DialogDescription id="service-dialog-description">
           {isEditing
             ? 'Update the service information below.'
             : 'Fill in the details to create a new service.'}
@@ -259,7 +259,7 @@ export function ServiceAdminDialog({
                 value={formData.category_id || ''}
                 onValueChange={(value) => updateFormData('category_id', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="category" aria-label="Select service category">
                   <SelectValue placeholder={categoriesLoading ? "Loading..." : "Select category"} />
                 </SelectTrigger>
                 <SelectContent>
@@ -314,7 +314,7 @@ export function ServiceAdminDialog({
                 value={formData.price_type || 'fixed'}
                 onValueChange={(value) => updateFormData('price_type', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="price_type" aria-label="Select price type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -340,7 +340,7 @@ export function ServiceAdminDialog({
                 value={formData.dumpster_size || 'none'}
                 onValueChange={(value) => updateFormData('dumpster_size', value === 'none' ? null : value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="dumpster_size" aria-label="Select dumpster size">
                   <SelectValue placeholder="Select size (optional)" />
                 </SelectTrigger>
                 <SelectContent>
