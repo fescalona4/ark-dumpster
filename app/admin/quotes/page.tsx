@@ -144,6 +144,9 @@ function QuotesPageContent() {
   // Save loading state for individual quotes
   const [savingQuotes, setSavingQuotes] = useState<Set<string>>(new Set());
 
+  // Creating order loading state for individual quotes
+  const [creatingOrders, setCreatingOrders] = useState<Set<string>>(new Set());
+
   // Quote services state
   const [quoteServices, setQuoteServices] = useState<{
     [quoteId: string]: any[];
@@ -189,9 +192,11 @@ function QuotesPageContent() {
    * Applies status filter if not 'all'
    * Orders by creation date (newest first)
    */
-  const fetchQuotes = useCallback(async () => {
+  const fetchQuotes = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       let query = supabase.from('quotes').select('*').order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
@@ -240,7 +245,9 @@ function QuotesPageContent() {
       setError('Failed to fetch quotes');
       console.error('Unexpected error:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, [statusFilter, searchTerm]);
 
@@ -414,7 +421,7 @@ function QuotesPageContent() {
       } as any,
       dumpster_assignments: [],
     } as unknown as OrderServiceWithRelations;
-    
+
     setSelectedService(serviceForDialog);
     setServiceEditDialogOpen(true);
   };
@@ -508,6 +515,9 @@ function QuotesPageContent() {
    * Generates an order number and copies all relevant quote data
    */
   const createOrder = async (quoteId: string) => {
+    // Set loading state
+    setCreatingOrders(prev => new Set([...prev, quoteId]));
+
     try {
       const quote = quotes.find(q => q.id === quoteId);
       if (!quote) {
@@ -533,8 +543,8 @@ function QuotesPageContent() {
         services: services.length,
       });
 
-      // Refresh quotes to show updated status
-      await fetchQuotes();
+      // Refresh quotes to show updated status (without showing main loading state)
+      await fetchQuotes(false);
 
       // Show confirmation dialog with created order
       setCreatedOrder(orderResult);
@@ -542,6 +552,13 @@ function QuotesPageContent() {
     } catch (err) {
       console.error('Error creating order:', err);
       alert(err instanceof Error ? err.message : 'Failed to create order');
+    } finally {
+      // Clear loading state
+      setCreatingOrders(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(quoteId);
+        return newSet;
+      });
     }
   };
 
@@ -597,7 +614,7 @@ function QuotesPageContent() {
       <div className="text-center text-red-500">
         Error: {error}
         <br />
-        <Button onClick={fetchQuotes} className="mt-4">
+        <Button onClick={() => fetchQuotes()} className="mt-4">
           Retry
         </Button>
       </div>
@@ -636,7 +653,7 @@ function QuotesPageContent() {
             </Select>
 
             <Button
-              onClick={fetchQuotes}
+              onClick={() => fetchQuotes()}
               variant="outline"
               size="icon"
               className="min-h-[34px] min-w-[34px]"
@@ -827,7 +844,7 @@ function QuotesPageContent() {
                                   service =>
                                     !quote.dumpster_size ||
                                     service.services?.display_name !==
-                                      `Dumpster Rental - ${quote.dumpster_size}`
+                                    `Dumpster Rental - ${quote.dumpster_size}`
                                 ).length}{' '}
                               Total
                             </Badge>
@@ -837,7 +854,7 @@ function QuotesPageContent() {
                       <div className="space-y-2 text-sm">
                         {/* All Services in unified list */}
                         {quote.dumpster_size ||
-                        (quoteServices[quote.id] && quoteServices[quote.id].length > 0) ? (
+                          (quoteServices[quote.id] && quoteServices[quote.id].length > 0) ? (
                           <div className="space-y-2">
                             {/* Main service (dumpster) */}
                             {quote.dumpster_size && (
@@ -890,7 +907,7 @@ function QuotesPageContent() {
                                     // Filter out main service to avoid duplication
                                     !quote.dumpster_size ||
                                     service.services?.display_name !==
-                                      `Dumpster Rental - ${quote.dumpster_size}`
+                                    `Dumpster Rental - ${quote.dumpster_size}`
                                 )
                                 .map((service, index) => (
                                   <button
@@ -1056,23 +1073,22 @@ function QuotesPageContent() {
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                                    !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                                       ? 'text-muted-foreground border-red-300 hover:border-red-400'
                                       : ''
-                                  }`}
+                                    }`}
                                 >
                                   <RiCalendarLine className="mr-2 h-4 w-4" />
                                   {editForms[quote.id]?.dropoff_date || quote.dropoff_date
                                     ? (() => {
-                                        const dateStr =
-                                          editForms[quote.id]?.dropoff_date ||
-                                          quote.dropoff_date ||
-                                          '';
-                                        const [year, month, day] = dateStr.split('-').map(Number);
-                                        const localDate = new Date(year, month - 1, day);
-                                        return format(localDate, 'MMM dd');
-                                      })()
+                                      const dateStr =
+                                        editForms[quote.id]?.dropoff_date ||
+                                        quote.dropoff_date ||
+                                        '';
+                                      const [year, month, day] = dateStr.split('-').map(Number);
+                                      const localDate = new Date(year, month - 1, day);
+                                      return format(localDate, 'MMM dd');
+                                    })()
                                     : 'Pick a date'}
                                 </Button>
                               </DialogTrigger>
@@ -1084,13 +1100,13 @@ function QuotesPageContent() {
                                   date={
                                     editForms[quote.id]?.dropoff_date || quote.dropoff_date
                                       ? (() => {
-                                          const dateStr =
-                                            editForms[quote.id]?.dropoff_date ||
-                                            quote.dropoff_date ||
-                                            '';
-                                          const [year, month, day] = dateStr.split('-').map(Number);
-                                          return new Date(year, month - 1, day); // month is 0-indexed
-                                        })()
+                                        const dateStr =
+                                          editForms[quote.id]?.dropoff_date ||
+                                          quote.dropoff_date ||
+                                          '';
+                                        const [year, month, day] = dateStr.split('-').map(Number);
+                                        return new Date(year, month - 1, day); // month is 0-indexed
+                                      })()
                                       : undefined
                                   }
                                   time={
@@ -1172,11 +1188,10 @@ function QuotesPageContent() {
                             </Label>
                             <Button
                               variant="outline"
-                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                                !(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
                                   ? 'text-muted-foreground border-red-300 hover:border-red-400'
                                   : ''
-                              }`}
+                                }`}
                               onClick={() => setDateTimeDialogOpen(quote.id)}
                             >
                               <RiTimeLine className="mr-2 h-4 w-4" />
@@ -1256,15 +1271,23 @@ function QuotesPageContent() {
                             onClick={() => createOrder(quote.id)}
                             disabled={
                               !(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
-                              !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                              !(editForms[quote.id]?.dropoff_date || quote.dropoff_date) ||
+                              creatingOrders.has(quote.id)
                             }
                           >
-                            Create Order
+                            {creatingOrders.has(quote.id) ? (
+                              <>
+                                <Spinner variant="circle" size={16} className="mr-2" />
+                                Creating Order...
+                              </>
+                            ) : (
+                              'Create Order'
+                            )}
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
                           {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
-                          !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                            !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                             ? 'Dropoff date and time are required to create an order'
                             : 'Create order from this quote'}
                         </TooltipContent>
@@ -1273,25 +1296,25 @@ function QuotesPageContent() {
                       {/* Validation feedback */}
                       {(!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) ||
                         !(editForms[quote.id]?.dropoff_date || quote.dropoff_date)) && (
-                        <div className="w-full mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
-                          <div className="flex items-start gap-2">
-                            <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                            <div className="text-xs text-yellow-700 dark:text-yellow-300">
-                              <p className="font-medium">
-                                Missing required fields for order creation:
-                              </p>
-                              <ul className="mt-1 space-y-1">
-                                {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
-                                  <li>• Dropoff date is required</li>
-                                )}
-                                {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
-                                  <li>• Dropoff time is required</li>
-                                )}
-                              </ul>
+                          <div className="w-full mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                            <div className="flex items-start gap-2">
+                              <RiInformationLine className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                                <p className="font-medium">
+                                  Missing required fields for order creation:
+                                </p>
+                                <ul className="mt-1 space-y-1">
+                                  {!(editForms[quote.id]?.dropoff_date || quote.dropoff_date) && (
+                                    <li>• Dropoff date is required</li>
+                                  )}
+                                  {!(editForms[quote.id]?.dropoff_time || quote.dropoff_time) && (
+                                    <li>• Dropoff time is required</li>
+                                  )}
+                                </ul>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   </div>
                 </CardContent>
