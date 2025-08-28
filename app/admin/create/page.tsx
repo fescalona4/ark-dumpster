@@ -51,10 +51,6 @@ function CreateQuoteContent() {
     phone: '',
     email: '',
     address: '',
-    address2: '',
-    city: '',
-    state: 'FL',
-    zipCode: '',
     serviceDate: (() => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -75,16 +71,6 @@ function CreateQuoteContent() {
       formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
-    // Format state to uppercase and limit to 2 characters
-    if (id === 'state') {
-      formattedValue = value.toUpperCase().slice(0, 2);
-    }
-
-    // Format ZIP code to numeric only and limit to 5 digits
-    if (id === 'zipCode') {
-      const numericOnly = value.replace(/\D/g, '');
-      formattedValue = numericOnly.slice(0, 5);
-    }
 
     // Format phone number for display
     if (id === 'phone') {
@@ -107,15 +93,14 @@ function CreateQuoteContent() {
   const handlePlaceSelect = (placeData: {
     address: string;
     city: string;
-    state?: string;
+    state: string;
     zipCode: string;
+    fullAddress: string;
+    geometry: any;
   }) => {
     setFormData(prev => ({
       ...prev,
-      address: placeData.address || prev.address,
-      city: placeData.city || prev.city,
-      state: placeData.state || prev.state,
-      zipCode: placeData.zipCode || prev.zipCode,
+      address: placeData.fullAddress || placeData.address || prev.address,
     }));
   };
 
@@ -136,9 +121,6 @@ function CreateQuoteContent() {
         { field: 'phone', label: 'Phone Number' },
         { field: 'email', label: 'Email' },
         { field: 'address', label: 'Address' },
-        { field: 'city', label: 'City' },
-        { field: 'state', label: 'State' },
-        { field: 'zipCode', label: 'ZIP Code' },
         { field: 'serviceDate', label: 'Service Date' },
         { field: 'timeNeeded', label: 'Time Needed' },
       ];
@@ -184,8 +166,7 @@ function CreateQuoteContent() {
             service: selectedServices
               .map(s => `${s.service?.display_name || 'Unknown'} (Qty: ${s.quantity})`)
               .join(', '),
-            location:
-              `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
+            location: formData.address,
             date: formData.serviceDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
             message: formData.message,
@@ -219,10 +200,6 @@ function CreateQuoteContent() {
           phone: '',
           email: '',
           address: '',
-          address2: '',
-          city: '',
-          state: 'FL',
-          zipCode: '',
           serviceDate: (() => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
@@ -330,86 +307,24 @@ function CreateQuoteContent() {
               </div>
             </div>
 
-            {/* Section 2: Service Location */}
+            {/* Address Field */}
             <div className="space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-lg font-semibold text-foreground">Service Location</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Where should the dumpster be delivered?
-                </p>
-              </div>
-              <div className="grid gap-6">
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="md:col-span-2">
-                    <Label htmlFor="address">Street Address *</Label>
-                    <GooglePlacesAutocomplete
-                      id="address"
-                      placeholder="123 Main Street"
-                      value={formData.address}
-                      onPlaceSelect={handlePlaceSelect}
-                      className="mt-1.5 h-11"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="address2" className="truncate">
-                      Apt/Suite (Optional)
-                    </Label>
-                    <Input
-                      placeholder="Apt, suite, unit, etc."
-                      id="address2"
-                      type="text"
-                      value={formData.address2}
-                      onChange={handleInputChange}
-                      className="mt-1.5 h-11"
-                    />
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div>
-                    <Label htmlFor="city">City *</Label>
-                    <Input
-                      placeholder="City"
-                      id="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="mt-1.5 h-11"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="state">State *</Label>
-                    <Input
-                      placeholder="FL"
-                      id="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      maxLength={2}
-                      className="mt-1.5 h-11"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="zipCode">ZIP Code *</Label>
-                    <Input
-                      type="tel"
-                      placeholder="12345"
-                      id="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      maxLength={5}
-                      pattern="[0-9]{5}"
-                      className="mt-1.5 h-11"
-                      required
-                    />
-                  </div>
-                </div>
+              <div>
+                <Label htmlFor="address">Address *</Label>
+                <GooglePlacesAutocomplete
+                  id="address"
+                  placeholder="123 Main Street, City, State 12345"
+                  value={formData.address}
+                  onPlaceSelect={handlePlaceSelect}
+                  className="mt-1.5 h-11"
+                  required
+                />
               </div>
             </div>
 
             {/* Section 3: Service Details */}
             <div className="space-y-6">
-              <div className="border-b border-border pb-4">
+              <div className="border-b border-border py-4">
                 <h3 className="text-lg font-semibold text-foreground">Service Details</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   When do you need the dumpster and for how long?

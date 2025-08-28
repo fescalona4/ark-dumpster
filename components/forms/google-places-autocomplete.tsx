@@ -376,17 +376,17 @@ export default function GooglePlacesAutocomplete({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    // For manual entry (when Google Places is not available or user is typing manually)
-    if (!hasApiKey || !isLoaded) {
-      onPlaceSelect({
-        address: e.target.value,
-        city: '',
-        state: '',
-        zipCode: '',
-        fullAddress: e.target.value,
-        geometry: null,
-      });
-    }
+    
+    // Always call onPlaceSelect for manual typing to ensure form validation works
+    // This covers both cases: when Google Places is unavailable AND when user manually types
+    onPlaceSelect({
+      address: e.target.value,
+      city: '',
+      state: '',
+      zipCode: '',
+      fullAddress: e.target.value,
+      geometry: null,
+    });
   };
 
   return (
