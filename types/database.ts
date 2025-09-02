@@ -285,6 +285,7 @@ export interface Order {
   // Dropoff details (transferred from quote)
   dropoff_date: string | null;
   dropoff_time: string | null;
+  time_needed: TimeNeeded | null;
 
   // Service summary (computed fields)
   service_count: number;
@@ -858,7 +859,6 @@ export interface OrderCreateData {
   quoteId?: string;
   customerName?: string;
   dumpsterSize?: DumpsterSize;
-  dropoffDate?: string;
   totalAmount?: number;
 }
 
