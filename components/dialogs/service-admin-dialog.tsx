@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -168,19 +169,19 @@ export function ServiceAdminDialog({
 
       // Validation
       if (!formData.name?.trim()) {
-        alert('Name is required');
+        toast.error('Name is required');
         return;
       }
       if (!formData.display_name?.trim()) {
-        alert('Display name is required');
+        toast.error('Display name is required');
         return;
       }
       if (!formData.category_id) {
-        alert('Category is required');
+        toast.error('Category is required');
         return;
       }
       if (formData.base_price === undefined) {
-        alert('Base price is required');
+        toast.error('Base price is required');
         return;
       }
 
@@ -188,7 +189,7 @@ export function ServiceAdminDialog({
       setDialogOpen(false);
     } catch (error) {
       console.error('Failed to save service:', error);
-      alert('Failed to save service. Please try again.');
+      toast.error('Failed to save service. Please try again.');
     } finally {
       setLoading(false);
     }

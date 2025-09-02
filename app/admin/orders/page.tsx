@@ -486,7 +486,7 @@ function OrdersPageContent() {
         );
       }
     } else {
-      alert(result.error || 'Failed to update order status');
+      toast.error(result.error || 'Failed to update order status');
     }
   };
 
@@ -502,7 +502,7 @@ function OrdersPageContent() {
 
       if (error) {
         console.error('Error assigning driver:', error);
-        alert('Failed to assign driver to order');
+        toast.error('Failed to assign driver to order');
         return;
       }
 
@@ -512,7 +512,7 @@ function OrdersPageContent() {
       );
     } catch (err) {
       console.error('Unexpected error assigning driver:', err);
-      alert('Failed to assign driver');
+      toast.error('Failed to assign driver');
     }
   };
 
@@ -888,7 +888,7 @@ function OrdersPageContent() {
 
         if (orderError) {
           console.error('Error updating order:', orderError);
-          alert('Failed to assign dumpster to order');
+          toast.error('Failed to assign dumpster to order');
           return;
         }
 
@@ -934,7 +934,7 @@ function OrdersPageContent() {
 
         if (dumpsterError) {
           console.error('Error updating dumpster:', dumpsterError);
-          alert('Failed to update dumpster status');
+          toast.error('Failed to update dumpster status');
           return;
         }
 
@@ -969,7 +969,7 @@ function OrdersPageContent() {
 
         if (orderError) {
           console.error('Error updating order:', orderError);
-          alert('Failed to unassign dumpster from order');
+          toast.error('Failed to unassign dumpster from order');
           return;
         }
 
@@ -985,7 +985,7 @@ function OrdersPageContent() {
 
           if (dumpsterError) {
             console.error('Error updating dumpster:', dumpsterError);
-            alert('Failed to update dumpster status');
+            toast.error('Failed to update dumpster status');
             return;
           }
 
@@ -1005,7 +1005,7 @@ function OrdersPageContent() {
       }
     } catch (err) {
       console.error('Unexpected error assigning dumpster:', err);
-      alert('Failed to assign dumpster');
+      toast.error('Failed to assign dumpster');
     }
   };
 

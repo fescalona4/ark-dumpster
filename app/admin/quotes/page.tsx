@@ -395,14 +395,14 @@ function QuotesPageContent() {
 
       if (error) {
         console.error('Error deleting quote:', error);
-        alert('Failed to delete quote');
+        toast.error('Failed to delete quote');
       } else {
         setQuotes(quotes.filter(quote => quote.id !== id));
         // setDeleteQuoteId(null); // TODO: Uncomment when delete functionality is implemented
       }
     } catch (err) {
       console.error('Unexpected error:', err);
-      alert('Failed to delete quote');
+      toast.error('Failed to delete quote');
     }
   };
 
@@ -566,7 +566,7 @@ function QuotesPageContent() {
     try {
       const quote = quotes.find(q => q.id === quoteId);
       if (!quote) {
-        alert('Quote not found');
+        toast.error('Quote not found');
         return;
       }
 
@@ -576,7 +576,7 @@ function QuotesPageContent() {
 
       // Validate required fields for order creation
       if (!currentDropoffDate) {
-        alert('Dropoff date is required to create an order. Please set a dropoff date first.');
+        toast.error('Dropoff date is required to create an order. Please set a dropoff date first.');
         return;
       }
 
@@ -596,7 +596,7 @@ function QuotesPageContent() {
       setOrderConfirmationOpen(true);
     } catch (err) {
       console.error('Error creating order:', err);
-      alert(err instanceof Error ? err.message : 'Failed to create order');
+      toast.error(err instanceof Error ? err.message : 'Failed to create order');
     } finally {
       // Clear loading state
       setCreatingOrders(prev => {

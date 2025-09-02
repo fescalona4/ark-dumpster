@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { toast } from 'sonner';
 import { IconMapPin, IconNavigation, IconClock, IconRoute } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -74,7 +75,7 @@ export function NearbyOrders({
 
   const handleLocationRequest = async () => {
     if (permission === 'denied') {
-      alert('Location access denied. Please enable location in your browser settings.');
+      toast.error('Location access denied. Please enable location in your browser settings.');
       return;
     }
 

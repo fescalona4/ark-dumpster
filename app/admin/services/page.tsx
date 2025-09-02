@@ -13,6 +13,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -234,7 +235,7 @@ function ServicesPageContent() {
       await fetchServices(); // Refresh services list
     } catch (error) {
       console.error('Error deleting service:', error);
-      alert(`Failed to delete service: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to delete service: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -260,7 +261,7 @@ function ServicesPageContent() {
       await fetchServices(); // Refresh services list
     } catch (error) {
       console.error('Error updating service status:', error);
-      alert(`Failed to update service: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to update service: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -284,7 +285,7 @@ function ServicesPageContent() {
       setSelectedServices(new Set());
     } catch (error) {
       console.error('Error in bulk status change:', error);
-      alert('Failed to update some services');
+      toast.error('Failed to update some services');
     }
   };
 
