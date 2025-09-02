@@ -48,7 +48,7 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
           <Button
             variant="outline"
             id="date"
-            className="justify-between font-normal text-foreground bg-transparent h-11 shadow-xs rounded-md border border-input px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50"
+            className="justify-between font-normal text-foreground bg-white h-11 shadow-xs rounded-md border border-input px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50"
           >
             {date ? date.toLocaleDateString() : 'Date needed'}
             <RiArrowDownSLine />

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useTheme } from 'next-themes';
 import { Input } from '@/components/ui/input';
 
 // Google Places API types
@@ -82,15 +81,14 @@ export default function GooglePlacesAutocomplete({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(true);
   const [inputValue, setInputValue] = useState(value);
-  const { theme } = useTheme();
 
   useEffect(() => {
     setInputValue(value);
   }, [value]);
 
   useEffect(() => {
-    // Inject theme-aware styles for Google Places autocomplete dropdown
-    const injectThemeStyles = () => {
+    // Inject dark mode styles for Google Places autocomplete dropdown
+    const injectDarkModeStyles = () => {
       // Remove existing styles
       const existingStyle = document.getElementById('google-places-theme-styles');
       if (existingStyle) {
@@ -100,123 +98,67 @@ export default function GooglePlacesAutocomplete({
       const style = document.createElement('style');
       style.id = 'google-places-theme-styles';
 
-      if (theme === 'dark') {
-        // Dark theme styles
-        style.textContent = `
-          /* Google Places Autocomplete Dark Mode */
-          .pac-container {
-            background-color: #1f1f1f !important;
-            border: 1px solid #404040 !important;
-            border-radius: calc(var(--radius) - 2px) !important;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3) !important;
-            backdrop-filter: none !important;
-          }
+      // Always use dark theme styles for the autocomplete dropdown
+      style.textContent = `
+        /* Google Places Autocomplete Dark Mode (Always On) */
+        .pac-container {
+          background-color: #1f1f1f !important;
+          border: 1px solid #404040 !important;
+          border-radius: calc(var(--radius) - 2px) !important;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3) !important;
+          backdrop-filter: none !important;
+        }
 
-          .pac-item {
-            background-color: #1f1f1f !important;
-            color: #ffffff !important;
-            border-bottom: 1px solid #404040 !important;
-            padding: 8px 12px !important;
-            transition: background-color 0.2s !important;
-          }
+        .pac-item {
+          background-color: #1f1f1f !important;
+          color: #ffffff !important;
+          border-bottom: 1px solid #404040 !important;
+          padding: 8px 12px !important;
+          transition: background-color 0.2s !important;
+        }
 
-          .pac-item:hover,
-          .pac-item-selected {
-            background-color: #2a2a2a !important;
-            color: #ffffff !important;
-          }
+        .pac-item:hover,
+        .pac-item-selected {
+          background-color: #2a2a2a !important;
+          color: #ffffff !important;
+        }
 
-          .pac-item-query {
-            color: #ffffff !important;
-            font-weight: 600 !important;
-          }
+        .pac-item-query {
+          color: #ffffff !important;
+          font-weight: 600 !important;
+        }
 
-          .pac-matched {
-            color: #a78bfa !important;
-            font-weight: 700 !important;
-          }
+        .pac-matched {
+          color: #a78bfa !important;
+          font-weight: 700 !important;
+        }
 
-          .pac-icon {
-            background-image: none !important;
-            background-color: #666666 !important;
-            border-radius: 2px !important;
-          }
+        .pac-icon {
+          background-image: none !important;
+          background-color: #666666 !important;
+          border-radius: 2px !important;
+        }
 
-          .pac-icon-marker {
-            background-color: #a78bfa !important;
-          }
+        .pac-icon-marker {
+          background-color: #a78bfa !important;
+        }
 
-          .pac-item:last-child {
-            border-bottom: none !important;
-          }
+        .pac-item:last-child {
+          border-bottom: none !important;
+        }
 
-          /* Powered by Google logo dark mode */
-          .pac-logo:after {
-            filter: invert(1) contrast(0.8) !important;
-          }
-        `;
-      } else {
-        // Light theme styles
-        style.textContent = `
-          /* Google Places Autocomplete Light Mode */
-          .pac-container {
-            background-color: #ffffff !important;
-            border: 1px solid hsl(var(--border)) !important;
-            border-radius: calc(var(--radius) - 2px) !important;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
-          }
-
-          .pac-item {
-            background-color: #ffffff !important;
-            color: hsl(var(--foreground)) !important;
-            border-bottom: 1px solid hsl(var(--border)) !important;
-            padding: 8px 12px !important;
-            transition: background-color 0.2s !important;
-          }
-
-          .pac-item:hover,
-          .pac-item-selected {
-            background-color: hsl(var(--accent)) !important;
-            color: hsl(var(--accent-foreground)) !important;
-          }
-
-          .pac-item-query {
-            color: hsl(var(--foreground)) !important;
-            font-weight: 600 !important;
-          }
-
-          .pac-matched {
-            color: hsl(var(--primary)) !important;
-            font-weight: 700 !important;
-          }
-
-          .pac-icon {
-            background-image: none !important;
-            background-color: hsl(var(--muted-foreground)) !important;
-            border-radius: 2px !important;
-          }
-
-          .pac-icon-marker {
-            background-color: hsl(var(--primary)) !important;
-          }
-
-          .pac-item:last-child {
-            border-bottom: none !important;
-          }
-
-          /* Powered by Google logo light mode */
-          .pac-logo:after {
-            filter: none !important;
-          }
-        `;
-      }
+        /* Powered by Google logo dark mode */
+        .pac-logo:after {
+          filter: invert(1) contrast(0.8) !important;
+        }
+      `;
 
       document.head.appendChild(style);
     };
 
-    // Inject styles whenever theme changes
-    injectThemeStyles();
-  }, [theme]);
+    // Inject dark mode styles immediately
+    injectDarkModeStyles();
+  }, []);
 
   useEffect(() => {
     const loadGoogleMaps = () => {
