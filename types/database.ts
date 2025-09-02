@@ -281,6 +281,10 @@ export interface Order {
   scheduled_pickup_date: string | null;
   actual_delivery_date: string | null;
   actual_pickup_date: string | null;
+  
+  // Dropoff details (transferred from quote)
+  dropoff_date: string | null;
+  dropoff_time: string | null;
 
   // Service summary (computed fields)
   service_count: number;
@@ -842,6 +846,9 @@ export interface OrderCreateData {
   assignedTo?: string;
   scheduledDeliveryDate?: string;
   scheduledPickupDate?: string;
+  dropoffDate?: string;
+  dropoffTime?: string;
+  timeNeeded?: TimeNeeded;
   internalNotes?: string;
 
   // Services

@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import ConditionalLayout from '@/components/layout/conditional-layout';
 import AnalyticsProvider from '@/components/analytics/analytics-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 const manrope = Manrope({
   variable: '--font-manrope',
@@ -38,6 +39,7 @@ export default function RootLayout({
           <AnalyticsProvider>
             <ConditionalLayout>{children}</ConditionalLayout>
           </AnalyticsProvider>
+          <Toaster position="top-center" />
           <SpeedInsights />
         </ThemeProvider>
       </body>

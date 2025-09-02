@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { getAuthContext } from '@/lib/auth-middleware';
 import { withRateLimit } from '@/lib/rate-limiter';
 import {
@@ -11,10 +11,7 @@ import {
   ValidationError,
 } from '@/lib/api-response';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = createServerSupabaseClient();
 
 // GET single service
 export const GET = withRateLimit(async (request: NextRequest) => {

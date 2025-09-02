@@ -53,6 +53,9 @@ export async function createOrderWithServices(
       assigned_to: orderData.assignedTo || 'Ariel',
       scheduled_delivery_date: orderData.scheduledDeliveryDate || null,
       scheduled_pickup_date: orderData.scheduledPickupDate || null,
+      dropoff_date: orderData.dropoffDate || null,
+      dropoff_time: orderData.dropoffTime || null,
+      time_needed: orderData.timeNeeded || null,
       internal_notes: orderData.internalNotes || null,
     };
 
@@ -237,6 +240,9 @@ export async function convertQuoteToOrder(
     assignedTo: quote.assigned_to || 'Ariel',
     priority: quote.priority,
     scheduledDeliveryDate: quote.dropoff_date,
+    dropoffDate: quote.dropoff_date,
+    dropoffTime: quote.dropoff_time,
+    timeNeeded: quote.time_needed,
     internalNotes: quote.quote_notes,
     services: services,
   };

@@ -21,6 +21,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Status, StatusIndicator, StatusLabel } from '@/components/ui/status';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -45,6 +46,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   RiTruckLine,
   RiCalendarLine,
@@ -171,6 +180,17 @@ function OrdersPageContent() {
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState<string | null>(null);
   const [editForms, setEditForms] = useState<{ [key: string]: Partial<OrderViewData> }>({});
+  // Date-time picker dialog state
+  const [dateTimeDialogOpen, setDateTimeDialogOpen] = useState<string | null>(null);
+  // On My Way confirmation dialog state
+  const [onMyWayDialogOpen, setOnMyWayDialogOpen] = useState<string | null>(null);
+  // Delivered confirmation dialog state
+  const [deliveredDialogOpen, setDeliveredDialogOpen] = useState<string | null>(null);
+  // On Way to Pickup confirmation dialog state
+  const [pickupDialogOpen, setPickupDialogOpen] = useState<string | null>(null);
+  // Complete Order confirmation dialog state
+  const [completeDialogOpen, setCompleteDialogOpen] = useState<string | null>(null);
+  const [sendEmailUpdate, setSendEmailUpdate] = useState(true);
 
 
   /**
@@ -561,6 +581,8 @@ function OrdersPageContent() {
         city: editForm.city,
         state: editForm.state,
         zip_code: editForm.zip_code,
+        dropoff_date: editForm.dropoff_date,
+        dropoff_time: editForm.dropoff_time,
         updated_at: new Date().toISOString(),
       };
 
@@ -602,8 +624,172 @@ function OrdersPageContent() {
       setSelectedOrderForDumpster(order);
       setDumpsterDialogOpen(true);
     } else {
-      // Proceed directly to "On My Way" status
-      await updateOrderStatus(order.id, 'on_way');
+      // Show confirmation dialog for email update
+      setOnMyWayDialogOpen(order.id);
+      setSendEmailUpdate(true);
+    }
+  };
+
+  /**
+   * Confirms "On My Way" action and optionally sends email update
+   */
+  const confirmOnMyWay = async (orderId: string) => {
+    try {
+      // Update order status to "on_way"
+      await updateOrderStatus(orderId, 'on_way');
+      
+      if (sendEmailUpdate) {
+        // Send email notification
+        try {
+          const response = await fetch(`/api/orders/${orderId}/notify`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'on_way',
+              sendEmail: true,
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (result.success && result.emailSent) {
+            toast.success('Order status updated and customer notified via email');
+          } else {
+            toast.success('Order status updated to "On My Way" (email notification failed)');
+            console.warn('Email notification failed:', result.error);
+          }
+        } catch (emailError) {
+          console.error('Error sending email notification:', emailError);
+          toast.success('Order status updated to "On My Way" (email notification failed)');
+        }
+      } else {
+        toast.success('Order status updated to "On My Way"');
+      }
+      
+      setOnMyWayDialogOpen(null);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
+    }
+  };
+
+  /**
+   * Confirms "Delivered" action and optionally sends email update
+   */
+  const confirmDelivered = async (orderId: string) => {
+    try {
+      // Update order status to "delivered"
+      await updateOrderStatus(orderId, 'delivered');
+      
+      if (sendEmailUpdate) {
+        // Send email notification
+        try {
+          const response = await fetch(`/api/orders/${orderId}/notify`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'delivered',
+              sendEmail: true,
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (result.success && result.emailSent) {
+            toast.success('Order status updated and customer notified via email');
+          } else {
+            toast.success('Order status updated to "Delivered" (email notification failed)');
+            console.warn('Email notification failed:', result.error);
+          }
+        } catch (emailError) {
+          console.error('Error sending email notification:', emailError);
+          toast.success('Order status updated to "Delivered" (email notification failed)');
+        }
+      } else {
+        toast.success('Order status updated to "Delivered"');
+      }
+      
+      setDeliveredDialogOpen(null);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
+    }
+  };
+
+  /**
+   * Confirms "On Way to Pickup" action (no email option)
+   */
+  const confirmPickup = async (orderId: string) => {
+    try {
+      // Update order status to "on_way_pickup"
+      await updateOrderStatus(orderId, 'on_way_pickup');
+      toast.success('Order status updated to "On Way to Pickup"');
+      setPickupDialogOpen(null);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
+    }
+  };
+
+  /**
+   * Confirms "Complete Order" action and optionally sends email update
+   */
+  const confirmComplete = async (orderId: string) => {
+    try {
+      // Update order status to "completed"
+      await updateOrderStatus(orderId, 'completed');
+      
+      if (sendEmailUpdate) {
+        // Send email notification
+        try {
+          const response = await fetch(`/api/orders/${orderId}/notify`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'completed',
+              sendEmail: true,
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (result.success && result.emailSent) {
+            toast.success('Order completed and customer notified via email');
+          } else {
+            toast.success('Order completed (email notification failed)');
+            console.warn('Email notification failed:', result.error);
+          }
+        } catch (emailError) {
+          console.error('Error sending email notification:', emailError);
+          toast.success('Order completed (email notification failed)');
+        }
+      } else {
+        toast.success('Order completed');
+      }
+      
+      setCompleteDialogOpen(null);
+    } catch (error) {
+      console.error('Error completing order:', error);
+      toast.error('Failed to complete order');
+    }
+  };
+
+  /**
+   * Updates order status and shows appropriate toast notification
+   */
+  const updateOrderStatusWithToast = async (orderId: string, newStatus: Order['status'], message: string) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      toast.success(message);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
     }
   };
 
@@ -934,6 +1120,39 @@ function OrdersPageContent() {
                             </div>
                           </div>
                         )}
+                        {/* Dropoff Date and Time - combined display */}
+                        {order.dropoff_date && (
+                          <div className="flex items-center gap-2">
+                            <RiCalendarLine className="h-4 w-4 flex-shrink-0" />
+                            <span>
+                              Delivery:{' '}
+                              {(() => {
+                                const [year, month, day] = order.dropoff_date.split('-').map(Number);
+                                const localDate = new Date(year, month - 1, day);
+                                let result = format(localDate, 'EEE, MMM dd');
+                                
+                                // Add time if available
+                                if (order.dropoff_time) {
+                                  const [hours, minutes] = order.dropoff_time.split(':');
+                                  const hour12 = parseInt(hours) % 12 || 12;
+                                  const ampm = parseInt(hours) >= 12 ? 'pm' : 'am';
+                                  result += ` at ${hour12}:${minutes}${ampm}`;
+                                }
+                                
+                                return result;
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                        {/* Duration display */}
+                        {order.time_needed && (
+                          <div className="flex items-center gap-2">
+                            <RiTimeLine className="h-4 w-4 flex-shrink-0" />
+                            <span>
+                              Duration: {order.time_needed}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1182,91 +1401,150 @@ function OrdersPageContent() {
                         )}
                       </div>
 
-                      {/* Dumpster Assignment */}
-                      <div className="space-y-2">
-                        <Label htmlFor={`dumpster-${order.id}`} className="text-sm font-semibold">
-                          {order.order_status === 'completed'
-                            ? 'Dumpsters Used'
-                            : 'Assigned Dumpsters'}
-                        </Label>
-                        {order.order_status === 'completed' ? (
-                          // Show read-only dumpster info for completed orders
-                          <div className="p-3 bg-muted rounded-lg border min-h-[44px]">
-                            {order.assigned_dumpsters ? (
-                              <div className="flex items-center gap-2">
-                                <RiBox1Line className="h-3 w-3 text-gray-700" />
-                                <span className="text-sm text-gray-800 font-medium">
-                                  {order.assigned_dumpsters}
-                                </span>
-                                <Badge variant="secondary" className="ml-auto text-xs">
-                                  Completed
-                                </Badge>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2 text-gray-500">
-                                <RiBox1Line className="h-3 w-3" />
-                                <span className="text-sm">No dumpsters assigned</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          // Show dropdown for non-completed orders
-                          <Select
-                            value={
-                              dumpsters.find(d => d.current_order_id === order.id)?.id ||
-                              'unassigned'
-                            }
-                            onValueChange={value => {
-                              const dumpsterId = value === 'unassigned' ? null : value;
-                              assignDumpsterToOrder(order.id, dumpsterId);
-                            }}
+                      {/* Dropoff Date and Time - editable with date/time pickers */}
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                          <Label className="text-sm font-semibold mb-2 block">Dropoff Date</Label>
+                          <Dialog
+                            open={dateTimeDialogOpen === order.id}
+                            onOpenChange={open => setDateTimeDialogOpen(open ? order.id : null)}
                           >
-                            <SelectTrigger
-                              id={`dumpster-${order.id}`}
-                              className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                              aria-label="Select dumpster for this order"
-                            >
-                              <SelectValue>
-                                <div className="flex items-center gap-2">
-                                  <RiBox1Line className="h-3 w-3" />
-                                  <span className="text-sm">
-                                    {dumpsters.find(d => d.current_order_id === order.id)?.name ||
-                                      'Select a dumpster'}
-                                  </span>
-                                </div>
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unassigned">
-                                <span className="text-muted-foreground">Unassigned</span>
-                              </SelectItem>
-                              {dumpsters
-                                .filter(
-                                  d =>
-                                    d.name !== 'ARK-HOME' &&
-                                    (d.status === 'available' || d.current_order_id === order.id)
-                                )
-                                .map(dumpster => (
-                                  <SelectItem key={dumpster.id} value={dumpster.id}>
-                                    <div className="flex items-center justify-between w-full">
-                                      <span>{dumpster.name}</span>
-                                      {dumpster.size && (
-                                        <span className="text-xs text-muted-foreground ml-2">
-                                          {dumpster.size} yard
-                                        </span>
-                                      )}
-                                      {dumpster.current_order_id === order.id && (
-                                        <Badge variant="secondary" className="ml-2 text-xs">
-                                          Current
-                                        </Badge>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                              >
+                                <RiCalendarLine className="mr-2 h-4 w-4" />
+                                {editForms[order.id]?.dropoff_date || order.dropoff_date
+                                  ? (() => {
+                                      const dateStr =
+                                        editForms[order.id]?.dropoff_date || order.dropoff_date || '';
+                                      const [year, month, day] = dateStr.split('-').map(Number);
+                                      const localDate = new Date(year, month - 1, day);
+                                      return format(localDate, 'MMM dd');
+                                    })()
+                                  : 'Pick a date'}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="!max-w-[500px] !w-[500px]">
+                              <DialogHeader>
+                                <DialogTitle>Select Dropoff Date & Time</DialogTitle>
+                              </DialogHeader>
+                              <DateTimePicker
+                                date={
+                                  editForms[order.id]?.dropoff_date || order.dropoff_date
+                                    ? (() => {
+                                        const dateStr =
+                                          editForms[order.id]?.dropoff_date ||
+                                          order.dropoff_date ||
+                                          '';
+                                        const [year, month, day] = dateStr.split('-').map(Number);
+                                        return new Date(year, month - 1, day); // month is 0-indexed
+                                      })()
+                                    : undefined
+                                }
+                                time={
+                                  editForms[order.id]?.dropoff_time || order.dropoff_time || ''
+                                }
+                                onDateChange={date => {
+                                  const dateString = date ? format(date, 'yyyy-MM-dd') : '';
+                                  setEditForms(prev => ({
+                                    ...prev,
+                                    [order.id]: {
+                                      ...prev[order.id],
+                                      dropoff_date: dateString,
+                                    },
+                                  }));
+                                }}
+                                onTimeChange={time => {
+                                  setEditForms(prev => ({
+                                    ...prev,
+                                    [order.id]: {
+                                      ...prev[order.id],
+                                      dropoff_time: time,
+                                    },
+                                  }));
+                                }}
+                              />
+                              <div className="flex justify-center pt-4 border-t">
+                                <Button
+                                  onClick={() => setDateTimeDialogOpen(null)}
+                                  className="min-w-[200px]"
+                                >
+                                  {(() => {
+                                    const currentDate = editForms[order.id]?.dropoff_date || order.dropoff_date;
+                                    const currentTime = editForms[order.id]?.dropoff_time || order.dropoff_time;
+                                    
+                                    if (currentDate && currentTime) {
+                                      const [year, month, day] = currentDate
+                                        .split('-')
+                                        .map(Number);
+                                      const localDate = new Date(year, month - 1, day);
+                                      const [hours, minutes] = currentTime.split(':');
+                                      const hour12 = parseInt(hours) % 12 || 12;
+                                      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                      const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                      return `${format(localDate, 'MMM dd')} at ${formattedTime}`;
+                                    } else if (currentDate) {
+                                      const [year, month, day] = currentDate
+                                        .split('-')
+                                        .map(Number);
+                                      const localDate = new Date(year, month - 1, day);
+                                      return `${format(localDate, 'MMM dd')} - Select time`;
+                                    } else if (currentTime) {
+                                      const [hours, minutes] = currentTime.split(':');
+                                      const hour12 = parseInt(hours) % 12 || 12;
+                                      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                      const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                      return `Select date - ${formattedTime}`;
+                                    } else {
+                                      return 'Close';
+                                    }
+                                  })()}
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-semibold mb-2 block">Dropoff Time</Label>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            onClick={() => setDateTimeDialogOpen(order.id)}
+                          >
+                            <RiTimeLine className="mr-2 h-4 w-4" />
+                            {(() => {
+                              const currentTime =
+                                editForms[order.id]?.dropoff_time || order.dropoff_time;
+                              if (currentTime) {
+                                const [hours, minutes] = currentTime.split(':');
+                                const hour12 = parseInt(hours) % 12 || 12;
+                                const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                return `${hour12}:${minutes} ${ampm}`;
+                              }
+                              return 'Pick a time';
+                            })()}
+                          </Button>
+                        </div>
                       </div>
+
+                      {/* Save Button for Dropoff Changes */}
+                      {(editForms[order.id]?.dropoff_date !== undefined || 
+                        editForms[order.id]?.dropoff_time !== undefined) && (
+                        <div className="flex justify-end mt-4">
+                          <Button
+                            onClick={() => saveOrder(order.id)}
+                            variant="outline"
+                            size="sm"
+                            className="min-h-[44px] px-4 touch-manipulation"
+                          >
+                            Save Changes
+                          </Button>
+                        </div>
+                      )}
+
 
                       <div className="text-xs text-muted-foreground">
                         Created: {format(new Date(order.created_at), "MMM dd, yyyy 'at' h:mm a")}
@@ -1332,7 +1610,7 @@ function OrdersPageContent() {
                     {order.order_status === 'on_way' && (
                       <>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'scheduled')}
+                          onClick={() => updateOrderStatusWithToast(order.id, 'scheduled', 'Order status updated to "Scheduled"')}
                           variant="outline"
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
@@ -1341,7 +1619,7 @@ function OrdersPageContent() {
                           Back to Scheduled
                         </Button>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          onClick={() => setDeliveredDialogOpen(order.id)}
                           className="bg-green-600 hover:bg-green-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
@@ -1353,7 +1631,7 @@ function OrdersPageContent() {
                     {order.order_status === 'delivered' && (
                       <>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'on_way')}
+                          onClick={() => updateOrderStatusWithToast(order.id, 'on_way', 'Order status updated to "On My Way"')}
                           variant="outline"
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
@@ -1362,7 +1640,7 @@ function OrdersPageContent() {
                           Back to On Way
                         </Button>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'on_way_pickup')}
+                          onClick={() => setPickupDialogOpen(order.id)}
                           className="bg-yellow-600 hover:bg-yellow-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
@@ -1374,7 +1652,7 @@ function OrdersPageContent() {
                     {order.order_status === 'on_way_pickup' && (
                       <>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'delivered')}
+                          onClick={() => updateOrderStatusWithToast(order.id, 'delivered', 'Order status updated to "Delivered"')}
                           variant="outline"
                           size="sm"
                           className="min-h-[44px] px-4 touch-manipulation"
@@ -1383,7 +1661,7 @@ function OrdersPageContent() {
                           Back to Delivered
                         </Button>
                         <Button
-                          onClick={() => updateOrderStatus(order.id, 'completed')}
+                          onClick={() => setCompleteDialogOpen(order.id)}
                           className="bg-gray-600 hover:bg-gray-700 min-h-[44px] px-4 touch-manipulation font-semibold"
                           size="sm"
                         >
@@ -1466,6 +1744,135 @@ function OrdersPageContent() {
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* On My Way Confirmation Dialog */}
+      <AlertDialog open={!!onMyWayDialogOpen} onOpenChange={open => setOnMyWayDialogOpen(open ? onMyWayDialogOpen : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update Order Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to mark this order as "On My Way". Would you like to send an email update to the customer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="send-email" 
+                checked={sendEmailUpdate}
+                onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
+              />
+              <Label 
+                htmlFor="send-email" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Send email notification to customer
+              </Label>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOnMyWayDialogOpen(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => onMyWayDialogOpen && confirmOnMyWay(onMyWayDialogOpen)}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              Update Status
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delivered Confirmation Dialog */}
+      <AlertDialog open={!!deliveredDialogOpen} onOpenChange={open => setDeliveredDialogOpen(open ? deliveredDialogOpen : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update Order Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to mark this order as "Delivered". Would you like to send an email update to the customer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="send-email-delivered" 
+                checked={sendEmailUpdate}
+                onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
+              />
+              <Label 
+                htmlFor="send-email-delivered" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Send email notification to customer
+              </Label>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeliveredDialogOpen(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deliveredDialogOpen && confirmDelivered(deliveredDialogOpen)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Update Status
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* On Way to Pickup Confirmation Dialog */}
+      <AlertDialog open={!!pickupDialogOpen} onOpenChange={open => setPickupDialogOpen(open ? pickupDialogOpen : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update Order Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark this order as "On Way to Pickup"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPickupDialogOpen(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => pickupDialogOpen && confirmPickup(pickupDialogOpen)}
+              className="bg-yellow-600 hover:bg-yellow-700"
+            >
+              Update Status
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Complete Order Confirmation Dialog */}
+      <AlertDialog open={!!completeDialogOpen} onOpenChange={open => setCompleteDialogOpen(open ? completeDialogOpen : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to mark this order as "Completed". Would you like to send a completion confirmation email to the customer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="send-email-complete" 
+                checked={sendEmailUpdate}
+                onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
+              />
+              <Label 
+                htmlFor="send-email-complete" 
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Send completion email notification to customer
+              </Label>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCompleteDialogOpen(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => completeDialogOpen && confirmComplete(completeDialogOpen)}
+              className="bg-gray-600 hover:bg-gray-700"
+            >
+              Complete Order
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
