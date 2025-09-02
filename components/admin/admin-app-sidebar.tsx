@@ -64,8 +64,8 @@ const navData = {
       icon: IconChartBar,
     },
     {
-      title: 'Create Quote',
-      url: '/admin/create',
+      title: 'Create Order',
+      url: '/admin/create-order',
       icon: IconPlus,
     },
   ],

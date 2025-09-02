@@ -19,8 +19,6 @@ interface DateTimePickerProps {
 
 // Default time slots for business hours (6 AM to 11 PM)
 const defaultTimeSlots = [
-  { time: '06:00', available: true },
-  { time: '06:30', available: true },
   { time: '07:00', available: true },
   { time: '07:30', available: true },
   { time: '08:00', available: true },
