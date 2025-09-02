@@ -299,7 +299,7 @@ function CreateOrderContent() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="firstName">First Name *</Label>
+                  <Label htmlFor="firstName" className="text-foreground">First Name *</Label>
                   <Input
                     placeholder="First name"
                     id="firstName"
@@ -313,7 +313,7 @@ function CreateOrderContent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
+                  <Label htmlFor="lastName" className="text-foreground">Last Name *</Label>
                   <Input
                     placeholder="Last name"
                     id="lastName"
@@ -327,7 +327,7 @@ function CreateOrderContent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
                   <Input
                     placeholder="(555) 555-5555"
                     id="phone"
@@ -341,7 +341,7 @@ function CreateOrderContent() {
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email" className="text-foreground">Email Address *</Label>
                   <Input
                     placeholder="email@example.com"
                     type="email"
@@ -357,7 +357,7 @@ function CreateOrderContent() {
               </div>
 
               <div>
-                <Label htmlFor="address">Service Address *</Label>
+                <Label htmlFor="address" className="text-foreground">Service Address *</Label>
                 <GooglePlacesAutocomplete
                   id="address"
                   placeholder="123 Main Street, City, State 12345"
@@ -393,7 +393,7 @@ function CreateOrderContent() {
 
                 <div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="serviceTime" className="px-1">
+                    <Label htmlFor="serviceTime" className="px-1 text-foreground">
                       Service Time *
                     </Label>
                     <Select onValueChange={(value) => handleSelectChange('serviceTime', value)} value={formData.serviceTime}>
@@ -426,7 +426,7 @@ function CreateOrderContent() {
 
                 <div>
                   <div className="flex flex-col gap-1.5">
-                    <Label htmlFor="timeNeeded" className="px-1">
+                    <Label htmlFor="timeNeeded" className="px-1 text-foreground">
                       Duration Needed *
                     </Label>
                     <Select onValueChange={(value) => handleSelectChange('timeNeeded', value)} value={formData.timeNeeded}>
@@ -453,7 +453,7 @@ function CreateOrderContent() {
               {/* Services Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label>Services *</Label>
+                  <Label className="text-foreground">Services *</Label>
                   <AddServicesDialog
                     existingServices={selectedServices}
                     onServicesAdded={setSelectedServices}
@@ -513,7 +513,7 @@ function CreateOrderContent() {
               </div>
 
               <div>
-                <Label htmlFor="message">Internal Notes</Label>
+                <Label htmlFor="message" className="text-foreground">Internal Notes</Label>
                 <Textarea
                   placeholder="Any special instructions, access notes, or internal details about this order..."
                   id="message"

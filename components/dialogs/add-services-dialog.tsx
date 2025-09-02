@@ -344,7 +344,7 @@ export function AddServicesDialog({
                 <div className="space-y-6">
                   {/* Category Filter */}
                   <div className="space-y-2">
-                    <Label htmlFor="category-filter">Filter by Category</Label>
+                    <Label htmlFor="category-filter" className="text-foreground">Filter by Category</Label>
                     <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
                       <SelectTrigger id="category-filter" className="w-full" aria-label="Filter services by category">
                         <SelectValue placeholder="Select category" />
@@ -362,7 +362,7 @@ export function AddServicesDialog({
 
                   {/* Available Services */}
                   <div className="space-y-2">
-                    <Label>Available Services</Label>
+                    <Label className="text-foreground">Available Services</Label>
                     <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-2">
                       {filteredServices.map(service => (
                         <div
@@ -395,7 +395,7 @@ export function AddServicesDialog({
                   {/* Selected Services */}
                   {selectedServices.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Selected Services</Label>
+                      <Label className="text-foreground">Selected Services</Label>
                       <div className="space-y-3 border rounded-md p-3">
                         {selectedServices.map(selectedService => (
                           <div
@@ -417,7 +417,7 @@ export function AddServicesDialog({
 
                             <div className="grid grid-cols-3 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-xs">Quantity</Label>
+                                <Label className="text-xs text-foreground">Quantity</Label>
                                 <Input
                                   type="number"
                                   min="1"
@@ -434,7 +434,7 @@ export function AddServicesDialog({
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label className="text-xs">Unit Price ($)</Label>
+                                <Label className="text-xs text-foreground">Unit Price ($)</Label>
                                 <Input
                                   type="number"
                                   step="10"
@@ -450,7 +450,7 @@ export function AddServicesDialog({
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label className="text-xs">Total</Label>
+                                <Label className="text-xs text-foreground">Total</Label>
                                 <Input
                                   type="text"
                                   value={`$${selectedService.total_price.toFixed(2)}`}
@@ -461,7 +461,7 @@ export function AddServicesDialog({
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-xs">Notes (optional)</Label>
+                              <Label className="text-xs text-foreground">Notes (optional)</Label>
                               <Textarea
                                 value={selectedService.notes}
                                 onChange={e =>

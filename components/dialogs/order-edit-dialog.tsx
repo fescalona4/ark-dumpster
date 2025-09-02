@@ -50,11 +50,11 @@ export function OrderEditDialog({
               <div className="space-y-6">
           {/* Customer Information Section */}
           <div>
-            <h4 className="font-semibold mb-3 text-lg">Customer Information</h4>
+            <h4 className="font-semibold mb-3 text-lg text-foreground">Customer Information</h4>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor={`firstName-${order.id}`}>First Name *</Label>
+                  <Label htmlFor={`firstName-${order.id}`} className="text-foreground">First Name *</Label>
                   <Input
                     id={`firstName-${order.id}`}
                     value={editForms[order.id]?.first_name || order.first_name || ''}
@@ -72,7 +72,7 @@ export function OrderEditDialog({
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`lastName-${order.id}`}>Last Name</Label>
+                  <Label htmlFor={`lastName-${order.id}`} className="text-foreground">Last Name</Label>
                   <Input
                     id={`lastName-${order.id}`}
                     value={editForms[order.id]?.last_name || order.last_name || ''}
@@ -92,7 +92,7 @@ export function OrderEditDialog({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor={`phone-${order.id}`}>Phone Number</Label>
+                  <Label htmlFor={`phone-${order.id}`} className="text-foreground">Phone Number</Label>
                   <Input
                     id={`phone-${order.id}`}
                     value={editForms[order.id]?.phone || order.phone || ''}
@@ -110,7 +110,7 @@ export function OrderEditDialog({
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`email-${order.id}`}>Email *</Label>
+                  <Label htmlFor={`email-${order.id}`} className="text-foreground">Email *</Label>
                   <Input
                     id={`email-${order.id}`}
                     type="email"
@@ -130,7 +130,7 @@ export function OrderEditDialog({
                 </div>
               </div>
               <div>
-                <Label htmlFor={`address-${order.id}`}>Address</Label>
+                <Label htmlFor={`address-${order.id}`} className="text-foreground">Address</Label>
                 <Input
                   id={`address-${order.id}`}
                   value={editForms[order.id]?.address || order.address || ''}
@@ -148,7 +148,7 @@ export function OrderEditDialog({
                 />
               </div>
               <div>
-                <Label htmlFor={`address2-${order.id}`}>Address 2 (Optional)</Label>
+                <Label htmlFor={`address2-${order.id}`} className="text-foreground">Address 2 (Optional)</Label>
                 <Input
                   id={`address2-${order.id}`}
                   value={editForms[order.id]?.address2 || order.address2 || ''}
@@ -167,7 +167,7 @@ export function OrderEditDialog({
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor={`city-${order.id}`}>City</Label>
+                  <Label htmlFor={`city-${order.id}`} className="text-foreground">City</Label>
                   <Input
                     id={`city-${order.id}`}
                     value={editForms[order.id]?.city || order.city || ''}
@@ -185,7 +185,7 @@ export function OrderEditDialog({
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`state-${order.id}`}>State</Label>
+                  <Label htmlFor={`state-${order.id}`} className="text-foreground">State</Label>
                   <Input
                     id={`state-${order.id}`}
                     value={editForms[order.id]?.state || order.state || ''}
@@ -204,7 +204,7 @@ export function OrderEditDialog({
                   />
                 </div>
                 <div>
-                  <Label htmlFor={`zipCode-${order.id}`}>ZIP Code</Label>
+                  <Label htmlFor={`zipCode-${order.id}`} className="text-foreground">ZIP Code</Label>
                   <Input
                     id={`zipCode-${order.id}`}
                     value={editForms[order.id]?.zip_code || order.zip_code || ''}
@@ -225,7 +225,7 @@ export function OrderEditDialog({
               
               {/* Internal Notes */}
               <div>
-                <Label htmlFor={`internalNotes-${order.id}`}>Internal Notes</Label>
+                <Label htmlFor={`internalNotes-${order.id}`} className="text-foreground">Internal Notes</Label>
                 <Textarea
                   id={`internalNotes-${order.id}`}
                   value={editForms[order.id]?.internal_notes || order.internal_notes || ''}
