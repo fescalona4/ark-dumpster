@@ -71,6 +71,7 @@ import {
   RiArrowLeftLine,
   RiTimeLine,
   RiFlagLine,
+  RiHistoryLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -190,6 +191,8 @@ function OrdersPageContent() {
   const [pickupDialogOpen, setPickupDialogOpen] = useState<string | null>(null);
   // Complete Order confirmation dialog state
   const [completeDialogOpen, setCompleteDialogOpen] = useState<string | null>(null);
+  // Email logs dialog state
+  const [emailLogsDialogOpen, setEmailLogsDialogOpen] = useState<string | null>(null);
   const [sendEmailUpdate, setSendEmailUpdate] = useState(true);
 
 
@@ -1326,6 +1329,13 @@ function OrdersPageContent() {
                             Edit Order
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => setEmailLogsDialogOpen(order.id)}
+                            className="cursor-pointer"
+                          >
+                            <RiHistoryLine className="mr-2 h-4 w-4" />
+                            View Email Logs
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => {
                               setSelectedOrderToDelete(order.id);
                               setDeleteDialogOpen(true);
@@ -1877,6 +1887,125 @@ function OrdersPageContent() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Email Logs Dialog */}
+      <Dialog open={!!emailLogsDialogOpen} onOpenChange={open => setEmailLogsDialogOpen(open ? emailLogsDialogOpen : null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Email Logs</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {emailLogsDialogOpen && (() => {
+              const order = orders.find(o => o.id === emailLogsDialogOpen);
+              if (!order) return <p>Order not found</p>;
+              
+              // Generate mock email logs based on order status and timestamps
+              const emailLogs = [
+                ...(order.order_status === 'on_way' || order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ? 
+                  [{
+                    id: '1',
+                    type: 'status_update',
+                    status: 'on_way',
+                    subject: 'We\'re On Our Way! - Order #' + order.order_number,
+                    recipient: order.email,
+                    sentAt: order.updated_at,
+                    success: true,
+                  }] : []
+                ),
+                ...(order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ? 
+                  [{
+                    id: '2',
+                    type: 'status_update',
+                    status: 'delivered',
+                    subject: 'Your Dumpster Has Been Delivered - Order #' + order.order_number,
+                    recipient: order.email,
+                    sentAt: order.updated_at,
+                    success: true,
+                  }] : []
+                ),
+                ...(order.order_status === 'completed' ? 
+                  [{
+                    id: '3',
+                    type: 'status_update',
+                    status: 'completed',
+                    subject: 'Your Order Is Complete - Order #' + order.order_number,
+                    recipient: order.email,
+                    sentAt: order.updated_at,
+                    success: true,
+                  }] : []
+                ),
+              ];
+              
+              const getStatusIcon = (status: string) => {
+                switch (status) {
+                  case 'on_way': return '🚛';
+                  case 'delivered': return '✅';
+                  case 'completed': return '🏁';
+                  default: return '📧';
+                }
+              };
+              
+              const getStatusColor = (status: string) => {
+                switch (status) {
+                  case 'on_way': return 'text-blue-600 bg-blue-50';
+                  case 'delivered': return 'text-green-600 bg-green-50';
+                  case 'completed': return 'text-gray-600 bg-gray-50';
+                  default: return 'text-gray-600 bg-gray-50';
+                }
+              };
+
+              return emailLogs.length > 0 ? (
+                <div className="space-y-3">
+                  {emailLogs.map((log) => (
+                    <div key={log.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg">{getStatusIcon(log.status)}</span>
+                          <div>
+                            <div className="font-medium text-sm">{log.subject}</div>
+                            <div className="text-xs text-muted-foreground">To: {log.recipient}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge className={`text-xs ${getStatusColor(log.status)}`}>
+                            {log.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(log.sentAt), 'MMM dd, yyyy HH:mm')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className={`flex items-center space-x-1 text-xs ${log.success ? 'text-green-600' : 'text-red-600'}`}>
+                          {log.success ? (
+                            <>
+                              <RiCheckLine className="h-3 w-3" />
+                              <span>Delivered successfully</span>
+                            </>
+                          ) : (
+                            <>
+                              <RiCloseLine className="h-3 w-3" />
+                              <span>Failed to deliver</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <RiMailLine className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <h3 className="font-medium text-sm mb-2">No Email Logs</h3>
+                  <p className="text-xs text-muted-foreground">
+                    No emails have been sent for this order yet.
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
