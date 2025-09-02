@@ -14,9 +14,24 @@ export async function POST(
 ) {
   try {
     const { orderId } = await params;
-    const { status, sendEmail } = await request.json();
+    let status, sendEmail, deliveryImage;
     
-    emailLogger.debug(`Received params:`, { orderId, status, sendEmail });
+    // Handle both JSON and FormData requests
+    const contentType = request.headers.get('content-type');
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // FormData request (with image)
+      const formData = await request.formData();
+      status = formData.get('status') as string;
+      sendEmail = formData.get('sendEmail') === 'true';
+      deliveryImage = formData.get('deliveryImage') as File | null;
+    } else {
+      // JSON request (without image)
+      const body = await request.json();
+      status = body.status;
+      sendEmail = body.sendEmail;
+    }
+    
+    emailLogger.debug(`Received params:`, { orderId, status, sendEmail, hasImage: !!deliveryImage });
 
     if (!sendEmail) {
       return NextResponse.json({
@@ -44,6 +59,17 @@ export async function POST(
       );
     }
 
+    // Prepare delivery image attachment if provided
+    let deliveryImageAttachment = null;
+    if (deliveryImage) {
+      const imageBuffer = Buffer.from(await deliveryImage.arrayBuffer());
+      deliveryImageAttachment = {
+        filename: deliveryImage.name,
+        content: imageBuffer,
+        contentType: deliveryImage.type,
+      };
+    }
+
     // Send email notification
     const emailResult = await sendOrderStatusEmail({
       customerEmail: order.email,
@@ -55,6 +81,7 @@ export async function POST(
       address: order.address,
       city: order.city,
       state: order.state,
+      deliveryImage: deliveryImageAttachment,
     });
 
     if (!emailResult.success) {

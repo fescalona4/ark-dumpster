@@ -72,6 +72,7 @@ import {
   RiTimeLine,
   RiFlagLine,
   RiHistoryLine,
+  RiImageLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -194,6 +195,10 @@ function OrdersPageContent() {
   // Email logs dialog state
   const [emailLogsDialogOpen, setEmailLogsDialogOpen] = useState<string | null>(null);
   const [sendEmailUpdate, setSendEmailUpdate] = useState(true);
+  // Delivery image state
+  const [deliveryImage, setDeliveryImage] = useState<File | null>(null);
+  const [deliveryImagePreview, setDeliveryImagePreview] = useState<string | null>(null);
+  const deliveryImageInputRef = useRef<HTMLInputElement>(null);
 
 
   /**
@@ -679,6 +684,40 @@ function OrdersPageContent() {
   };
 
   /**
+   * Handles delivery image file selection
+   */
+  const handleDeliveryImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error('Image file must be less than 5MB');
+        return;
+      }
+      
+      setDeliveryImage(file);
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setDeliveryImagePreview(previewUrl);
+    }
+  };
+
+  /**
+   * Clears the selected delivery image
+   */
+  const clearDeliveryImage = () => {
+    if (deliveryImagePreview) {
+      URL.revokeObjectURL(deliveryImagePreview);
+    }
+    setDeliveryImage(null);
+    setDeliveryImagePreview(null);
+  };
+
+  /**
    * Confirms "Delivered" action and optionally sends email update
    */
   const confirmDelivered = async (orderId: string) => {
@@ -687,18 +726,34 @@ function OrdersPageContent() {
       await updateOrderStatus(orderId, 'delivered');
       
       if (sendEmailUpdate) {
-        // Send email notification
+        // Send email notification with optional delivery image
         try {
-          const response = await fetch(`/api/orders/${orderId}/notify`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              status: 'delivered',
-              sendEmail: true,
-            }),
-          });
+          let response;
+          
+          if (deliveryImage) {
+            // Send with image attachment
+            const formData = new FormData();
+            formData.append('status', 'delivered');
+            formData.append('sendEmail', 'true');
+            formData.append('deliveryImage', deliveryImage);
+            
+            response = await fetch(`/api/orders/${orderId}/notify`, {
+              method: 'POST',
+              body: formData,
+            });
+          } else {
+            // Send without image
+            response = await fetch(`/api/orders/${orderId}/notify`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                status: 'delivered',
+                sendEmail: true,
+              }),
+            });
+          }
 
           const result = await response.json();
           
@@ -717,6 +772,7 @@ function OrdersPageContent() {
       }
       
       setDeliveredDialogOpen(null);
+      clearDeliveryImage(); // Clear image state
     } catch (error) {
       console.error('Error updating order status:', error);
       toast.error('Failed to update order status');
@@ -1804,7 +1860,7 @@ function OrdersPageContent() {
               You are about to mark this order as "Delivered". Would you like to send an email update to the customer?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
+          <div className="py-4 space-y-4">
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="send-email-delivered" 
@@ -1818,9 +1874,66 @@ function OrdersPageContent() {
                 Send email notification to customer
               </Label>
             </div>
+            
+            {sendEmailUpdate && (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <RiImageLine className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    Delivery Photo (Optional)
+                  </Label>
+                </div>
+                
+                {!deliveryImagePreview ? (
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-gray-300 transition-colors">
+                    <input
+                      ref={deliveryImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleDeliveryImageChange}
+                      className="hidden"
+                    />
+                    <div 
+                      onClick={() => {
+                        deliveryImageInputRef.current?.click();
+                      }}
+                      className="cursor-pointer flex flex-col items-center space-y-2"
+                    >
+                      <RiImageLine className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">
+                        Click to upload a delivery photo
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        JPG, PNG up to 5MB
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <img
+                      src={deliveryImagePreview}
+                      alt="Delivery preview"
+                      className="w-full h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={clearDeliveryImage}
+                    >
+                      <RiDeleteBinLine className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeliveredDialogOpen(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {
+              setDeliveredDialogOpen(null);
+              clearDeliveryImage();
+            }}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deliveredDialogOpen && confirmDelivered(deliveredDialogOpen)}
               className="bg-green-600 hover:bg-green-700"

@@ -206,6 +206,12 @@ export function shouldSendUserEmails(): boolean {
   return process.env.SEND_USER_EMAIL_NOTIFICATIONS === 'true';
 }
 
+export interface DeliveryImageAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
 export interface OrderStatusEmailOptions {
   customerEmail: string;
   customerName: string;
@@ -216,6 +222,7 @@ export interface OrderStatusEmailOptions {
   address?: string | null;
   city?: string | null;
   state?: string | null;
+  deliveryImage?: DeliveryImageAttachment | null;
 }
 
 export async function sendOrderStatusEmail(
@@ -247,7 +254,7 @@ export async function sendOrderStatusEmail(
     const emailHtml = generateOrderStatusEmailHtml(options);
     const emailText = generateOrderStatusEmailText(options);
 
-    const emailPayload = {
+    const emailPayload: any = {
       from: 'ARK Dumpster <info@arkdumpsterrentals.com>',
       replyTo: 'info@arkdumpsterrentals.com',
       to: customerEmail,
@@ -255,6 +262,16 @@ export async function sendOrderStatusEmail(
       html: emailHtml,
       text: emailText,
     };
+
+    // Add attachment if delivery image is provided
+    if (options.deliveryImage) {
+      emailPayload.attachments = [
+        {
+          filename: options.deliveryImage.filename,
+          content: options.deliveryImage.content,
+        }
+      ];
+    }
 
     const result = await resend.emails.send(emailPayload);
 
@@ -283,7 +300,7 @@ export async function sendOrderStatusEmail(
 }
 
 function generateOrderStatusEmailHtml(options: OrderStatusEmailOptions): string {
-  const { customerName, orderNumber, status, dropoffDate, dropoffTime, address, city, state } = options;
+  const { customerName, orderNumber, status, dropoffDate, dropoffTime, address, city, state, deliveryImage } = options;
   
   const statusMessages = {
     on_way: {
@@ -294,7 +311,9 @@ function generateOrderStatusEmailHtml(options: OrderStatusEmailOptions): string 
     delivered: {
       title: 'Your Dumpster Has Been Delivered',
       message: 'Your dumpster has been successfully delivered to your location.',
-      action: 'You can now begin using your dumpster. Please follow the guidelines provided.',
+      action: deliveryImage 
+        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve also attached a photo of the delivered dumpster for your records.'
+        : 'You can now begin using your dumpster. Please follow the guidelines provided.',
     },
     picked_up: {
       title: 'Your Dumpster Has Been Picked Up',
@@ -364,7 +383,7 @@ function generateOrderStatusEmailHtml(options: OrderStatusEmailOptions): string 
 }
 
 function generateOrderStatusEmailText(options: OrderStatusEmailOptions): string {
-  const { customerName, orderNumber, status, dropoffDate, dropoffTime, address, city, state } = options;
+  const { customerName, orderNumber, status, dropoffDate, dropoffTime, address, city, state, deliveryImage } = options;
   
   const statusMessages = {
     on_way: {
@@ -375,7 +394,9 @@ function generateOrderStatusEmailText(options: OrderStatusEmailOptions): string 
     delivered: {
       title: 'Your Dumpster Has Been Delivered',
       message: 'Your dumpster has been successfully delivered to your location.',
-      action: 'You can now begin using your dumpster. Please follow the guidelines provided.',
+      action: deliveryImage 
+        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve also attached a photo of the delivered dumpster for your records.'
+        : 'You can now begin using your dumpster. Please follow the guidelines provided.',
     },
     picked_up: {
       title: 'Your Dumpster Has Been Picked Up',
