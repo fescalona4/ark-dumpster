@@ -263,12 +263,14 @@ export async function sendOrderStatusEmail(
       text: emailText,
     };
 
-    // Add attachment if delivery image is provided
+    // Add both inline image and attachment if delivery image is provided
     if (options.deliveryImage) {
+      const imageId = 'delivery-photo';
       emailPayload.attachments = [
         {
           filename: options.deliveryImage.filename,
           content: options.deliveryImage.content,
+          cid: imageId, // Content-ID for inline embedding
         }
       ];
     }
@@ -312,7 +314,7 @@ function generateOrderStatusEmailHtml(options: OrderStatusEmailOptions): string 
       title: 'Your Dumpster Has Been Delivered',
       message: 'Your dumpster has been successfully delivered to your location.',
       action: deliveryImage 
-        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve also attached a photo of the delivered dumpster for your records.'
+        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve included a photo of the delivered dumpster below for your records.'
         : 'You can now begin using your dumpster. Please follow the guidelines provided.',
     },
     picked_up: {
@@ -365,6 +367,14 @@ function generateOrderStatusEmailHtml(options: OrderStatusEmailOptions): string 
           ${deliveryInfo}
         </div>
 
+        ${deliveryImage ? `
+        <div style="text-align: center; margin-bottom: 25px;">
+          <h3 style="color: #2c3e50; margin-bottom: 15px;">Delivery Photo</h3>
+          <img src="cid:delivery-photo" alt="Delivered dumpster" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+          <p style="color: #7f8c8d; font-size: 14px; margin-top: 10px; font-style: italic;">Photo taken at delivery</p>
+        </div>
+        ` : ''}
+
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
           <p style="color: #7f8c8d; margin-bottom: 5px;">Need assistance?</p>
           <p style="margin: 0;">
@@ -395,7 +405,7 @@ function generateOrderStatusEmailText(options: OrderStatusEmailOptions): string 
       title: 'Your Dumpster Has Been Delivered',
       message: 'Your dumpster has been successfully delivered to your location.',
       action: deliveryImage 
-        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve also attached a photo of the delivered dumpster for your records.'
+        ? 'You can now begin using your dumpster. Please follow the guidelines provided. We\'ve included a photo of the delivered dumpster below for your records.'
         : 'You can now begin using your dumpster. Please follow the guidelines provided.',
     },
     picked_up: {

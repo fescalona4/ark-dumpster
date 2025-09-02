@@ -15,6 +15,7 @@ import {
   IconReceipt,
   IconTrash,
   IconTools,
+  IconMail,
 } from '@tabler/icons-react';
 
 import { NavMain } from '@/components/navigation/nav-main';
@@ -74,6 +75,11 @@ const navData = {
       title: 'View Website',
       url: '/',
       icon: IconHome,
+    },
+    {
+      title: 'Email Previews',
+      url: '/admin/email-previews',
+      icon: IconMail,
     },
     {
       title: 'Settings',

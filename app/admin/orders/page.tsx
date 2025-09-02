@@ -73,6 +73,7 @@ import {
   RiFlagLine,
   RiHistoryLine,
   RiImageLine,
+  RiEyeLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import AuthGuard from '@/components/providers/auth-guard';
@@ -2112,6 +2113,19 @@ function OrdersPageContent() {
               setDeliveredDialogOpen(null);
               clearDeliveryImage();
             }}>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (deliveredDialogOpen) {
+                  const url = `/api/orders/${deliveredDialogOpen}/email-preview?status=delivered&includeImage=${!!deliveryImage}`;
+                  window.open(url, '_blank');
+                }
+              }}
+              className="mr-2"
+            >
+              <RiEyeLine className="h-4 w-4 mr-2" />
+              Preview Email
+            </Button>
             <AlertDialogAction
               onClick={() => deliveredDialogOpen && confirmDelivered(deliveredDialogOpen)}
               className="bg-green-600 hover:bg-green-700"
