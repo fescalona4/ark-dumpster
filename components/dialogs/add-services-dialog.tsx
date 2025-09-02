@@ -193,10 +193,16 @@ export function AddServicesDialog({
     };
 
     setSelectedServices(prev => [...prev, newSelectedService]);
+    toast.success(`${service.display_name} added to ${type}!`);
   };
 
   const removeService = (serviceId: string) => {
+    const serviceToRemove = selectedServices.find(s => s.service_id === serviceId);
     setSelectedServices(prev => prev.filter(s => s.service_id !== serviceId));
+    
+    if (serviceToRemove) {
+      toast.success(`${serviceToRemove.service.display_name} removed from ${type}!`);
+    }
   };
 
   const updateServiceQuantity = (serviceId: string, quantity: number) => {
