@@ -87,23 +87,108 @@ export async function createSquareInvoiceWithPayment(
 
     payment = paymentResult.data;
 
-    // Step 2: Create Square customer if needed
+    // Step 2: Create Square customer (required for invoice)
     let customerId: string;
     
     try {
-      const customerResponse = await customersApi.create({
+      console.log('Creating Square customer for:', { 
+        firstName: order.first_name, 
+        lastName: order.last_name, 
+        email: order.email,
+        phone: order.phone,
+        formattedPhone: 'will be formatted below'
+      });
+
+      // Format phone number for Square API - Square expects format: +1-555-123-4567
+      let formattedPhone: string | undefined;
+      if (order.phone) {
+        const phoneStr = order.phone.toString().replace(/\D/g, ''); // Remove non-digits
+        if (phoneStr.length === 10) {
+          // Format as +1-XXX-XXX-XXXX
+          formattedPhone = `+1-${phoneStr.slice(0, 3)}-${phoneStr.slice(3, 6)}-${phoneStr.slice(6)}`;
+        } else if (phoneStr.length === 11 && phoneStr.startsWith('1')) {
+          // Format as +1-XXX-XXX-XXXX  
+          const cleaned = phoneStr.slice(1); // Remove leading 1
+          formattedPhone = `+1-${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+        }
+        // If phone doesn't match expected format, leave undefined
+      }
+
+      console.log('Formatted phone number:', { original: order.phone, formatted: formattedPhone });
+
+      // Try different phone formats until one works
+      const customerData: any = {
         givenName: order.first_name,
         familyName: order.last_name || undefined,
         emailAddress: order.email,
-        phoneNumber: order.phone?.toString(),
         note: `ARK Dumpster Order ${order.order_number}`,
-      });
+      };
+
+      // Try to add phone number, but continue without it if it fails validation
+      let customerResponse;
+      let phoneIncluded = false;
       
-      customerId = (customerResponse as any).customer?.id || '';
+      if (formattedPhone && formattedPhone.replace(/\D/g, '').length >= 10) {
+        // Convert to E.164 format: +1XXXXXXXXXX (no spaces, no hyphens)
+        const digits = formattedPhone.replace(/\D/g, '');
+        const e164Phone = digits.length === 10 ? `+1${digits}` : 
+                         digits.length === 11 && digits.startsWith('1') ? `+${digits}` : 
+                         formattedPhone;
+        
+        console.log('Attempting to create customer with phone:', e164Phone);
+        
+        try {
+          // Try creating customer with phone number
+          customerResponse = await customersApi.create({
+            ...customerData,
+            phoneNumber: e164Phone,
+          });
+          phoneIncluded = true;
+          console.log('Customer created successfully with phone number');
+        } catch (error) {
+          console.warn('Failed to create customer with phone number, trying without:', error);
+          // If phone number fails, try without it
+          customerResponse = await customersApi.create(customerData);
+          console.log('Customer created successfully without phone number');
+        }
+      } else {
+        // No valid phone number, create customer without it
+        console.log('Creating customer without phone number');
+        customerResponse = await customersApi.create(customerData);
+      }
+      
+      console.log('Customer creation response:', customerResponse);
+      
+      const customer = (customerResponse as any).result?.customer || (customerResponse as any).customer;
+      customerId = customer?.id || '';
+      
+      if (!customerId) {
+        throw new Error('No customer ID returned from Square customer creation');
+      }
+      
+      console.log('Successfully created Square customer ID:', customerId);
     } catch (error) {
       console.error('Error creating Square customer:', error);
-      // Try to continue without customer
-      customerId = '';
+      
+      // Clean up the payment record since we can't proceed without a customer
+      try {
+        await cancelPayment(payment.id, 'Customer creation failed');
+      } catch (cleanupError) {
+        console.error('Error cleaning up payment after customer creation failure:', cleanupError);
+      }
+      
+      if (error instanceof SquareError) {
+        return {
+          success: false,
+          error: `Square Customer API Error: Status code: ${error.statusCode}\nBody: ${JSON.stringify(error.body)}`,
+        };
+      }
+      
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        success: false,
+        error: `Failed to create Square customer: ${errorMessage}`,
+      };
     }
 
     // Step 3: Fetch order with services to create itemized invoice
@@ -265,7 +350,7 @@ export async function createSquareInvoiceWithPayment(
           locationId: process.env.SQUARE_LOCATION_ID,
           orderId: squareOrderId,
           primaryRecipient: {
-            customerId: customerId || undefined,
+            customerId: customerId,
           },
           paymentRequests: [{
             requestType: 'BALANCE' as any,

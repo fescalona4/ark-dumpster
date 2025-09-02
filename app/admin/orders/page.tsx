@@ -195,6 +195,8 @@ function OrdersPageContent() {
   // Email logs dialog state
   const [emailLogsDialogOpen, setEmailLogsDialogOpen] = useState<string | null>(null);
   const [sendEmailUpdate, setSendEmailUpdate] = useState(true);
+  // Save confirmation dialog state
+  const [saveConfirmationOpen, setSaveConfirmationOpen] = useState<string | null>(null);
   // Delivery image state
   const [deliveryImage, setDeliveryImage] = useState<File | null>(null);
   const [deliveryImagePreview, setDeliveryImagePreview] = useState<string | null>(null);
@@ -317,6 +319,23 @@ function OrdersPageContent() {
   useEffect(() => {
     fetchOrderServices();
   }, [fetchOrderServices]);
+
+  // Populate edit forms with existing values when dialog opens
+  useEffect(() => {
+    if (dateTimeDialogOpen && orders.length > 0) {
+      const order = orders.find(o => o.id.toString() === dateTimeDialogOpen);
+      if (order) {
+        setEditForms(prev => ({
+          ...prev,
+          [order.id]: {
+            ...prev[order.id],
+            dropoff_date: order.dropoff_date || '',
+            dropoff_time: order.dropoff_time || '',
+          },
+        }));
+      }
+    }
+  }, [dateTimeDialogOpen, orders]);
 
   /**
    * Handles when services are added to an order
@@ -586,6 +605,13 @@ function OrdersPageContent() {
   };
 
   /**
+   * Shows confirmation dialog for saving order changes
+   */
+  const handleSaveOrder = (orderId: string) => {
+    setSaveConfirmationOpen(orderId);
+  };
+
+  /**
    * Saves order customer information
    */
   const saveOrder = async (orderId: string) => {
@@ -626,11 +652,15 @@ function OrdersPageContent() {
           ...prev,
           [orderId]: {},
         }));
-        toast.success('Order updated successfully!');
+        setSaveConfirmationOpen(null); // Close confirmation dialog
+        toast.success('Order Updated Successfully', {
+          description: 'The dropoff date and time have been updated.',
+        });
       }
     } catch (err) {
       console.error('Unexpected error:', err);
       toast.error('An unexpected error occurred while saving the order.');
+      setSaveConfirmationOpen(null); // Close confirmation dialog on error too
     }
   };
 
@@ -1485,7 +1515,7 @@ function OrdersPageContent() {
                       {/* Dropoff Date and Time - editable with date/time pickers */}
                       <div className="grid grid-cols-2 gap-4 mt-4">
                         <div>
-                          <Label className="text-sm font-semibold mb-2 block">Dropoff Date</Label>
+                          <Label className="text-sm font-semibold mb-2 block">Date</Label>
                           <Dialog
                             open={dateTimeDialogOpen === order.id}
                             onOpenChange={open => setDateTimeDialogOpen(open ? order.id : null)}
@@ -1547,49 +1577,150 @@ function OrdersPageContent() {
                                   }));
                                 }}
                               />
-                              <div className="flex justify-center pt-4 border-t">
-                                <Button
-                                  onClick={() => setDateTimeDialogOpen(null)}
-                                  className="min-w-[200px]"
-                                >
-                                  {(() => {
-                                    const currentDate = editForms[order.id]?.dropoff_date || order.dropoff_date;
-                                    const currentTime = editForms[order.id]?.dropoff_time || order.dropoff_time;
 
-                                    if (currentDate && currentTime) {
-                                      const [year, month, day] = currentDate
-                                        .split('-')
-                                        .map(Number);
-                                      const localDate = new Date(year, month - 1, day);
-                                      const [hours, minutes] = currentTime.split(':');
-                                      const hour12 = parseInt(hours) % 12 || 12;
-                                      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
-                                      const formattedTime = `${hour12}:${minutes} ${ampm}`;
-                                      return `${format(localDate, 'MMM dd')} at ${formattedTime}`;
-                                    } else if (currentDate) {
-                                      const [year, month, day] = currentDate
-                                        .split('-')
-                                        .map(Number);
-                                      const localDate = new Date(year, month - 1, day);
-                                      return `${format(localDate, 'MMM dd')} - Select time`;
-                                    } else if (currentTime) {
-                                      const [hours, minutes] = currentTime.split(':');
-                                      const hour12 = parseInt(hours) % 12 || 12;
-                                      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
-                                      const formattedTime = `${hour12}:${minutes} ${ampm}`;
-                                      return `Select date - ${formattedTime}`;
-                                    } else {
-                                      return 'Close';
-                                    }
-                                  })()}
-                                </Button>
+                              {/* Existing and New Date/Time Display */}
+                              <div className="space-y-4 pt-4 border-t">
+                                <div className="grid grid-cols-2 gap-4">
+                                  {/* Existing Date & Time */}
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-semibold text-muted-foreground">Existing</Label>
+                                    <div className="text-sm">
+                                      {(() => {
+                                        if (order.dropoff_date && order.dropoff_time) {
+                                          const [year, month, day] = order.dropoff_date.split('-').map(Number);
+                                          const localDate = new Date(year, month - 1, day);
+                                          const [hours, minutes] = order.dropoff_time.split(':');
+                                          const hour12 = parseInt(hours) % 12 || 12;
+                                          const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                          const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                          return (
+                                            <div>
+                                              <div>{format(localDate, 'MMM dd, yyyy')}</div>
+                                              <div className="text-muted-foreground">{formattedTime}</div>
+                                            </div>
+                                          );
+                                        } else if (order.dropoff_date) {
+                                          const [year, month, day] = order.dropoff_date.split('-').map(Number);
+                                          const localDate = new Date(year, month - 1, day);
+                                          return (
+                                            <div>
+                                              <div>{format(localDate, 'MMM dd, yyyy')}</div>
+                                              <div className="text-muted-foreground">No time set</div>
+                                            </div>
+                                          );
+                                        } else if (order.dropoff_time) {
+                                          const [hours, minutes] = order.dropoff_time.split(':');
+                                          const hour12 = parseInt(hours) % 12 || 12;
+                                          const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                          const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                          return (
+                                            <div>
+                                              <div className="text-muted-foreground">No date set</div>
+                                              <div>{formattedTime}</div>
+                                            </div>
+                                          );
+                                        } else {
+                                          return (
+                                            <div className="text-muted-foreground">
+                                              Not set
+                                            </div>
+                                          );
+                                        }
+                                      })()}
+                                    </div>
+                                  </div>
+
+                                  {/* New Date & Time */}
+                                  <div className="space-y-2">
+                                    <Label className="text-sm font-semibold text-primary">New</Label>
+                                    <div className="text-sm">
+                                      {(() => {
+                                        const newDate = editForms[order.id]?.dropoff_date;
+                                        const newTime = editForms[order.id]?.dropoff_time;
+
+                                        if (newDate && newTime) {
+                                          const [year, month, day] = newDate.split('-').map(Number);
+                                          const localDate = new Date(year, month - 1, day);
+                                          const [hours, minutes] = newTime.split(':');
+                                          const hour12 = parseInt(hours) % 12 || 12;
+                                          const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                          const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                          return (
+                                            <div>
+                                              <div>{format(localDate, 'MMM dd, yyyy')}</div>
+                                              <div className="text-muted-foreground">{formattedTime}</div>
+                                            </div>
+                                          );
+                                        } else if (newDate) {
+                                          const [year, month, day] = newDate.split('-').map(Number);
+                                          const localDate = new Date(year, month - 1, day);
+                                          return (
+                                            <div>
+                                              <div>{format(localDate, 'MMM dd, yyyy')}</div>
+                                              <div className="text-muted-foreground">Select time</div>
+                                            </div>
+                                          );
+                                        } else if (newTime) {
+                                          const [hours, minutes] = newTime.split(':');
+                                          const hour12 = parseInt(hours) % 12 || 12;
+                                          const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+                                          const formattedTime = `${hour12}:${minutes} ${ampm}`;
+                                          return (
+                                            <div>
+                                              <div className="text-muted-foreground">Select date</div>
+                                              <div>{formattedTime}</div>
+                                            </div>
+                                          );
+                                        } else {
+                                          return (
+                                            <div className="text-muted-foreground">
+                                              Select date & time
+                                            </div>
+                                          );
+                                        }
+                                      })()}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 pt-2">
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Reset any changes and close dialog
+                                      setEditForms(prev => ({
+                                        ...prev,
+                                        [order.id]: {
+                                          ...prev[order.id],
+                                          dropoff_date: order.dropoff_date,
+                                          dropoff_time: order.dropoff_time,
+                                        },
+                                      }));
+                                      setDateTimeDialogOpen(null);
+                                    }}
+                                    className="flex-1"
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    onClick={() => {
+                                      setDateTimeDialogOpen(null);
+                                      handleSaveOrder(order.id);
+                                    }}
+                                    className="flex-1"
+                                    disabled={!editForms[order.id]?.dropoff_date && !editForms[order.id]?.dropoff_time}
+                                  >
+                                    Update Order
+                                  </Button>
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>
                         </div>
 
                         <div>
-                          <Label className="text-sm font-semibold mb-2 block">Dropoff Time</Label>
+                          <Label className="text-sm font-semibold mb-2 block">Time</Label>
                           <Button
                             variant="outline"
                             className="w-full overflow-hidden justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -1616,7 +1747,7 @@ function OrdersPageContent() {
                         editForms[order.id]?.dropoff_time !== undefined) && (
                           <div className="flex justify-end mt-4">
                             <Button
-                              onClick={() => saveOrder(order.id)}
+                              onClick={() => handleSaveOrder(order.id)}
                               variant="outline"
                               size="sm"
                               className="min-h-[44px] px-4 touch-manipulation"
@@ -1832,6 +1963,31 @@ function OrdersPageContent() {
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Save Changes Confirmation Dialog */}
+      <AlertDialog open={!!saveConfirmationOpen} onOpenChange={open => setSaveConfirmationOpen(open ? saveConfirmationOpen : null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save Order Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to save the changes to this order? This will update the dropoff date and time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (saveConfirmationOpen) {
+                  saveOrder(saveConfirmationOpen);
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-600"
+            >
+              Save Changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
