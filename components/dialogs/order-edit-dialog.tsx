@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -218,6 +219,27 @@ export function OrderEditDialog({
                     placeholder="ZIP Code"
                   />
                 </div>
+              </div>
+              
+              {/* Internal Notes */}
+              <div>
+                <Label htmlFor={`internalNotes-${order.id}`}>Internal Notes</Label>
+                <Textarea
+                  id={`internalNotes-${order.id}`}
+                  value={editForms[order.id]?.internal_notes || order.internal_notes || ''}
+                  onChange={e =>
+                    setEditForms(prev => ({
+                      ...prev,
+                      [order.id]: {
+                        ...prev[order.id],
+                        internal_notes: e.target.value,
+                      },
+                    }))
+                  }
+                  className="mt-1 min-h-[80px]"
+                  placeholder="Internal notes about this order..."
+                  rows={3}
+                />
               </div>
             </div>
           </div>

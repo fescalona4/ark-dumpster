@@ -521,6 +521,11 @@ function OrdersPageContent() {
    */
   const deleteOrder = async (orderId: string) => {
     try {
+      // Find the order to get customer information for the success message
+      const orderToDelete = orders.find(order => order.id === orderId);
+      const customerName = orderToDelete ? `${orderToDelete.first_name} ${orderToDelete.last_name || ''}`.trim() : 'Unknown';
+      const orderNumber = orderToDelete?.order_number || 'Unknown';
+
       // First, if there's a dumpster assigned, free it up
       if (false) {
         // TODO: Update for multi-service
@@ -538,12 +543,19 @@ function OrdersPageContent() {
 
       if (error) {
         console.error('Error deleting order:', error);
-        alert('Failed to delete order');
+        toast.error('Failed to Delete Order', {
+          description: 'There was an error deleting the order. Please try again.',
+        });
         return;
       }
 
       // Update local state
       setOrders(orders.filter(order => order.id !== orderId));
+
+      // Show success notification
+      toast.success('Order Deleted', {
+        description: `Order ${orderNumber} for ${customerName} has been deleted successfully.`,
+      });
 
       // Update dumpsters state if needed
       if (false) {
@@ -558,7 +570,9 @@ function OrdersPageContent() {
       }
     } catch (err) {
       console.error('Unexpected error deleting order:', err);
-      alert('Failed to delete order');
+      toast.error('Failed to Delete Order', {
+        description: 'An unexpected error occurred while deleting the order.',
+      });
     }
   };
 
@@ -591,6 +605,7 @@ function OrdersPageContent() {
         zip_code: editForm.zip_code,
         dropoff_date: editForm.dropoff_date,
         dropoff_time: editForm.dropoff_time,
+        internal_notes: editForm.internal_notes,
         updated_at: new Date().toISOString(),
       };
 
@@ -645,7 +660,7 @@ function OrdersPageContent() {
     try {
       // Update order status to "on_way"
       await updateOrderStatus(orderId, 'on_way');
-      
+
       if (sendEmailUpdate) {
         // Send email notification
         try {
@@ -661,7 +676,7 @@ function OrdersPageContent() {
           });
 
           const result = await response.json();
-          
+
           if (result.success && result.emailSent) {
             toast.success('Order status updated and customer notified via email');
           } else {
@@ -675,7 +690,7 @@ function OrdersPageContent() {
       } else {
         toast.success('Order status updated to "On My Way"');
       }
-      
+
       setOnMyWayDialogOpen(null);
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -698,7 +713,7 @@ function OrdersPageContent() {
         toast.error('Image file must be less than 5MB');
         return;
       }
-      
+
       setDeliveryImage(file);
       // Create preview URL
       const previewUrl = URL.createObjectURL(file);
@@ -724,19 +739,19 @@ function OrdersPageContent() {
     try {
       // Update order status to "delivered"
       await updateOrderStatus(orderId, 'delivered');
-      
+
       if (sendEmailUpdate) {
         // Send email notification with optional delivery image
         try {
           let response;
-          
+
           if (deliveryImage) {
             // Send with image attachment
             const formData = new FormData();
             formData.append('status', 'delivered');
             formData.append('sendEmail', 'true');
             formData.append('deliveryImage', deliveryImage);
-            
+
             response = await fetch(`/api/orders/${orderId}/notify`, {
               method: 'POST',
               body: formData,
@@ -756,7 +771,7 @@ function OrdersPageContent() {
           }
 
           const result = await response.json();
-          
+
           if (result.success && result.emailSent) {
             toast.success('Order status updated and customer notified via email');
           } else {
@@ -770,7 +785,7 @@ function OrdersPageContent() {
       } else {
         toast.success('Order status updated to "Delivered"');
       }
-      
+
       setDeliveredDialogOpen(null);
       clearDeliveryImage(); // Clear image state
     } catch (error) {
@@ -801,7 +816,7 @@ function OrdersPageContent() {
     try {
       // Update order status to "completed"
       await updateOrderStatus(orderId, 'completed');
-      
+
       if (sendEmailUpdate) {
         // Send email notification
         try {
@@ -817,7 +832,7 @@ function OrdersPageContent() {
           });
 
           const result = await response.json();
-          
+
           if (result.success && result.emailSent) {
             toast.success('Order completed and customer notified via email');
           } else {
@@ -831,7 +846,7 @@ function OrdersPageContent() {
       } else {
         toast.success('Order completed');
       }
-      
+
       setCompleteDialogOpen(null);
     } catch (error) {
       console.error('Error completing order:', error);
@@ -1189,7 +1204,7 @@ function OrdersPageContent() {
                                 const [year, month, day] = order.dropoff_date.split('-').map(Number);
                                 const localDate = new Date(year, month - 1, day);
                                 let result = format(localDate, 'EEE, MMM dd');
-                                
+
                                 // Add time if available
                                 if (order.dropoff_time) {
                                   const [hours, minutes] = order.dropoff_time.split(':');
@@ -1197,7 +1212,7 @@ function OrdersPageContent() {
                                   const ampm = parseInt(hours) >= 12 ? 'pm' : 'am';
                                   result += ` at ${hour12}:${minutes}${ampm}`;
                                 }
-                                
+
                                 return result;
                               })()}
                             </span>
@@ -1478,17 +1493,17 @@ function OrdersPageContent() {
                             <DialogTrigger asChild>
                               <Button
                                 variant="outline"
-                                className="w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                                className="w-full overflow-hidden justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                               >
-                                <RiCalendarLine className="mr-2 h-4 w-4" />
+                                <RiCalendarLine className="h-4 w-4" />
                                 {editForms[order.id]?.dropoff_date || order.dropoff_date
                                   ? (() => {
-                                      const dateStr =
-                                        editForms[order.id]?.dropoff_date || order.dropoff_date || '';
-                                      const [year, month, day] = dateStr.split('-').map(Number);
-                                      const localDate = new Date(year, month - 1, day);
-                                      return format(localDate, 'MMM dd');
-                                    })()
+                                    const dateStr =
+                                      editForms[order.id]?.dropoff_date || order.dropoff_date || '';
+                                    const [year, month, day] = dateStr.split('-').map(Number);
+                                    const localDate = new Date(year, month - 1, day);
+                                    return format(localDate, 'MMM dd');
+                                  })()
                                   : 'Pick a date'}
                               </Button>
                             </DialogTrigger>
@@ -1500,13 +1515,13 @@ function OrdersPageContent() {
                                 date={
                                   editForms[order.id]?.dropoff_date || order.dropoff_date
                                     ? (() => {
-                                        const dateStr =
-                                          editForms[order.id]?.dropoff_date ||
-                                          order.dropoff_date ||
-                                          '';
-                                        const [year, month, day] = dateStr.split('-').map(Number);
-                                        return new Date(year, month - 1, day); // month is 0-indexed
-                                      })()
+                                      const dateStr =
+                                        editForms[order.id]?.dropoff_date ||
+                                        order.dropoff_date ||
+                                        '';
+                                      const [year, month, day] = dateStr.split('-').map(Number);
+                                      return new Date(year, month - 1, day); // month is 0-indexed
+                                    })()
                                     : undefined
                                 }
                                 time={
@@ -1540,7 +1555,7 @@ function OrdersPageContent() {
                                   {(() => {
                                     const currentDate = editForms[order.id]?.dropoff_date || order.dropoff_date;
                                     const currentTime = editForms[order.id]?.dropoff_time || order.dropoff_time;
-                                    
+
                                     if (currentDate && currentTime) {
                                       const [year, month, day] = currentDate
                                         .split('-')
@@ -1577,10 +1592,10 @@ function OrdersPageContent() {
                           <Label className="text-sm font-semibold mb-2 block">Dropoff Time</Label>
                           <Button
                             variant="outline"
-                            className="w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="w-full overflow-hidden justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                             onClick={() => setDateTimeDialogOpen(order.id)}
                           >
-                            <RiTimeLine className="mr-2 h-4 w-4" />
+                            <RiTimeLine className="h-4 w-4" />
                             {(() => {
                               const currentTime =
                                 editForms[order.id]?.dropoff_time || order.dropoff_time;
@@ -1597,20 +1612,27 @@ function OrdersPageContent() {
                       </div>
 
                       {/* Save Button for Dropoff Changes */}
-                      {(editForms[order.id]?.dropoff_date !== undefined || 
+                      {(editForms[order.id]?.dropoff_date !== undefined ||
                         editForms[order.id]?.dropoff_time !== undefined) && (
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            onClick={() => saveOrder(order.id)}
-                            variant="outline"
-                            size="sm"
-                            className="min-h-[44px] px-4 touch-manipulation"
-                          >
-                            Save Changes
-                          </Button>
+                          <div className="flex justify-end mt-4">
+                            <Button
+                              onClick={() => saveOrder(order.id)}
+                              variant="outline"
+                              size="sm"
+                              className="min-h-[44px] px-4 touch-manipulation"
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
+                        )}
+
+                      {/* Internal Notes */}
+                      {order.internal_notes && (
+                        <div className="mt-4 p-3 bg-muted/30 rounded-md">
+                          <Label className="text-sm font-semibold mb-1 block text-muted-foreground">Internal Notes</Label>
+                          <p className="text-sm whitespace-pre-wrap">{order.internal_notes}</p>
                         </div>
                       )}
-
 
                       <div className="text-xs text-muted-foreground">
                         Created: {format(new Date(order.created_at), "MMM dd, yyyy 'at' h:mm a")}
@@ -1826,13 +1848,13 @@ function OrdersPageContent() {
           </AlertDialogHeader>
           <div className="py-4">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="send-email" 
+              <Checkbox
+                id="send-email"
                 checked={sendEmailUpdate}
                 onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
               />
-              <Label 
-                htmlFor="send-email" 
+              <Label
+                htmlFor="send-email"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Send email notification to customer
@@ -1862,19 +1884,19 @@ function OrdersPageContent() {
           </AlertDialogHeader>
           <div className="py-4 space-y-4">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="send-email-delivered" 
+              <Checkbox
+                id="send-email-delivered"
                 checked={sendEmailUpdate}
                 onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
               />
-              <Label 
-                htmlFor="send-email-delivered" 
+              <Label
+                htmlFor="send-email-delivered"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Send email notification to customer
               </Label>
             </div>
-            
+
             {sendEmailUpdate && (
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
@@ -1883,7 +1905,7 @@ function OrdersPageContent() {
                     Delivery Photo (Optional)
                   </Label>
                 </div>
-                
+
                 {!deliveryImagePreview ? (
                   <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center hover:border-gray-300 transition-colors">
                     <input
@@ -1893,7 +1915,7 @@ function OrdersPageContent() {
                       onChange={handleDeliveryImageChange}
                       className="hidden"
                     />
-                    <div 
+                    <div
                       onClick={() => {
                         deliveryImageInputRef.current?.click();
                       }}
@@ -1976,13 +1998,13 @@ function OrdersPageContent() {
           </AlertDialogHeader>
           <div className="py-4">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="send-email-complete" 
+              <Checkbox
+                id="send-email-complete"
                 checked={sendEmailUpdate}
                 onCheckedChange={(checked) => setSendEmailUpdate(!!checked)}
               />
-              <Label 
-                htmlFor="send-email-complete" 
+              <Label
+                htmlFor="send-email-complete"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Send completion email notification to customer
@@ -2011,10 +2033,10 @@ function OrdersPageContent() {
             {emailLogsDialogOpen && (() => {
               const order = orders.find(o => o.id === emailLogsDialogOpen);
               if (!order) return <p>Order not found</p>;
-              
+
               // Generate mock email logs based on order status and timestamps
               const emailLogs = [
-                ...(order.order_status === 'on_way' || order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ? 
+                ...(order.order_status === 'on_way' || order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ?
                   [{
                     id: '1',
                     type: 'status_update',
@@ -2025,7 +2047,7 @@ function OrdersPageContent() {
                     success: true,
                   }] : []
                 ),
-                ...(order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ? 
+                ...(order.order_status === 'delivered' || order.order_status === 'on_way_pickup' || order.order_status === 'completed' ?
                   [{
                     id: '2',
                     type: 'status_update',
@@ -2036,7 +2058,7 @@ function OrdersPageContent() {
                     success: true,
                   }] : []
                 ),
-                ...(order.order_status === 'completed' ? 
+                ...(order.order_status === 'completed' ?
                   [{
                     id: '3',
                     type: 'status_update',
@@ -2048,7 +2070,7 @@ function OrdersPageContent() {
                   }] : []
                 ),
               ];
-              
+
               const getStatusIcon = (status: string) => {
                 switch (status) {
                   case 'on_way': return '🚛';
@@ -2057,7 +2079,7 @@ function OrdersPageContent() {
                   default: return '📧';
                 }
               };
-              
+
               const getStatusColor = (status: string) => {
                 switch (status) {
                   case 'on_way': return 'text-blue-600 bg-blue-50';

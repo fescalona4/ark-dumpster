@@ -611,27 +611,67 @@ export function QuotesDataTable({
       },
       {
         id: 'actions',
-        cell: () => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-                size="icon"
-              >
-                <IconDotsVertical />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Make a copy</DropdownMenuItem>
-              <DropdownMenuItem>Favorite</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
+        cell: ({ row }) => {
+          const handleCancelQuote = async () => {
+            const quoteData = row.original;
+            
+            try {
+              const response = await fetch('/api/quotes', {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  quoteId: quoteData.id,
+                  status: 'canceled',
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to cancel quote');
+              }
+
+              const result = await response.json();
+              
+              toast.success('Quote Canceled', {
+                description: `Quote for ${quoteData.header} has been canceled successfully.`,
+              });
+
+              // Refresh the page to show updated status
+              window.location.reload();
+            } catch (error) {
+              console.error('Error canceling quote:', error);
+              toast.error('Failed to Cancel Quote', {
+                description: 'There was an error canceling the quote. Please try again.',
+              });
+            }
+          };
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                  size="icon"
+                >
+                  <IconDotsVertical />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32">
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuItem>Make a copy</DropdownMenuItem>
+                <DropdownMenuItem>Favorite</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleCancelQuote} variant="destructive">
+                  Cancel Quote
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
       },
     ],
     [statuses]

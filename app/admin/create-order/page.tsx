@@ -25,6 +25,7 @@ import AuthGuard from '@/components/providers/auth-guard';
 import GooglePlacesAutocomplete from '@/components/forms/google-places-autocomplete';
 import { AddServicesDialog, SelectedService } from '@/components/dialogs/add-services-dialog';
 import { Service } from '@/types/database';
+import { supabase } from '@/lib/supabase';
 
 export default function CreateOrderPage() {
   return (
@@ -188,7 +189,7 @@ function CreateOrderContent() {
         email: formData.email,
         address: formData.address,
         dropoffDate: formData.serviceDate,
-        serviceTime: formData.serviceTime,
+        dropoffTime: formData.serviceTime,
         timeNeeded: formData.timeNeeded,
         internalNotes: formData.message,
         services: selectedServices.map(service => ({
@@ -202,11 +203,20 @@ function CreateOrderContent() {
 
       console.log('Creating order:', orderData);
 
+      // Get the current session token for authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add authorization header if we have a session
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(orderData),
       });
 
@@ -216,10 +226,13 @@ function CreateOrderContent() {
         throw new Error(result.message || 'Failed to create order');
       }
 
+      // Ensure we have the order data before accessing properties
+      const orderNumber = result.order?.order_number || result.data?.order?.order_number || 'Unknown';
+      
       setNotification({
         type: 'success',
         title: 'Order Created Successfully!',
-        description: `Order #${result.order.order_number} has been created and is ready for scheduling.`,
+        description: `Order #${orderNumber} has been created and is ready for scheduling.`,
         action: {
           label: 'View Order',
           onClick: () => {

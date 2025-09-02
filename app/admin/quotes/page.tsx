@@ -78,6 +78,7 @@ import {
   RiMore2Line,
   RiEditLine,
   RiMore2Fill,
+  RiCloseLine,
 } from '@remixicon/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -402,6 +403,40 @@ function QuotesPageContent() {
     } catch (err) {
       console.error('Unexpected error:', err);
       alert('Failed to delete quote');
+    }
+  };
+
+  /**
+   * Cancels a quote by updating its status to 'canceled'
+   * Shows success/error notification using sonner toast
+   */
+  const handleCancelQuote = async (quoteId: string, customerName: string) => {
+    try {
+      const { error } = await supabase
+        .from('quotes')
+        .update({ status: 'cancelled' })
+        .eq('id', quoteId);
+
+      if (error) {
+        console.error('Error updating quote status:', error);
+        toast.error('Failed to cancel quote. Please try again.');
+        return;
+      }
+      
+      // Update local state to reflect the change immediately
+      setQuotes(quotes.map(q => 
+        q.id === quoteId ? { ...q, status: 'cancelled' } : q
+      ));
+      
+      toast.success('Quote Canceled', {
+        description: `Quote for ${customerName} has been canceled successfully.`,
+      });
+
+      // Refresh quotes to show updated status
+      fetchQuotes(false);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('An unexpected error occurred while canceling the quote.');
     }
   };
 
@@ -986,6 +1021,13 @@ function QuotesPageContent() {
                               Edit Quote
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              onClick={() => handleCancelQuote(quote.id, quote.first_name)}
+                              className="cursor-pointer text-orange-600 focus:text-orange-600"
+                            >
+                              <RiCloseLine className="mr-2 h-4 w-4" />
+                              Cancel Quote
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => setDeleteDialogOpen(quote.id)}
                               className="cursor-pointer text-red-600 focus:text-red-600"
                             >
@@ -996,32 +1038,6 @@ function QuotesPageContent() {
                         </DropdownMenu>
                       </div>
                       <div className="space-y-3 text-sm">
-                        {/* Status Assignment */}
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold">Status</Label>
-                          <Select
-                            value={editForms[quote.id]?.status || quote.status}
-                            onValueChange={value =>
-                              setEditForms(prev => ({
-                                ...prev,
-                                [quote.id]: {
-                                  ...prev[quote.id],
-                                  status: value as Quote['status'],
-                                },
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="w-full min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                              <SelectItem value="cancelled">Cancelled</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
                         {/* Team Assignment */}
                         <div className="space-y-2">
                           <Label className="text-sm font-semibold">Assigned To</Label>
@@ -1069,12 +1085,12 @@ function QuotesPageContent() {
                               <DialogTrigger asChild>
                                 <Button
                                   variant="outline"
-                                  className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
+                                  className={`w-full overflow-hidden justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_date || quote.dropoff_date)
                                     ? 'text-muted-foreground border-red-300 hover:border-red-400'
                                     : ''
                                     }`}
                                 >
-                                  <RiCalendarLine className="mr-2 h-4 w-4" />
+                                  <RiCalendarLine className="h-4 w-4" />
                                   {editForms[quote.id]?.dropoff_date || quote.dropoff_date
                                     ? (() => {
                                       const dateStr =
@@ -1184,13 +1200,13 @@ function QuotesPageContent() {
                             </Label>
                             <Button
                               variant="outline"
-                              className={`w-full justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
+                              className={`w-full overflow-hidden justify-start text-left font-normal rounded-md min-h-[44px] touch-manipulation focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${!(editForms[quote.id]?.dropoff_time || quote.dropoff_time)
                                 ? 'text-muted-foreground border-red-300 hover:border-red-400'
                                 : ''
                                 }`}
                               onClick={() => setDateTimeDialogOpen(quote.id)}
                             >
-                              <RiTimeLine className="mr-2 h-4 w-4" />
+                              <RiTimeLine className="h-4 w-4" />
                               {(() => {
                                 const currentTime =
                                   editForms[quote.id]?.dropoff_time || quote.dropoff_time;

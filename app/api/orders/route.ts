@@ -81,8 +81,8 @@ export const POST = withRateLimit(async (request: NextRequest) => {
     // Import the order service dynamically to avoid circular dependencies
     const { createOrderWithServices } = await import('@/lib/order-service');
 
-    // Create the order with services
-    const { order, services } = await createOrderWithServices(body);
+    // Create the order with services using server-side client
+    const { order, services } = await createOrderWithServices(body, supabase);
 
     return createSuccessResponse({
       order,

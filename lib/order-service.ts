@@ -29,7 +29,8 @@ import {
  * Creates a new order with multiple services
  */
 export async function createOrderWithServices(
-  orderData: OrderCreateData
+  orderData: OrderCreateData,
+  supabaseClient = supabase
 ): Promise<{ order: Order; services: OrderService[] }> {
   if (!orderData.services || orderData.services.length === 0) {
     throw new Error('At least one service is required to create an order');
@@ -60,14 +61,14 @@ export async function createOrderWithServices(
     };
 
     // Generate order number and create order
-    const { data: orderNumber, error: orderNumError } = await supabase.rpc('generate_order_number');
+    const { data: orderNumber, error: orderNumError } = await supabaseClient.rpc('generate_order_number');
 
     if (orderNumError) {
       throw new Error(`Failed to generate order number: ${orderNumError.message}`);
     }
 
     // Create the order
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await supabaseClient
       .from('orders')
       .insert([{ ...orderInsertData, order_number: orderNumber }])
       .select()
@@ -78,11 +79,11 @@ export async function createOrderWithServices(
     }
 
     // Create order services
-    const orderServices = await createOrderServices(order.id, orderData.services);
+    const orderServices = await createOrderServices(order.id, orderData.services, supabaseClient);
 
     // Update quote status if this was created from a quote
     if (orderData.quoteId) {
-      await supabase.from('quotes').update({ status: 'completed' }).eq('id', orderData.quoteId);
+      await supabaseClient.from('quotes').update({ status: 'completed' }).eq('id', orderData.quoteId);
     }
 
     return {
@@ -100,13 +101,14 @@ export async function createOrderWithServices(
  */
 export async function createOrderServices(
   orderId: string,
-  services: ServiceSelection[]
+  services: ServiceSelection[],
+  supabaseClient = supabase
 ): Promise<OrderService[]> {
   const createdServices: OrderService[] = [];
 
   for (const serviceSelection of services) {
     // Get service details for pricing
-    const { data: service, error: serviceError } = await supabase
+    const { data: service, error: serviceError } = await supabaseClient
       .from('services')
       .select('*')
       .eq('id', serviceSelection.service_id)
@@ -131,7 +133,7 @@ export async function createOrderServices(
       status: 'confirmed' as const,
     };
 
-    const { data: orderService, error: orderServiceError } = await supabase
+    const { data: orderService, error: orderServiceError } = await supabaseClient
       .from('order_services')
       .insert([orderServiceData])
       .select()
