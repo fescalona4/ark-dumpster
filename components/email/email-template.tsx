@@ -39,10 +39,6 @@ export function EmailTemplate({
   }
   const renderContent = () => {
     switch (type) {
-      case 'company-notification':
-        // This case is now handled by CompanyNotificationEmail component
-        return null;
-
       case 'quote':
         return (
           <>
@@ -236,7 +232,7 @@ export function EmailTemplate({
       {renderContent()}
       
       {/* Reply instructions for customer emails */}
-      {type !== 'company-notification' && (
+      {(
         <div
           style={{
             backgroundColor: '#f0f9ff',
