@@ -60,7 +60,9 @@ export function Invoice({ order, invoiceNumber, className = '' }: InvoiceProps) 
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-4 text-gray-900">Bill To:</h3>
         <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="font-semibold text-gray-900">{order.first_name} {order.last_name}</p>
+          <p className="font-semibold text-gray-900">
+            {order.first_name} {order.last_name}
+          </p>
           <p className="text-gray-800">{order.email}</p>
           {order.phone && <p className="text-gray-800">{formatPhoneNumber(order.phone)}</p>}
           {order.address && (
@@ -68,7 +70,9 @@ export function Invoice({ order, invoiceNumber, className = '' }: InvoiceProps) 
               <p className="text-gray-800">{order.address}</p>
               {order.address2 && <p className="text-gray-800">{order.address2}</p>}
               {order.city && order.state && order.zip_code && (
-                <p className="text-gray-800">{order.city}, {order.state} {order.zip_code}</p>
+                <p className="text-gray-800">
+                  {order.city}, {order.state} {order.zip_code}
+                </p>
               )}
             </div>
           )}
@@ -79,18 +83,30 @@ export function Invoice({ order, invoiceNumber, className = '' }: InvoiceProps) 
       <div className="mb-8">
         <h3 className="text-lg font-semibold mb-4 text-gray-900">Order Details:</h3>
         <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-gray-800"><span className="font-medium">Order Number:</span> {order.order_number}</p>
+          <p className="text-gray-800">
+            <span className="font-medium">Order Number:</span> {order.order_number}
+          </p>
           {order.dumpster_size && (
-            <p className="text-gray-800"><span className="font-medium">Dumpster Size:</span> {order.dumpster_size} Yard</p>
+            <p className="text-gray-800">
+              <span className="font-medium">Dumpster Size:</span> {order.dumpster_size} Yard
+            </p>
           )}
           {order.scheduled_delivery_date && (
-            <p className="text-gray-800"><span className="font-medium">Delivery Date:</span> {format(new Date(order.scheduled_delivery_date), 'MMMM dd, yyyy')}</p>
+            <p className="text-gray-800">
+              <span className="font-medium">Delivery Date:</span>{' '}
+              {format(new Date(order.scheduled_delivery_date), 'MMMM dd, yyyy')}
+            </p>
           )}
           {order.scheduled_pickup_date && (
-            <p className="text-gray-800"><span className="font-medium">Pickup Date:</span> {format(new Date(order.scheduled_pickup_date), 'MMMM dd, yyyy')}</p>
+            <p className="text-gray-800">
+              <span className="font-medium">Pickup Date:</span>{' '}
+              {format(new Date(order.scheduled_pickup_date), 'MMMM dd, yyyy')}
+            </p>
           )}
           {order.message && (
-            <p className="text-gray-800"><span className="font-medium">Special Instructions:</span> {order.message}</p>
+            <p className="text-gray-800">
+              <span className="font-medium">Special Instructions:</span> {order.message}
+            </p>
           )}
         </div>
       </div>
@@ -100,8 +116,12 @@ export function Invoice({ order, invoiceNumber, className = '' }: InvoiceProps) 
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-3 text-left text-gray-900">Description</th>
-              <th className="border border-gray-300 px-4 py-3 text-right text-gray-900">Quantity</th>
+              <th className="border border-gray-300 px-4 py-3 text-left text-gray-900">
+                Description
+              </th>
+              <th className="border border-gray-300 px-4 py-3 text-right text-gray-900">
+                Quantity
+              </th>
               <th className="border border-gray-300 px-4 py-3 text-right text-gray-900">Rate</th>
               <th className="border border-gray-300 px-4 py-3 text-right text-gray-900">Amount</th>
             </tr>
@@ -111,19 +131,19 @@ export function Invoice({ order, invoiceNumber, className = '' }: InvoiceProps) 
               <td className="border border-gray-300 px-4 py-3 text-gray-800">
                 Dumpster Rental Service
                 {order.dumpster_size && (
-                  <div className="text-sm text-gray-700">
-                    {order.dumpster_size} Yard Dumpster
-                  </div>
+                  <div className="text-sm text-gray-700">{order.dumpster_size} Yard Dumpster</div>
                 )}
                 {order.address && (
-                  <div className="text-sm text-gray-700">
-                    Delivery to: {order.address}
-                  </div>
+                  <div className="text-sm text-gray-700">Delivery to: {order.address}</div>
                 )}
               </td>
               <td className="border border-gray-300 px-4 py-3 text-right text-gray-800">1</td>
-              <td className="border border-gray-300 px-4 py-3 text-right text-gray-800">${subtotal.toFixed(2)}</td>
-              <td className="border border-gray-300 px-4 py-3 text-right text-gray-800">${subtotal.toFixed(2)}</td>
+              <td className="border border-gray-300 px-4 py-3 text-right text-gray-800">
+                ${subtotal.toFixed(2)}
+              </td>
+              <td className="border border-gray-300 px-4 py-3 text-right text-gray-800">
+                ${subtotal.toFixed(2)}
+              </td>
             </tr>
           </tbody>
         </table>

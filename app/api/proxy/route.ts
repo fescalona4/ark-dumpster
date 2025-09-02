@@ -23,24 +23,24 @@ const BLOCKED_IP_PATTERNS = [
 function validateUrl(urlString: string): { isValid: boolean; error?: string } {
   try {
     const url = new URL(urlString);
-    
+
     // Only allow HTTPS for security
     if (url.protocol !== 'https:') {
       return { isValid: false, error: 'Only HTTPS URLs are allowed' };
     }
-    
+
     // Check if domain is in allowlist
     if (!ALLOWED_DOMAINS.includes(url.hostname)) {
       return { isValid: false, error: 'Domain not allowed' };
     }
-    
+
     // Check for blocked IP patterns
     for (const pattern of BLOCKED_IP_PATTERNS) {
       if (pattern.test(url.hostname)) {
         return { isValid: false, error: 'IP address not allowed' };
       }
     }
-    
+
     return { isValid: true };
   } catch (error) {
     return { isValid: false, error: 'Invalid URL format' };
@@ -78,7 +78,8 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': response.headers.get('content-type') || 'text/plain',
         // Restrictive CORS headers
-        'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 'https://arkdumpsterrentals.com',
+        'Access-Control-Allow-Origin':
+          process.env.NEXT_PUBLIC_APP_URL || 'https://arkdumpsterrentals.com',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
       },
@@ -126,7 +127,8 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': response.headers.get('content-type') || 'application/json',
         // Restrictive CORS headers
-        'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 'https://arkdumpsterrentals.com',
+        'Access-Control-Allow-Origin':
+          process.env.NEXT_PUBLIC_APP_URL || 'https://arkdumpsterrentals.com',
         'Access-Control-Allow-Methods': 'POST',
         'Access-Control-Allow-Headers': 'Content-Type',
       },

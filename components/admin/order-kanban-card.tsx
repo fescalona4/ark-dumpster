@@ -11,11 +11,7 @@ interface OrderKanbanCardProps {
   onStatusChange?: (orderId: string, newStatus: Order['status']) => void;
 }
 
-export const OrderKanbanCard = ({ 
-  order, 
-  onClick,
-  onStatusChange 
-}: OrderKanbanCardProps) => {
+export const OrderKanbanCard = ({ order, onClick, onStatusChange }: OrderKanbanCardProps) => {
   return (
     <Card className="hover:shadow-md transition-shadow bg-card dark:bg-card border-l-4 border-l-primary">
       <CardContent className="p-0">

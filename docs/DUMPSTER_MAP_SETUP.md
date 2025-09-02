@@ -12,6 +12,7 @@ The dumpster page includes a map view that shows all dumpsters based on their ad
 
 2. **Configure the Environment Variable**:
    - Add your API key to your `.env.local` file:
+
    ```
    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key_here
    ```
@@ -27,7 +28,7 @@ The dumpster map includes:
 
 - **Color-coded markers** based on dumpster status:
   - 🟢 Green: Available
-  - 🔵 Blue: Assigned  
+  - 🔵 Blue: Assigned
   - 🟠 Orange: In Transit
   - 🟠 Orange: Maintenance
   - 🔴 Red: Out of Service
@@ -41,6 +42,7 @@ The dumpster map includes:
 ## Data Requirements
 
 For dumpsters to appear on the map, they need either:
+
 - An `address` field with a valid address
 - A `last_known_location` field with a valid address
 - `gps_coordinates` field with "lat,lng" format

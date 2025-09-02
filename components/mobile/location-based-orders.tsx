@@ -1,11 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import { toast } from 'sonner';
 import { IconMapPin, IconNavigation, IconClock, IconRoute } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGeolocation, calculateDistance, formatDistance, useLocationPermission } from '@/hooks/useGeolocation';
+import {
+  useGeolocation,
+  calculateDistance,
+  formatDistance,
+  useLocationPermission,
+} from '@/hooks/useGeolocation';
 import { MobileOrderCard } from './mobile-order-card';
 import { cn } from '@/lib/utils';
 
@@ -33,11 +39,11 @@ interface NearbyOrdersProps {
   className?: string;
 }
 
-export function NearbyOrders({ 
-  orders, 
-  onOrderSelect, 
+export function NearbyOrders({
+  orders,
+  onOrderSelect,
   maxDistance = 25,
-  className 
+  className,
 }: NearbyOrdersProps) {
   const { position, loading, error, getCurrentPosition } = useGeolocation({
     enableHighAccuracy: true,
@@ -69,10 +75,10 @@ export function NearbyOrders({
 
   const handleLocationRequest = async () => {
     if (permission === 'denied') {
-      alert('Location access denied. Please enable location in your browser settings.');
+      toast.error('Location access denied. Please enable location in your browser settings.');
       return;
     }
-    
+
     const granted = await requestPermission();
     if (granted) {
       getCurrentPosition();
@@ -81,7 +87,7 @@ export function NearbyOrders({
 
   const openDirections = (order: OrderData) => {
     if (!order.coordinates) return;
-    
+
     const { lat, lng } = order.coordinates;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     window.open(url, '_blank');
@@ -126,9 +132,11 @@ export function NearbyOrders({
             <IconMapPin className="h-12 w-12 mx-auto mb-2 text-red-500" />
             <h3 className="font-semibold text-lg">Location Error</h3>
             <p className="text-sm mt-2">
-              {error.code === 1 ? 'Location access denied' :
-               error.code === 2 ? 'Location unavailable' :
-               'Location request timed out'}
+              {error.code === 1
+                ? 'Location access denied'
+                : error.code === 2
+                  ? 'Location unavailable'
+                  : 'Location request timed out'}
             </p>
           </div>
           <Button onClick={getCurrentPosition} variant="outline" size="touch">
@@ -157,12 +165,7 @@ export function NearbyOrders({
     <div className={className}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-lg">Nearby Orders</h3>
-        <Button 
-          onClick={getCurrentPosition} 
-          variant="ghost" 
-          size="sm"
-          disabled={loading}
-        >
+        <Button onClick={getCurrentPosition} variant="ghost" size="sm" disabled={loading}>
           <IconNavigation className={cn('h-4 w-4', loading && 'animate-spin')} />
         </Button>
       </div>
@@ -179,14 +182,14 @@ export function NearbyOrders({
         </Card>
       ) : (
         <div className="space-y-3">
-          {nearbyOrders.map((order) => (
+          {nearbyOrders.map(order => (
             <div key={order.id} className="relative">
               <MobileOrderCard
                 order={order}
                 onTap={onOrderSelect}
                 className="pr-20" // Make space for distance badge
               />
-              
+
               {/* Distance badge and directions button */}
               <div className="absolute top-4 right-4 flex items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
@@ -232,7 +235,7 @@ export function RouteOptimization({ orders, className }: RouteOptimizationProps)
     const route: OrderData[] = [];
     let currentOrder = unvisited.shift()!; // Start with first order
     route.push(currentOrder);
-    
+
     let totalDist = 0;
 
     while (unvisited.length > 0) {
@@ -248,7 +251,7 @@ export function RouteOptimization({ orders, className }: RouteOptimizationProps)
             order.coordinates.lat,
             order.coordinates.lng
           );
-          
+
           if (distance < nearestDistance) {
             nearest = order;
             nearestDistance = distance;
@@ -307,12 +310,8 @@ export function RouteOptimization({ orders, className }: RouteOptimizationProps)
               {estimatedTime}min
             </span>
           </div>
-          
-          <Button 
-            onClick={openOptimizedRoute}
-            className="w-full"
-            size="touch"
-          >
+
+          <Button onClick={openOptimizedRoute} className="w-full" size="touch">
             <IconNavigation className="h-4 w-4 mr-2" />
             Open in Maps
           </Button>

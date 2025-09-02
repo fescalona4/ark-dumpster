@@ -20,15 +20,18 @@ export async function GET(request: NextRequest) {
     const response = await fetch(imageUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; NextJS-ImageProxy/1.0)',
-        'Accept': 'image/*,*/*;q=0.8',
+        Accept: 'image/*,*/*;q=0.8',
       },
     });
 
     if (!response.ok) {
       console.error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-      return NextResponse.json({
-        error: `Failed to fetch image: ${response.status}`
-      }, { status: response.status });
+      return NextResponse.json(
+        {
+          error: `Failed to fetch image: ${response.status}`,
+        },
+        { status: response.status }
+      );
     }
 
     // Get the image data
@@ -37,21 +40,24 @@ export async function GET(request: NextRequest) {
 
     console.log(`Successfully proxied image: ${contentType}, ${imageBuffer.byteLength} bytes`);
 
-    // Return the image with proper headers for caching and optimization
+    // Return the image without caching
     return new NextResponse(imageBuffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Content-Length': imageBuffer.byteLength.toString(),
         'Access-Control-Allow-Origin': '*',
       },
     });
   } catch (error) {
     console.error('Image proxy error:', error);
-    return NextResponse.json({
-      error: 'Failed to proxy image',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to proxy image',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
 }

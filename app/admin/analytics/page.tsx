@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,7 +15,13 @@ import { RiBarChartLine } from '@remixicon/react';
 import AuthGuard from '@/components/providers/auth-guard';
 import { AdvancedAreaChart } from '@/components/analytics/advanced-area-chart';
 import { AnalyticsSectionCards } from '@/components/analytics/analytics-section-cards';
-import { getAnalytics, getPageViews, getDailyVisits, getCountryStats, getCityStats } from '@/lib/analytics';
+import {
+  getAnalytics,
+  getPageViews,
+  getDailyVisits,
+  getCountryStats,
+  getCityStats,
+} from '@/lib/analytics';
 import { Spinner } from '@/components/ui/spinner';
 
 interface Visit {
@@ -49,17 +55,15 @@ export default function AnalyticsPage() {
 function AnalyticsPageContent() {
   const [visits, setVisits] = useState<Visit[]>([]);
   const [pageViews, setPageViews] = useState<Record<string, number>>({});
-  const [dailyVisits, setDailyVisits] = useState<Record<string, number>>({});
-  const [countryStats, setCountryStats] = useState<Record<string, number>>({});
   const [cityStats, setCityStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30');
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const days = parseInt(timeRange);
-      const [analyticsData, pageViewsData, dailyVisitsData, countryData, cityData] = await Promise.all([
+      const [analyticsData, pageViewsData, , , cityData] = await Promise.all([
         getAnalytics(days),
         getPageViews(days),
         getDailyVisits(days),
@@ -69,19 +73,17 @@ function AnalyticsPageContent() {
 
       if (analyticsData) setVisits(analyticsData);
       setPageViews(pageViewsData);
-      setDailyVisits(dailyVisitsData);
-      setCountryStats(countryData);
       setCityStats(cityData);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeRange]);
+  }, [fetchAnalytics]);
 
   // Calculate stats
   const totalVisits = visits.length;
@@ -91,16 +93,22 @@ function AnalyticsPageContent() {
     .slice(0, 10);
 
   // Device type stats
-  const deviceStats = visits.reduce((acc, visit) => {
-    acc[visit.device_type] = (acc[visit.device_type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const deviceStats = visits.reduce(
+    (acc, visit) => {
+      acc[visit.device_type] = (acc[visit.device_type] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   // Browser stats
-  const browserStats = visits.reduce((acc, visit) => {
-    acc[visit.browser] = (acc[visit.browser] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const browserStats = visits.reduce(
+    (acc, visit) => {
+      acc[visit.browser] = (acc[visit.browser] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   if (loading) {
     return (
@@ -142,17 +150,14 @@ function AnalyticsPageContent() {
               uniqueSessions,
               pagesViewed: Object.keys(pageViews).length,
               avgDailyVisits: Math.round(totalVisits / parseInt(timeRange)),
-              timeRange
+              timeRange,
             }}
           />
 
           {/* Advanced Analytics Chart */}
           <div className="px-4 lg:px-6">
             <div className="bg-card rounded-lg border">
-              <AdvancedAreaChart
-                timeRange={timeRange}
-                onTimeRangeChange={setTimeRange}
-              />
+              <AdvancedAreaChart timeRange={timeRange} onTimeRangeChange={setTimeRange} />
             </div>
           </div>
 
@@ -173,7 +178,9 @@ function AnalyticsPageContent() {
                       </div>
                     ))}
                     {topCities.length === 0 && (
-                      <p className="text-muted-foreground text-center py-4">No city data available</p>
+                      <p className="text-muted-foreground text-center py-4">
+                        No city data available
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -193,7 +200,9 @@ function AnalyticsPageContent() {
                       </div>
                     ))}
                     {Object.keys(deviceStats).length === 0 && (
-                      <p className="text-muted-foreground text-center py-4">No device data available</p>
+                      <p className="text-muted-foreground text-center py-4">
+                        No device data available
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -213,7 +222,9 @@ function AnalyticsPageContent() {
                       </div>
                     ))}
                     {Object.keys(browserStats).length === 0 && (
-                      <p className="text-muted-foreground text-center py-4">No browser data available</p>
+                      <p className="text-muted-foreground text-center py-4">
+                        No browser data available
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -226,7 +237,7 @@ function AnalyticsPageContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-h-80 overflow-y-auto">
-                    {visits.slice(0, 10).map((visit) => (
+                    {visits.slice(0, 10).map(visit => (
                       <div key={visit.id} className="border-b pb-2 last:border-b-0">
                         <div className="flex items-center justify-between mb-1">
                           <div className="text-sm font-medium truncate flex-1">

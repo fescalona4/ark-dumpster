@@ -1,4 +1,11 @@
-import { RiAddLine, RiDeleteBinLine, RiPlantLine, RiArchiveLine, RiArrowLeftSLine, RiArrowRightSLine } from '@remixicon/react';
+import {
+  RiAddLine,
+  RiDeleteBinLine,
+  RiPlantLine,
+  RiArchiveLine,
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+} from '@remixicon/react';
 import { Badge } from '@/components/ui/badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -47,7 +54,7 @@ async function getServiceImages(): Promise<ServiceImages> {
   const serviceImages: ServiceImages = {
     dump: [],
     junk: [],
-    tree: []
+    tree: [],
   };
 
   // Fetch images dynamically from each folder
@@ -88,10 +95,5 @@ export default async function ServiceSection() {
   // Fetch images on the server
   const serviceImages = await getServiceImages();
 
-  return (
-    <ServicesClient 
-      items={items}
-      serviceImages={serviceImages}
-    />
-  );
+  return <ServicesClient items={items} serviceImages={serviceImages} />;
 }

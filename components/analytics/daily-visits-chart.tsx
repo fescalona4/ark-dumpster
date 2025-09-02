@@ -54,9 +54,7 @@ export function DailyVisitsChart({ dailyVisits, timeRange }: DailyVisitsChartPro
           <CardTitle>Daily Visitors</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            No visitor data available
-          </div>
+          <div className="text-center py-8 text-muted-foreground">No visitor data available</div>
         </CardContent>
       </Card>
     );
@@ -109,7 +107,7 @@ export function DailyVisitsChart({ dailyVisits, timeRange }: DailyVisitsChartPro
                           <br />
                           {data.date.toLocaleDateString('en-US', {
                             month: 'short',
-                            day: 'numeric'
+                            day: 'numeric',
                           })}
                         </div>
                       </div>
@@ -123,12 +121,13 @@ export function DailyVisitsChart({ dailyVisits, timeRange }: DailyVisitsChartPro
             <div className="flex justify-between mt-2 ml-8 mr-4 text-xs text-muted-foreground">
               {completeData.map((data, index) => {
                 // Show every few labels to avoid crowding
-                const showLabel = completeData.length <= 7 || index % Math.ceil(completeData.length / 7) === 0;
+                const showLabel =
+                  completeData.length <= 7 || index % Math.ceil(completeData.length / 7) === 0;
                 return (
                   <span key={index} className={showLabel ? '' : 'invisible'}>
                     {data.date.toLocaleDateString('en-US', {
                       month: 'short',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </span>
                 );
@@ -141,7 +140,9 @@ export function DailyVisitsChart({ dailyVisits, timeRange }: DailyVisitsChartPro
         <div className="mt-4 flex justify-between text-sm text-muted-foreground">
           <span>Total: {completeData.reduce((sum, d) => sum + d.visits, 0)} visits</span>
           <span>
-            Avg: {Math.round(completeData.reduce((sum, d) => sum + d.visits, 0) / completeData.length)} per day
+            Avg:{' '}
+            {Math.round(completeData.reduce((sum, d) => sum + d.visits, 0) / completeData.length)}{' '}
+            per day
           </span>
         </div>
       </CardContent>

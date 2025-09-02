@@ -53,7 +53,14 @@
       "Bash(chmod:*)",
       "mcp__playwright__browser_resize",
       "mcp__playwright__browser_close",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "WebSearch",
+      "WebFetch(domain:developer.squareup.com)",
+      "Bash(curl:*)",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_handle_dialog",
+      "Bash(npm ls:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

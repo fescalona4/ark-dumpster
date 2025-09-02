@@ -31,7 +31,6 @@ import {
   IconGripVertical,
   IconLayoutColumns,
   IconLoader,
-  IconPlus,
 } from '@tabler/icons-react';
 import {
   ColumnDef,
@@ -106,6 +105,29 @@ const orderSchema = z.object({
 
 type OrderData = z.infer<typeof orderSchema>;
 
+// Define interface for order data from API
+interface ApiOrderData {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  dumpster_size?: string;
+  duration?: string;
+  status: string;
+  delivery_date?: string;
+  final_price?: string;
+  created_at: string;
+  order_notes?: string;
+  assigned_to?: string;
+  priority?: string;
+}
+
 function DragHandle({ id }: { id: number }) {
   return (
     <Button variant="ghost" size="icon" className="cursor-grab active:cursor-grabbing">
@@ -122,7 +144,7 @@ function OrderTableCellViewer({
   statuses?: readonly string[];
 }) {
   const isMobile = useIsMobile();
-  const [orderData, setOrderData] = React.useState<any>(null);
+  const [orderData, setOrderData] = React.useState<ApiOrderData | null>(null);
   const [loading, setLoading] = React.useState(false);
 
   // Function to fetch order data from database
@@ -139,8 +161,9 @@ function OrderTableCellViewer({
           const data = await response.json();
           if (data.orders && data.orders.length > 0) {
             // Find the matching order by customer name
-            const matchingOrder = data.orders.find((order: any) =>
-              `${order.first_name} ${order.last_name || ''}`.trim() === item.header
+            const matchingOrder = data.orders.find(
+              (order: ApiOrderData) =>
+                `${order.first_name} ${order.last_name || ''}`.trim() === item.header
             );
             if (matchingOrder) {
               setOrderData(matchingOrder);
@@ -209,7 +232,9 @@ function OrderTableCellViewer({
                       <Label className="text-xs text-muted-foreground">Address</Label>
                       <div className="font-medium">
                         {orderData.address}
-                        {orderData.address2 && <div className="text-muted-foreground">{orderData.address2}</div>}
+                        {orderData.address2 && (
+                          <div className="text-muted-foreground">{orderData.address2}</div>
+                        )}
                         <div className="text-muted-foreground">
                           {orderData.city}, {orderData.state} {orderData.zip_code}
                         </div>
@@ -237,7 +262,9 @@ function OrderTableCellViewer({
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Status</Label>
                   <Badge variant="outline" className="w-fit">
-                    {orderData.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                    {orderData.status
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                   </Badge>
                 </div>
               </div>
@@ -330,7 +357,9 @@ function OrderTableCellViewer({
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Status</Label>
                     <Badge variant="outline" className="w-fit">
-                      {item.status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                      {item.status
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                     </Badge>
                   </div>
                 </div>
@@ -360,7 +389,9 @@ function OrderTableCellViewer({
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
             <Button className="flex-1">Edit Order</Button>
-            <Button variant="outline" className="flex-1">Track Order</Button>
+            <Button variant="outline" className="flex-1">
+              Track Order
+            </Button>
           </div>
         </div>
         <DrawerFooter>
@@ -414,7 +445,7 @@ export function OrdersDataTable({
     pageIndex: 0,
     pageSize: 10,
   });
-  const [currentView, setCurrentView] = React.useState("all");
+  const [currentView, setCurrentView] = React.useState('all');
 
   // Debug currentView changes
   React.useEffect(() => {
@@ -433,14 +464,14 @@ export function OrdersDataTable({
       hasData: !!data,
       dataLength: data?.length,
       currentView,
-      isAll: currentView === "all",
+      isAll: currentView === 'all',
       statuses: statuses,
-      sampleDataStatuses: data?.slice(0, 3).map(item => item.status)
+      sampleDataStatuses: data?.slice(0, 3).map(item => item.status),
     });
 
     if (!data || !currentView) return data;
 
-    if (currentView === "all") return data;
+    if (currentView === 'all') return data;
 
     const filtered = data.filter(item => item.status === currentView);
     console.log('Filtered result:', filtered.length, 'for status:', currentView);
@@ -448,184 +479,187 @@ export function OrdersDataTable({
     return filtered;
   }, [data, currentView, statuses]);
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(() => filteredData?.map(({ id }) => id) || [], [filteredData]);
+  const dataIds = React.useMemo<UniqueIdentifier[]>(
+    () => filteredData?.map(({ id }) => id) || [],
+    [filteredData]
+  );
 
   // Define columns for orders
-  const columns = React.useMemo((): ColumnDef<OrderData>[] => [
-    {
-      id: 'drag',
-      header: () => null,
-      cell: ({ row }) => <DragHandle id={row.original.id} />,
-    },
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <div className="flex items-center justify-center">
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && 'indeterminate')
-            }
-            onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={value => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: 'header',
-      header: 'Customer',
-      cell: ({ row }) => {
-        return <OrderTableCellViewer
-          item={row.original}
-          statuses={statuses}
-        />;
+  const columns = React.useMemo(
+    (): ColumnDef<OrderData>[] => [
+      {
+        id: 'drag',
+        header: () => null,
+        cell: ({ row }) => <DragHandle id={row.original.id} />,
       },
-      enableHiding: false,
-    },
-    {
-      accessorKey: 'type',
-      header: 'Dumpster Size',
-      cell: ({ row }) => (
-        <div className="w-32">
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <div className="flex items-center justify-center">
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && 'indeterminate')
+              }
+              onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+              aria-label="Select all"
+            />
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center">
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={value => row.toggleSelected(!!value)}
+              aria-label="Select row"
+            />
+          </div>
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: 'header',
+        header: 'Customer',
+        cell: ({ row }) => {
+          return <OrderTableCellViewer item={row.original} statuses={statuses} />;
+        },
+        enableHiding: false,
+      },
+      {
+        accessorKey: 'type',
+        header: 'Dumpster Size',
+        cell: ({ row }) => (
+          <div className="w-32">
+            <Badge variant="outline" className="text-muted-foreground px-1.5">
+              {row.original.type}
+            </Badge>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
           <Badge variant="outline" className="text-muted-foreground px-1.5">
-            {row.original.type}
+            {row.original.status === 'Done' ? (
+              <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
+            ) : (
+              <IconLoader />
+            )}
+            {row.original.status}
           </Badge>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.status === 'Done' ? (
-            <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-          ) : (
-            <IconLoader />
-          )}
-          {row.original.status}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'target',
-      header: () => <div className="w-full text-right">Delivery Date</div>,
-      cell: ({ row }) => (
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
-              loading: `Saving ${row.original.header}`,
-              success: 'Done',
-              error: 'Error',
-            });
-          }}
-        >
-          <Label htmlFor={`${row.original.id}-target`} className="sr-only">
-            Delivery Date
-          </Label>
-          <Input
-            className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-            defaultValue={row.original.target}
-            id={`${row.original.id}-target`}
-          />
-        </form>
-      ),
-    },
-    {
-      accessorKey: 'limit',
-      header: () => <div className="w-full text-right">Final Price</div>,
-      cell: ({ row }) => (
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
-              loading: `Saving ${row.original.header}`,
-              success: 'Done',
-              error: 'Error',
-            });
-          }}
-        >
-          <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
-            Final Price
-          </Label>
-          <Input
-            className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-            defaultValue={row.original.limit}
-            id={`${row.original.id}-limit`}
-          />
-        </form>
-      ),
-    },
-    {
-      accessorKey: 'reviewer',
-      header: 'Email',
-      cell: ({ row }) => {
-        const isAssigned = row.original.reviewer !== 'Assign reviewer';
-
-        if (isAssigned) {
-          return row.original.reviewer;
-        }
-
-        return (
-          <>
-            <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
-              Email
-            </Label>
-            <Select>
-              <SelectTrigger
-                className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
-                size="sm"
-                id={`${row.original.id}-reviewer`}
-              >
-                <SelectValue placeholder="Assign reviewer" />
-              </SelectTrigger>
-              <SelectContent align="end">
-                <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                <SelectItem value="Jamik Tashpulatov">Jamik Tashpulatov</SelectItem>
-              </SelectContent>
-            </Select>
-          </>
-        );
+        ),
       },
-    },
-    {
-      id: 'actions',
-      cell: () => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-              size="icon"
-            >
-              <IconDotsVertical />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Make a copy</DropdownMenuItem>
-            <DropdownMenuItem>Favorite</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ], [statuses]);
+      {
+        accessorKey: 'target',
+        header: () => <div className="w-full text-right">Delivery Date</div>,
+        cell: ({ row }) => (
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+                loading: `Saving ${row.original.header}`,
+                success: 'Done',
+                error: 'Error',
+              });
+            }}
+          >
+            <Label htmlFor={`${row.original.id}-target`} className="sr-only">
+              Delivery Date
+            </Label>
+            <Input
+              className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+              defaultValue={row.original.target}
+              id={`${row.original.id}-target`}
+            />
+          </form>
+        ),
+      },
+      {
+        accessorKey: 'limit',
+        header: () => <div className="w-full text-right">Final Price</div>,
+        cell: ({ row }) => (
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+                loading: `Saving ${row.original.header}`,
+                success: 'Done',
+                error: 'Error',
+              });
+            }}
+          >
+            <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
+              Final Price
+            </Label>
+            <Input
+              className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
+              defaultValue={row.original.limit}
+              id={`${row.original.id}-limit`}
+            />
+          </form>
+        ),
+      },
+      {
+        accessorKey: 'reviewer',
+        header: 'Email',
+        cell: ({ row }) => {
+          const isAssigned = row.original.reviewer !== 'Assign reviewer';
+
+          if (isAssigned) {
+            return row.original.reviewer;
+          }
+
+          return (
+            <>
+              <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
+                Email
+              </Label>
+              <Select>
+                <SelectTrigger
+                  className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
+                  size="sm"
+                  id={`${row.original.id}-reviewer`}
+                >
+                  <SelectValue placeholder="Assign reviewer" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
+                  <SelectItem value="Jamik Tashpulatov">Jamik Tashpulatov</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        cell: () => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                size="icon"
+              >
+                <IconDotsVertical />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem>Edit</DropdownMenuItem>
+              <DropdownMenuItem>Make a copy</DropdownMenuItem>
+              <DropdownMenuItem>Favorite</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ],
+    [statuses]
+  );
 
   const table = useReactTable({
     data: filteredData,
@@ -668,7 +702,7 @@ export function OrdersDataTable({
     const options = [
       <SelectItem key="all" value="all">
         All
-      </SelectItem>
+      </SelectItem>,
     ];
 
     if (statuses && statuses.length > 0) {
@@ -681,13 +715,17 @@ export function OrdersDataTable({
     }
 
     return options;
-  }
+  };
 
   return (
-    <Tabs value={currentView} onValueChange={(value) => {
-      console.log('Tab changed from', currentView, 'to', value);
-      setCurrentView(value);
-    }} className="w-full flex-col justify-start gap-6">
+    <Tabs
+      value={currentView}
+      onValueChange={value => {
+        console.log('Tab changed from', currentView, 'to', value);
+        setCurrentView(value);
+      }}
+      className="w-full flex-col justify-start gap-6"
+    >
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
           View
@@ -696,20 +734,13 @@ export function OrdersDataTable({
           <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
             <SelectValue placeholder="Select a view" />
           </SelectTrigger>
-          <SelectContent>
-            {getStatusOptions()}
-          </SelectContent>
+          <SelectContent>{getStatusOptions()}</SelectContent>
         </Select>
         <TabsList className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="all">
-            All
-          </TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
           {statuses && statuses.length > 0 ? (
             statuses.map(status => (
-              <TabsTrigger
-                key={status}
-                value={status}
-              >
+              <TabsTrigger key={status} value={status}>
                 {status.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
               </TabsTrigger>
             ))
@@ -747,10 +778,7 @@ export function OrdersDataTable({
       </div>
 
       {/* All TabsContent - always show this first */}
-      <TabsContent
-        value="all"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
-      >
+      <TabsContent value="all" className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
         <div className="overflow-hidden rounded-lg border">
           <DndContext
             sensors={sensors}
@@ -867,7 +895,8 @@ export function OrdersDataTable({
       </TabsContent>
 
       {/* Dynamic TabsContent for each status */}
-      {statuses && statuses.length > 0 && (
+      {statuses &&
+        statuses.length > 0 &&
         statuses.map(status => (
           <TabsContent
             key={status}
@@ -914,8 +943,7 @@ export function OrdersDataTable({
               </DndContext>
             </div>
           </TabsContent>
-        ))
-      )}
+        ))}
     </Tabs>
   );
 }

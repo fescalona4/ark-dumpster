@@ -23,7 +23,8 @@ interface AnalyticsSectionCardsProps {
 }
 
 export function AnalyticsSectionCards({ stats }: AnalyticsSectionCardsProps) {
-  const sessionRate = stats.totalVisits > 0 ? Math.round((stats.uniqueSessions / stats.totalVisits) * 100) : 0;
+  const sessionRate =
+    stats.totalVisits > 0 ? Math.round((stats.uniqueSessions / stats.totalVisits) * 100) : 0;
   const isGrowthPositive = stats.avgDailyVisits > 10; // Assuming positive if more than 10 daily visits
 
   return (
@@ -106,7 +107,8 @@ export function AnalyticsSectionCards({ stats }: AnalyticsSectionCardsProps) {
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="line-clamp-1 flex gap-2 font-medium">
-            {isGrowthPositive ? 'Steady traffic' : 'Growing audience'} <IconTrendingUp className="size-4" />
+            {isGrowthPositive ? 'Steady traffic' : 'Growing audience'}{' '}
+            <IconTrendingUp className="size-4" />
           </div>
           <div className="text-muted-foreground">Average visits in last {stats.timeRange} days</div>
         </CardFooter>

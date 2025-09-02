@@ -18,7 +18,9 @@ import { Order } from '@/types/order';
 import { getStatusIcon } from '@/components/order-management/order-status-manager';
 
 // Helper function to map order status to Status component status
-const mapOrderStatusToStatusType = (orderStatus: string): 'online' | 'offline' | 'maintenance' | 'degraded' => {
+const mapOrderStatusToStatusType = (
+  orderStatus: string
+): 'online' | 'offline' | 'maintenance' | 'degraded' => {
   switch (orderStatus) {
     case 'delivered':
     case 'completed':
@@ -43,12 +45,12 @@ interface MiniOrderViewProps {
   className?: string;
 }
 
-export const MiniOrderView = ({ 
-  order, 
+export const MiniOrderView = ({
+  order,
   onClick,
   onStatusChange,
   showActions = true,
-  className = ""
+  className = '',
 }: MiniOrderViewProps) => {
   const formatPhoneNumber = (phone: number | null) => {
     if (!phone) return '';
@@ -66,7 +68,7 @@ export const MiniOrderView = ({
 
   const getStatusActions = () => {
     if (!showActions) return null;
-    
+
     switch (order.status) {
       case 'scheduled':
         return (
@@ -75,7 +77,7 @@ export const MiniOrderView = ({
               size="sm"
               variant="outline"
               className="text-xs px-3 py-2 min-h-[36px] touch-manipulation"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onStatusChange?.(order.id, 'cancelled');
               }}
@@ -85,7 +87,7 @@ export const MiniOrderView = ({
             <Button
               size="sm"
               className="text-xs px-3 py-2 min-h-[36px] bg-indigo-600 hover:bg-indigo-700 touch-manipulation font-semibold"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 onStatusChange?.(order.id, 'on_way');
               }}
@@ -99,7 +101,7 @@ export const MiniOrderView = ({
           <Button
             size="sm"
             className="text-xs px-3 py-2 min-h-[36px] bg-green-600 hover:bg-green-700 touch-manipulation font-semibold"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'delivered');
             }}
@@ -112,7 +114,7 @@ export const MiniOrderView = ({
           <Button
             size="sm"
             className="text-xs px-3 py-2 min-h-[36px] bg-yellow-600 hover:bg-yellow-700 touch-manipulation font-semibold"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'on_way_pickup');
             }}
@@ -125,7 +127,7 @@ export const MiniOrderView = ({
           <Button
             size="sm"
             className="text-xs px-3 py-2 min-h-[36px] bg-gray-600 hover:bg-gray-700 touch-manipulation font-semibold"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               onStatusChange?.(order.id, 'completed');
             }}
@@ -139,12 +141,12 @@ export const MiniOrderView = ({
   };
 
   return (
-    <div 
+    <div
       className={`p-4 space-y-3 cursor-pointer hover:bg-accent/10 transition-colors rounded-lg touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${className}`}
       onClick={handleClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => {
+      onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           const mockEvent = { stopPropagation: () => {} } as React.MouseEvent;
@@ -159,7 +161,10 @@ export const MiniOrderView = ({
         <div className="text-sm font-bold text-foreground bg-primary/10 px-2 py-1 rounded">
           #{order.order_number}
         </div>
-        <Status status={mapOrderStatusToStatusType(order.status)} className="text-xs px-3 py-1 min-h-[28px] flex items-center">
+        <Status
+          status={mapOrderStatusToStatusType(order.status)}
+          className="text-xs px-3 py-1 min-h-[28px] flex items-center"
+        >
           <StatusIndicator />
           <StatusLabel className="ml-1 text-xs font-semibold">
             <span className="mr-1">{getStatusIcon(order.status)}</span>
@@ -170,7 +175,10 @@ export const MiniOrderView = ({
       {/* Customer Name - Prominent */}
       <div className="flex items-center gap-2 mb-3">
         <RiUserLine className="h-4 w-4 text-primary flex-shrink-0" />
-        <h4 id={`order-${order.id}-customer`} className="font-bold text-base truncate text-foreground">
+        <h4
+          id={`order-${order.id}-customer`}
+          className="font-bold text-base truncate text-foreground"
+        >
           {order.first_name} {order.last_name}
         </h4>
       </div>
@@ -192,28 +200,28 @@ export const MiniOrderView = ({
             </div>
           )}
         </div>
-        
+
         {/* Contact info */}
         <div className="space-y-1.5">
           {order.phone && (
             <div className="flex items-center gap-2">
               <RiPhoneLine className="h-4 w-4 text-blue-600 flex-shrink-0" />
-              <a 
-                href={`tel:${order.phone}`} 
+              <a
+                href={`tel:${order.phone}`}
                 className="text-sm font-medium text-blue-600 hover:underline touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-                onClick={(e) => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
                 aria-label={`Call ${order.first_name} ${order.last_name} at ${formatPhoneNumber(order.phone)}`}
               >
                 {formatPhoneNumber(order.phone)}
               </a>
             </div>
           )}
-          
+
           {order.address && (
             <div className="flex items-start gap-2">
               <RiMapPinLine className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   let fullAddress = order.address!;
                   if (order.city && order.state) {
@@ -234,7 +242,7 @@ export const MiniOrderView = ({
               </button>
             </div>
           )}
-          
+
           {/* Secondary info */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             {order.scheduled_delivery_date && (
@@ -256,11 +264,9 @@ export const MiniOrderView = ({
       {/* Priority Badge */}
       {order.priority && order.priority !== 'normal' && (
         <div className="flex justify-start">
-          <Badge 
+          <Badge
             variant={
-              order.priority === 'high' || order.priority === 'urgent' 
-                ? 'destructive' 
-                : 'secondary'
+              order.priority === 'high' || order.priority === 'urgent' ? 'destructive' : 'secondary'
             }
             className="text-xs px-1.5 py-0.5"
           >
@@ -271,9 +277,7 @@ export const MiniOrderView = ({
 
       {/* Action Buttons */}
       {getStatusActions() && (
-        <div className="pt-3 mt-3 border-t border-border/50">
-          {getStatusActions()}
-        </div>
+        <div className="pt-3 mt-3 border-t border-border/50">{getStatusActions()}</div>
       )}
     </div>
   );

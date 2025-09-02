@@ -77,7 +77,11 @@ const Footer = () => {
               <Link href="https://facebook.com/share/19WqphXmho/?mibextid=wwXlfr" target="_blank">
                 <RiFacebookLine className="h-5 w-5" />
               </Link>
-              <Link href="https://www.tiktok.com/@arkdumpsterrentals" target="_blank" className='mr-3'>
+              <Link
+                href="https://www.tiktok.com/@arkdumpsterrentals"
+                target="_blank"
+                className="mr-3"
+              >
                 <RiTiktokLine className="h-5 w-5" />
               </Link>
               <DarkToggle />

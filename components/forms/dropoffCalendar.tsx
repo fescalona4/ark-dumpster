@@ -41,14 +41,14 @@ export function DropoffCalendar({ value, onChange }: DropoffCalendarProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <Label htmlFor="date" className="px-1">
-        Drop-off Date
+        Service Date *
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             id="date"
-            className="justify-between font-normal text-foreground bg-white h-11 shadow-none rounded-md"
+            className="justify-between font-normal text-foreground bg-white h-11 shadow-xs rounded-md border border-input px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:border-ring focus-visible:ring-ring/50"
           >
             {date ? date.toLocaleDateString() : 'Date needed'}
             <RiArrowDownSLine />

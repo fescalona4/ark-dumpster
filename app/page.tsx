@@ -19,7 +19,10 @@ export default function Home() {
             <div className="mx-auto px-6 md:px-10 mt-8">
               <div className="flex flex-col gap-8">
                 <div className="flex-1 mt-2">
-                  <Badge variant="outline" className="gap-1.5 text-sm md:text-xs px-2 py-0.5 text-white">
+                  <Badge
+                    variant="outline"
+                    className="gap-1.5 text-sm md:text-xs px-2 py-0.5 text-white"
+                  >
                     <span className="size-1 rounded-full bg-emerald-500" aria-hidden="true"></span>
                     Available for work
                   </Badge>
@@ -29,8 +32,9 @@ export default function Home() {
                 </div>
                 <div className="flex-3">
                   <p className="text-2xl md:text-xl font-light leading-relaxed pr-10 md:pt-2">
-                    Whether you are tackling a home renovation, construction project, or major cleanout, Ark Dumpster
-                    provides convenient, affordable waste management solutions.
+                    Whether you are tackling a home renovation, construction project, or major
+                    cleanout, Ark Dumpster provides convenient, affordable waste management
+                    solutions.
                     <span className="align-super bold text-2xl md:text-xl/2">®</span>
                     {/* With our commitment to exceptional service and competitive pricing, 
               we make waste disposal simple so you can focus on what matters most. */}
@@ -51,7 +55,13 @@ export default function Home() {
           {/* Background Image */}
           <div className="rounded-lg md:bg-gradient-to-r from-orange-900/80 via-orange-800/70 to-rose-900/90 dark:from-orange-900/70 dark:via-orange-800/70 dark:to-rose-900/70">
             <div className="w-full h-full flex justify-center items-center">
-              <Image src="/ark-background.svg" alt="Ark Dumpster" width={900} height={900} priority />
+              <Image
+                src="/ark-background.svg"
+                alt="Ark Dumpster"
+                width={900}
+                height={900}
+                priority
+              />
             </div>
           </div>
         </div>

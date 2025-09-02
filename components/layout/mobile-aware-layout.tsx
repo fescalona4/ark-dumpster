@@ -5,7 +5,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { AdminAppSidebar } from '@/components/admin/admin-app-sidebar';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { MobileTabNavigation, QuickActionsSheet, useMobileNavigation } from '@/components/navigation/mobile-tab-nav';
+import {
+  MobileTabNavigation,
+  QuickActionsSheet,
+  useMobileNavigation,
+} from '@/components/navigation/mobile-tab-nav';
 import { supabase } from '@/lib/supabase';
 
 interface MobileAwareLayoutProps {
@@ -51,7 +55,6 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
     }
   }, [isMobile]);
 
-
   if (isMobile) {
     return (
       <SidebarProvider
@@ -62,30 +65,24 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
           } as React.CSSProperties
         }
       >
-
         <AdminAppSidebar variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          
+
           {/* Mobile-specific content wrapper */}
           <div className="relative min-h-screen bg-background">
             {/* Mobile Content Area */}
-            <main className="mobile-content">
-              {children}
-            </main>
+            <main className="mobile-content">{children}</main>
 
             {/* Mobile Bottom Navigation */}
-            <MobileTabNavigation 
-              onFabClick={openQuickActions} 
+            <MobileTabNavigation
+              onFabClick={openQuickActions}
               pendingQuotes={pendingQuotes}
               pendingOrders={activeOrders}
             />
-            
+
             {/* Quick Actions Sheet */}
-            <QuickActionsSheet 
-              isOpen={isQuickActionsOpen} 
-              onClose={closeQuickActions} 
-            />
+            <QuickActionsSheet isOpen={isQuickActionsOpen} onClose={closeQuickActions} />
           </div>
         </SidebarInset>
       </SidebarProvider>
@@ -114,10 +111,10 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
 // Hook to detect if we should use mobile layout
 export function useLayoutMode() {
   const isMobile = useIsMobile();
-  
+
   return {
     isMobile,
-    layoutMode: isMobile ? 'mobile' : 'desktop' as 'mobile' | 'desktop',
+    layoutMode: isMobile ? 'mobile' : ('desktop' as 'mobile' | 'desktop'),
   };
 }
 
@@ -129,11 +126,11 @@ interface MobilePageContainerProps {
   className?: string;
 }
 
-export function MobilePageContainer({ 
-  children, 
-  title, 
-  headerActions, 
-  className 
+export function MobilePageContainer({
+  children,
+  title,
+  headerActions,
+  className,
 }: MobilePageContainerProps) {
   const { isMobile } = useLayoutMode();
 
@@ -148,9 +145,7 @@ export function MobilePageContainer({
             </div>
           </div>
         )}
-        <div className="flex-1 p-4">
-          {children}
-        </div>
+        <div className="flex-1 p-4">{children}</div>
       </div>
     );
   }

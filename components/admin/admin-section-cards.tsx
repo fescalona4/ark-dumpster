@@ -14,9 +14,8 @@ import { CountingNumber } from '@/components/ui/counting-number';
 interface QuoteStats {
   total: number;
   pending: number;
-  quoted: number;
-  accepted: number;
   completed: number;
+  cancelled: number;
 }
 
 interface OrderStats {
@@ -39,7 +38,7 @@ export function AdminSectionCards({ stats, orderStats }: AdminSectionCardsProps)
         <CardHeader>
           <CardDescription>Pending Quotes</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            <CountingNumber 
+            <CountingNumber
               number={stats.pending}
               transition={{ stiffness: 90, damping: 50 }}
               inView={true}
@@ -64,7 +63,7 @@ export function AdminSectionCards({ stats, orderStats }: AdminSectionCardsProps)
         <CardHeader>
           <CardDescription>Scheduled Orders</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            <CountingNumber 
+            <CountingNumber
               number={orderStats.scheduled}
               transition={{ stiffness: 90, damping: 50 }}
               inView={true}

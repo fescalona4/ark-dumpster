@@ -11,9 +11,7 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen flex flex-col">
       {!isAdminPage && <Header />}
-      <div className="flex-1">
-        {children}
-      </div>
+      <div className="flex-1">{children}</div>
       {!isAdminPage && <Footer />}
     </div>
   );

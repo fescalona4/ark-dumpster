@@ -14,9 +14,7 @@ export default function AdminLayout({
 }>) {
   return (
     <AdminAuthGuard>
-      <MobileAwareLayout>
-        {children}
-      </MobileAwareLayout>
+      <MobileAwareLayout>{children}</MobileAwareLayout>
     </AdminAuthGuard>
   );
 }

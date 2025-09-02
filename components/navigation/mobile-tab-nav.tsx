@@ -3,13 +3,7 @@
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import {
-  IconHome,
-  IconTruck,
-  IconMessage,
-  IconMapPin,
-  IconPlus,
-} from '@tabler/icons-react';
+import { IconHome, IconTruck, IconMessage, IconMapPin, IconPlus } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -29,7 +23,12 @@ interface MobileTabNavigationProps {
   pendingOrders?: number;
 }
 
-export function MobileTabNavigation({ className, onFabClick, pendingQuotes, pendingOrders }: MobileTabNavigationProps) {
+export function MobileTabNavigation({
+  className,
+  onFabClick,
+  pendingQuotes,
+  pendingOrders,
+}: MobileTabNavigationProps) {
   const pathname = usePathname();
 
   const tabs: TabItem[] = [
@@ -64,13 +63,15 @@ export function MobileTabNavigation({ className, onFabClick, pendingQuotes, pend
   return (
     <>
       {/* Bottom Tab Bar */}
-      <div className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border',
-        'safe-area-pb', // For devices with bottom safe area
-        className
-      )}>
+      <div
+        className={cn(
+          'fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border',
+          'safe-area-pb', // For devices with bottom safe area
+          className
+        )}
+      >
         <div className="grid grid-cols-4 h-16">
-          {tabs.map((tab) => (
+          {tabs.map(tab => (
             <TabButton
               key={tab.href}
               href={tab.href}
@@ -126,10 +127,12 @@ function TabButton({ href, icon, label, badge, isActive }: TabButtonProps) {
             </Badge>
           )}
         </div>
-        <span className={cn(
-          'text-xs font-medium leading-none mt-1',
-          isActive ? 'text-primary' : 'text-muted-foreground'
-        )}>
+        <span
+          className={cn(
+            'text-xs font-medium leading-none mt-1',
+            isActive ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
           {label}
         </span>
       </div>
@@ -172,7 +175,7 @@ export function QuickActionsSheet({ isOpen, onClose }: QuickActionsSheetProps) {
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div
         className="fixed bottom-0 left-0 right-0 bg-background rounded-t-xl p-6"
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         <div className="w-12 h-1 bg-muted rounded mx-auto mb-4" />
         <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
@@ -204,12 +207,7 @@ export function QuickActionsSheet({ isOpen, onClose }: QuickActionsSheetProps) {
           />
         </div>
 
-        <Button
-          variant="outline"
-          className="w-full mt-4"
-          size="touch"
-          onClick={onClose}
-        >
+        <Button variant="outline" className="w-full mt-4" size="touch" onClick={onClose}>
           Cancel
         </Button>
       </div>

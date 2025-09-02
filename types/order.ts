@@ -26,7 +26,16 @@ export interface Order {
 
   // Order-specific fields
   order_number: string;
-  status: 'pending' | 'scheduled' | 'on_way' | 'in_progress' | 'delivered' | 'on_way_pickup' | 'picked_up' | 'completed' | 'cancelled';
+  status:
+    | 'pending'
+    | 'scheduled'
+    | 'on_way'
+    | 'in_progress'
+    | 'delivered'
+    | 'on_way_pickup'
+    | 'picked_up'
+    | 'completed'
+    | 'cancelled';
   priority: 'low' | 'normal' | 'high' | 'urgent';
 
   // Pricing
@@ -34,14 +43,14 @@ export interface Order {
   final_price: number | null;
 
   // Assignment and tracking
-  assigned_to: string | null;  // Driver assignment
-  dumpster_id: string | null;  // Assigned dumpster
+  assigned_to: string | null; // Driver assignment
+  dumpster_id: string | null; // Assigned dumpster
   driver_notes: string | null;
   internal_notes: string | null;
-  
+
   // Completed order tracking
-  completed_with_dumpster_id: string | null;  // Dumpster used when order was completed
-  completed_with_dumpster_name: string | null;  // Name of dumpster used when order was completed
+  completed_with_dumpster_id: string | null; // Dumpster used when order was completed
+  completed_with_dumpster_name: string | null; // Name of dumpster used when order was completed
 
   // Scheduling
   scheduled_delivery_date: string | null;

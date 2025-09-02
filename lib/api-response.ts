@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Standard API response interfaces
-export interface ApiSuccess<T = any> {
+export interface ApiSuccess<T = unknown> {
   success: true;
   data: T;
   message?: string;
@@ -14,7 +14,7 @@ export interface ApiError {
   code?: string;
 }
 
-export type ApiResponse<T = any> = ApiSuccess<T> | ApiError;
+export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
 
 // Standard HTTP error codes and messages
 export const ERROR_CODES = {
@@ -148,7 +148,10 @@ export function handleApiError(error: unknown): NextResponse {
  * Custom error classes for better error handling
  */
 export class ValidationError extends Error {
-  constructor(message: string, public field?: string) {
+  constructor(
+    message: string,
+    public field?: string
+  ) {
     super(message);
     this.name = 'ValidationError';
   }
@@ -185,9 +188,7 @@ export class ExternalServiceError extends Error {
 /**
  * Async wrapper for API route handlers with standardized error handling
  */
-export function withErrorHandling(
-  handler: (request: Request) => Promise<NextResponse>
-) {
+export function withErrorHandling(handler: (request: Request) => Promise<NextResponse>) {
   return async (request: Request): Promise<NextResponse> => {
     try {
       return await handler(request);
@@ -200,10 +201,7 @@ export function withErrorHandling(
 /**
  * Validate that response includes required fields
  */
-export function validateResponse<T>(
-  data: any,
-  requiredFields: (keyof T)[]
-): data is T {
+export function validateResponse<T>(data: unknown, requiredFields: (keyof T)[]): data is T {
   return requiredFields.every(field => data && typeof data === 'object' && field in data);
 }
 
@@ -222,13 +220,13 @@ export function sanitizeResponseData<T>(
     return data.map(item => sanitizeResponseData(item, sensitiveFields)) as T;
   }
 
-  const sanitized = { ...data } as any;
-  
+  const sanitized = { ...data } as Record<string, unknown>;
+
   for (const field of sensitiveFields) {
     if (field in sanitized) {
       delete sanitized[field];
     }
   }
 
-  return sanitized;
+  return sanitized as T;
 }

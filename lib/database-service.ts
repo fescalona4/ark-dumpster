@@ -1,6 +1,6 @@
-import { } from // createServerSupabaseClient, // TODO: Use for server-side operations
-  // createServerSupabaseClientSafe, // TODO: Use for safe server operations
-  '@/lib/supabase-server';
+import {} from // createServerSupabaseClient, // TODO: Use for server-side operations
+// createServerSupabaseClientSafe, // TODO: Use for safe server operations
+'@/lib/supabase-server';
 import { createClient } from '@supabase/supabase-js';
 
 export interface QuoteFormData {
@@ -13,10 +13,21 @@ export interface QuoteFormData {
   city?: string;
   state?: string;
   zipCode?: string;
-  dumpsterSize?: string;
-  dropoffDate?: string;
+  serviceDate?: string;
   timeNeeded?: string;
   message?: string;
+}
+
+export interface SelectedService {
+  service_id: string;
+  service: {
+    display_name: string;
+    [key: string]: any;
+  };
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  notes?: string;
 }
 
 export interface SaveQuoteResult {
@@ -26,10 +37,13 @@ export interface SaveQuoteResult {
   data?: any;
 }
 
-export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<SaveQuoteResult> {
+export async function saveQuoteToDatabase(
+  formData: QuoteFormData,
+  selectedServices?: SelectedService[]
+): Promise<SaveQuoteResult> {
   try {
     const isDevelopment = process.env.NODE_ENV === 'development';
-    
+
     // Only log in development
     if (isDevelopment) {
       console.log('Saving quote to database');
@@ -62,7 +76,8 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
     if (isDevelopment) {
       // Use custom API proxy in development to bypass corporate firewall
       const proxyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/supabase-proxy`;
-      const apiKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const apiKey =
+        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       supabase = createClient(proxyUrl, apiKey, {
         auth: {
@@ -110,8 +125,7 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
           city: formData.city || null,
           state: formData.state || null,
           zip_code: formData.zipCode || null,
-          dumpster_size: formData.dumpsterSize || null,
-          dropoff_date: formData.dropoffDate || null,
+          dropoff_date: formData.serviceDate || null,
           time_needed: formData.timeNeeded || null,
           message: formData.message || null,
           status: 'pending',
@@ -131,7 +145,30 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
     }
 
     const savedQuote = quoteData?.[0];
-    
+
+    // Save selected services if provided
+    if (selectedServices && selectedServices.length > 0 && savedQuote?.id) {
+      const servicesData = selectedServices.map(service => ({
+        quote_id: savedQuote.id,
+        service_id: service.service_id,
+        quantity: service.quantity,
+        unit_price: service.unit_price,
+        total_price: service.total_price,
+        notes: service.notes || null,
+        status: 'pending',
+      }));
+
+      const { error: servicesError } = await supabase.from('quote_services').insert(servicesData);
+
+      if (servicesError) {
+        if (isDevelopment) {
+          console.error('Failed to save quote services:', servicesError.message);
+        }
+        // Even if services fail to save, we don't want to fail the entire operation
+        // The quote is saved, just log the error
+      }
+    }
+
     if (isDevelopment) {
       console.log('Quote saved successfully');
     }
@@ -145,7 +182,10 @@ export async function saveQuoteToDatabase(formData: QuoteFormData): Promise<Save
   } catch (error) {
     const isDevelopment = process.env.NODE_ENV === 'development';
     if (isDevelopment) {
-      console.error('Unexpected database error:', error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        'Unexpected database error:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     }
     return {
       success: false,

@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { format } from "date-fns"
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 
 interface DateTimePickerProps {
   date?: Date | undefined;
@@ -19,41 +19,39 @@ interface DateTimePickerProps {
 
 // Default time slots for business hours (6 AM to 11 PM)
 const defaultTimeSlots = [
-  { time: "06:00", available: true },
-  { time: "06:30", available: true },
-  { time: "07:00", available: true },
-  { time: "07:30", available: true },
-  { time: "08:00", available: true },
-  { time: "08:30", available: true },
-  { time: "09:00", available: true },
-  { time: "09:30", available: true },
-  { time: "10:00", available: true },
-  { time: "10:30", available: true },
-  { time: "11:00", available: true },
-  { time: "11:30", available: true },
-  { time: "12:00", available: true },
-  { time: "12:30", available: true },
-  { time: "13:00", available: true },
-  { time: "13:30", available: true },
-  { time: "14:00", available: true },
-  { time: "14:30", available: true },
-  { time: "15:00", available: true },
-  { time: "15:30", available: true },
-  { time: "16:00", available: true },
-  { time: "16:30", available: true },
-  { time: "17:00", available: true },
-  { time: "17:30", available: true },
-  { time: "18:00", available: true },
-  { time: "18:30", available: true },
-  { time: "19:00", available: true },
-  { time: "19:30", available: true },
-  { time: "20:00", available: true },
-  { time: "20:30", available: true },
-  { time: "21:00", available: true },
-  { time: "21:30", available: true },
-  { time: "22:00", available: true },
-  { time: "22:30", available: true },
-  { time: "23:00", available: true },
+  { time: '07:00', available: true },
+  { time: '07:30', available: true },
+  { time: '08:00', available: true },
+  { time: '08:30', available: true },
+  { time: '09:00', available: true },
+  { time: '09:30', available: true },
+  { time: '10:00', available: true },
+  { time: '10:30', available: true },
+  { time: '11:00', available: true },
+  { time: '11:30', available: true },
+  { time: '12:00', available: true },
+  { time: '12:30', available: true },
+  { time: '13:00', available: true },
+  { time: '13:30', available: true },
+  { time: '14:00', available: true },
+  { time: '14:30', available: true },
+  { time: '15:00', available: true },
+  { time: '15:30', available: true },
+  { time: '16:00', available: true },
+  { time: '16:30', available: true },
+  { time: '17:00', available: true },
+  { time: '17:30', available: true },
+  { time: '18:00', available: true },
+  { time: '18:30', available: true },
+  { time: '19:00', available: true },
+  { time: '19:30', available: true },
+  { time: '20:00', available: true },
+  { time: '20:30', available: true },
+  { time: '21:00', available: true },
+  { time: '21:30', available: true },
+  { time: '22:00', available: true },
+  { time: '22:30', available: true },
+  { time: '23:00', available: true },
 ];
 
 export function DateTimePicker({
@@ -63,38 +61,38 @@ export function DateTimePicker({
   onDateChange,
   onTimeChange,
   disabled = false,
-  className = "",
-  timeSlots = defaultTimeSlots
+  className = '',
+  timeSlots = defaultTimeSlots,
 }: DateTimePickerProps) {
-  const today = new Date()
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate)
-  const [selectedTime, setSelectedTime] = useState<string | null>(initialTime || null)
+  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate);
+  const [selectedTime, setSelectedTime] = useState<string | null>(initialTime || null);
 
   // Update internal state when props change
   useEffect(() => {
-    setSelectedDate(initialDate)
-  }, [initialDate])
+    setSelectedDate(initialDate);
+  }, [initialDate]);
 
   useEffect(() => {
-    setSelectedTime(initialTime || null)
-  }, [initialTime])
+    setSelectedTime(initialTime || null);
+  }, [initialTime]);
 
   const handleDateSelect = (newDate: Date | undefined) => {
-    setSelectedDate(newDate)
-    setSelectedTime(null) // Reset time when date changes
-    onDateChange?.(newDate)
+    setSelectedDate(newDate);
+    setSelectedTime(null); // Reset time when date changes
+    onDateChange?.(newDate);
     if (onDateTimeChange) {
-      onDateTimeChange(newDate, "")
+      onDateTimeChange(newDate, '');
     }
-  }
+  };
 
   const handleTimeSelect = (time: string) => {
-    setSelectedTime(time)
-    onTimeChange?.(time)
+    setSelectedTime(time);
+    onTimeChange?.(time);
     if (onDateTimeChange && selectedDate) {
-      onDateTimeChange(selectedDate, time)
+      onDateTimeChange(selectedDate, time);
     }
-  }
+  };
 
   return (
     <div className={`rounded-md border ${className}`}>
@@ -112,7 +110,7 @@ export function DateTimePicker({
               <div className="space-y-3">
                 <div className="flex h-5 shrink-0 items-center px-5">
                   <p className="text-sm font-medium">
-                    {selectedDate ? format(selectedDate, "EEEE, d") : "Select date"}
+                    {selectedDate ? format(selectedDate, 'EEEE, d') : 'Select date'}
                   </p>
                 </div>
                 <div className="grid gap-1.5 px-5 max-sm:grid-cols-2">
@@ -126,7 +124,7 @@ export function DateTimePicker({
                     return (
                       <Button
                         key={timeSlot}
-                        variant={selectedTime === timeSlot ? "default" : "outline"}
+                        variant={selectedTime === timeSlot ? 'default' : 'outline'}
                         size="sm"
                         className="w-full"
                         onClick={() => handleTimeSelect(timeSlot)}
@@ -143,5 +141,5 @@ export function DateTimePicker({
         </div>
       </div>
     </div>
-  )
+  );
 }

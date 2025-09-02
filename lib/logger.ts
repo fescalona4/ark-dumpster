@@ -9,7 +9,7 @@ export const logger = {
   /**
    * Log general information (development only)
    */
-  info: (message: string, ...args: any[]) => {
+  info: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.log(`[INFO] ${message}`, ...args);
     }
@@ -18,7 +18,7 @@ export const logger = {
   /**
    * Log warnings (development only)
    */
-  warn: (message: string, ...args: any[]) => {
+  warn: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.warn(`[WARN] ${message}`, ...args);
     }
@@ -27,7 +27,7 @@ export const logger = {
   /**
    * Log errors (always in development, filtered in production)
    */
-  error: (message: string, error?: any) => {
+  error: (message: string, error?: unknown) => {
     if (isDevelopment) {
       console.error(`[ERROR] ${message}`, error);
     } else {
@@ -39,7 +39,7 @@ export const logger = {
   /**
    * Log debug information (development only)
    */
-  debug: (message: string, ...args: any[]) => {
+  debug: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.debug(`[DEBUG] ${message}`, ...args);
     }
@@ -48,7 +48,7 @@ export const logger = {
   /**
    * Log success messages (development only)
    */
-  success: (message: string, ...args: any[]) => {
+  success: (message: string, ...args: unknown[]) => {
     if (isDevelopment) {
       console.log(`[SUCCESS] ✅ ${message}`, ...args);
     }
@@ -57,7 +57,7 @@ export const logger = {
   /**
    * Log API requests (development only)
    */
-  api: (method: string, endpoint: string, details?: any) => {
+  api: (method: string, endpoint: string, details?: unknown) => {
     if (isDevelopment) {
       console.log(`[API] ${method} ${endpoint}`, details);
     }
@@ -66,7 +66,7 @@ export const logger = {
   /**
    * Log database operations (development only)
    */
-  db: (operation: string, table: string, details?: any) => {
+  db: (operation: string, table: string, details?: unknown) => {
     if (isDevelopment) {
       console.log(`[DB] ${operation} ${table}`, details);
     }
@@ -75,7 +75,7 @@ export const logger = {
   /**
    * Log security events (always log in production for monitoring)
    */
-  security: (event: string, details?: any) => {
+  security: (event: string, details?: unknown) => {
     const timestamp = new Date().toISOString();
     if (isDevelopment) {
       console.warn(`[SECURITY] ${timestamp} ${event}`, details);
@@ -89,11 +89,12 @@ export const logger = {
    * Create a scoped logger for specific modules
    */
   scope: (module: string) => ({
-    info: (message: string, ...args: any[]) => logger.info(`[${module}] ${message}`, ...args),
-    warn: (message: string, ...args: any[]) => logger.warn(`[${module}] ${message}`, ...args),
-    error: (message: string, error?: any) => logger.error(`[${module}] ${message}`, error),
-    debug: (message: string, ...args: any[]) => logger.debug(`[${module}] ${message}`, ...args),
-    success: (message: string, ...args: any[]) => logger.success(`[${module}] ${message}`, ...args),
+    info: (message: string, ...args: unknown[]) => logger.info(`[${module}] ${message}`, ...args),
+    warn: (message: string, ...args: unknown[]) => logger.warn(`[${module}] ${message}`, ...args),
+    error: (message: string, error?: unknown) => logger.error(`[${module}] ${message}`, error),
+    debug: (message: string, ...args: unknown[]) => logger.debug(`[${module}] ${message}`, ...args),
+    success: (message: string, ...args: unknown[]) =>
+      logger.success(`[${module}] ${message}`, ...args),
   }),
 };
 
@@ -107,7 +108,7 @@ export class PerformanceTimer {
   constructor(label: string) {
     this.label = label;
     this.startTime = performance.now();
-    
+
     if (isDevelopment) {
       console.time(label);
     }
@@ -115,12 +116,12 @@ export class PerformanceTimer {
 
   end(): number {
     const duration = performance.now() - this.startTime;
-    
+
     if (isDevelopment) {
       console.timeEnd(this.label);
       console.log(`[PERF] ${this.label} took ${duration.toFixed(2)}ms`);
     }
-    
+
     return duration;
   }
 }
@@ -128,14 +129,22 @@ export class PerformanceTimer {
 /**
  * Sanitize data for logging (remove sensitive information)
  */
-export function sanitizeForLogging(data: any): any {
+export function sanitizeForLogging(data: unknown): unknown {
   if (!data || typeof data !== 'object') {
     return data;
   }
 
   const sensitiveFields = [
-    'password', 'token', 'secret', 'key', 'authorization',
-    'cookie', 'session', 'apikey', 'api_key', 'auth'
+    'password',
+    'token',
+    'secret',
+    'key',
+    'authorization',
+    'cookie',
+    'session',
+    'apikey',
+    'api_key',
+    'auth',
   ];
 
   if (Array.isArray(data)) {
@@ -143,12 +152,12 @@ export function sanitizeForLogging(data: any): any {
   }
 
   const sanitized = { ...data };
-  
+
   for (const field of sensitiveFields) {
     const fieldLower = field.toLowerCase();
     for (const key in sanitized) {
       if (key.toLowerCase().includes(fieldLower)) {
-        sanitized[key] = '[REDACTED]';
+        (sanitized as any)[key] = '[REDACTED]';
       }
     }
   }
@@ -159,14 +168,14 @@ export function sanitizeForLogging(data: any): any {
 /**
  * Log HTTP request details safely
  */
-export function logRequest(method: string, url: string, headers?: any, body?: any) {
+export function logRequest(method: string, url: string, headers?: unknown, body?: unknown) {
   if (!isDevelopment) return;
 
   const sanitizedHeaders = sanitizeForLogging(headers);
   const sanitizedBody = sanitizeForLogging(body);
 
   logger.api(
-    `${method} ${url}`, 
+    `${method} ${url}`,
     `Headers: ${JSON.stringify(sanitizedHeaders)}, Body: ${JSON.stringify(sanitizedBody)}`
   );
 }

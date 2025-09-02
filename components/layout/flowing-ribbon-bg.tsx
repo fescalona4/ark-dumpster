@@ -4,7 +4,7 @@ interface FlowingRibbonBackgroundProps {
   className?: string;
 }
 
-export default function FlowingRibbonBackground({ className = "" }: FlowingRibbonBackgroundProps) {
+export default function FlowingRibbonBackground({ className = '' }: FlowingRibbonBackgroundProps) {
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
       {/* Static Centered Silky Ribbon */}
@@ -47,9 +47,11 @@ export default function FlowingRibbonBackground({ className = "" }: FlowingRibbo
           strokeWidth="180"
           fill="none"
           strokeLinecap="round"
-          style={{
-            // filter: 'blur(1px)',
-          }}
+          style={
+            {
+              // filter: 'blur(1px)',
+            }
+          }
         />
 
         {/* Silk highlight layer - centered */}
@@ -59,9 +61,11 @@ export default function FlowingRibbonBackground({ className = "" }: FlowingRibbo
           strokeWidth="90"
           fill="none"
           strokeLinecap="round"
-          style={{
-            // filter: 'blur(1px)',
-          }}
+          style={
+            {
+              // filter: 'blur(1px)',
+            }
+          }
         />
 
         {/* Soft shadow for depth - centered */}
@@ -71,9 +75,11 @@ export default function FlowingRibbonBackground({ className = "" }: FlowingRibbo
           strokeWidth="160"
           fill="none"
           strokeLinecap="round"
-          style={{
-            // filter: 'blur(1px)',
-          }}
+          style={
+            {
+              // filter: 'blur(1px)',
+            }
+          }
         />
       </svg>
 
@@ -82,7 +88,8 @@ export default function FlowingRibbonBackground({ className = "" }: FlowingRibbo
         <div
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-24 rounded-full"
           style={{
-            background: 'linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.20), rgba(102, 126, 234, 0.30), rgba(240, 147, 251, 0.40), rgba(102, 126, 234, 0.30), rgba(79, 172, 254, 0.20), transparent)',
+            background:
+              'linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.20), rgba(102, 126, 234, 0.30), rgba(240, 147, 251, 0.40), rgba(102, 126, 234, 0.30), rgba(79, 172, 254, 0.20), transparent)',
             // filter: 'blur(10px)',
           }}
         />

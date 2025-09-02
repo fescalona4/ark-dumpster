@@ -40,11 +40,7 @@ const Contacts = () => {
     phone: '',
     email: '',
     address: '',
-    address2: '',
-    city: '',
-    state: 'FL',
-    zipCode: '',
-    dropoffDate: '',
+    serviceDate: '',
     timeNeeded: '1-day',
     dumpsterSize: '15',
     message: '',
@@ -60,16 +56,6 @@ const Contacts = () => {
       formattedValue = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
     }
 
-    // Format state to uppercase and limit to 2 characters
-    if (id === 'state') {
-      formattedValue = value.toUpperCase().slice(0, 2);
-    }
-
-    // Format ZIP code to numeric only and limit to 5 digits
-    if (id === 'zipCode') {
-      const numericOnly = value.replace(/\D/g, '');
-      formattedValue = numericOnly.slice(0, 5);
-    }
 
     // Format phone number for display
     if (id === 'phone') {
@@ -96,15 +82,14 @@ const Contacts = () => {
   const handlePlaceSelect = (placeData: {
     address: string;
     city: string;
-    state?: string;
+    state: string;
     zipCode: string;
+    fullAddress: string;
+    geometry: any;
   }) => {
     setFormData(prev => ({
       ...prev,
-      address: placeData.address || prev.address,
-      city: placeData.city || prev.city,
-      state: placeData.state || prev.state,
-      zipCode: placeData.zipCode || prev.zipCode,
+      address: placeData.fullAddress || placeData.address || prev.address,
     }));
   };
 
@@ -121,10 +106,7 @@ const Contacts = () => {
         { field: 'phone', label: 'Phone Number' },
         { field: 'email', label: 'Email' },
         { field: 'address', label: 'Address' },
-        { field: 'city', label: 'City' },
-        { field: 'state', label: 'State' },
-        { field: 'zipCode', label: 'ZIP Code' },
-        { field: 'dropoffDate', label: 'Drop-off Date' },
+        { field: 'serviceDate', label: 'Service Date' },
         { field: 'timeNeeded', label: 'Time Needed' },
         { field: 'dumpsterSize', label: 'Dumpster Size' },
         // Note: message field is optional
@@ -148,6 +130,32 @@ const Contacts = () => {
       // Check if we should skip emails based on environment
       // This will be determined server-side based on environment variables
 
+      // Map dumpster size to service
+      const serviceMapping: Record<string, { id: string; display_name: string; base_price: number }> = {
+        '15': {
+          id: 'eee6b2e3-007c-4404-b316-b838d7044d5c',
+          display_name: '15 Yard Dumpster',
+          base_price: 350.00
+        },
+        '20': {
+          id: 'fb413a50-3512-4f79-b387-4c17fd683b44',
+          display_name: '20 Yard Dumpster',
+          base_price: 400.00
+        }
+      };
+
+      const selectedService = serviceMapping[formData.dumpsterSize];
+      const selectedServices = selectedService ? [{
+        service_id: selectedService.id,
+        service: {
+          id: selectedService.id,
+          display_name: selectedService.display_name,
+        },
+        quantity: 1,
+        unit_price: selectedService.base_price,
+        total_price: selectedService.base_price
+      }] : [];
+
       // Send request to API (for database storage) with environment-based email control
       const response = await fetch('/api/send', {
         method: 'POST',
@@ -161,15 +169,15 @@ const Contacts = () => {
           subject: 'New Dumpster Rental Request - ARK Dumpster',
           // Remove client-side skipEmail logic - let server decide based on env vars
           quoteDetails: {
-            service: formData.dumpsterSize
-              ? `${formData.dumpsterSize} Dumpster`
+            service: selectedServices.length > 0 
+              ? selectedServices.map(s => `${s.service?.display_name || 'Unknown'} (Qty: ${s.quantity})`).join(', ')
               : 'Dumpster Rental',
-            location:
-              `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`.trim(),
-            date: formData.dropoffDate || 'TBD',
+            location: formData.address,
+            date: formData.serviceDate || 'TBD',
             duration: formData.timeNeeded || 'TBD',
             message: formData.message,
           },
+          selectedServices,
           // Include full form data for database storage with numeric phone
           fullFormData: {
             ...formData,
@@ -187,11 +195,9 @@ const Contacts = () => {
         let description;
 
         if (!result.userEmailSent) {
-          description =
-            `Thank you, ${formData.firstName}! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.`;
+          description = `Thank you, ${formData.firstName}! Your request has been saved and our team has been notified. We'll get back to you within 24 hours.`;
         } else {
-          description =
-            `Thank you, ${formData.firstName}! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.`;
+          description = `Thank you, ${formData.firstName}! We've received your request and sent you a confirmation email. We'll get back to you within 24 hours.`;
         }
 
         // Add development info if email was skipped
@@ -223,11 +229,7 @@ const Contacts = () => {
           phone: '',
           email: '',
           address: '',
-          address2: '',
-          city: '',
-          state: 'FL',
-          zipCode: '',
-          dropoffDate: '',
+          serviceDate: '',
           timeNeeded: '1-day',
           dumpsterSize: '15',
           message: '',
@@ -360,7 +362,9 @@ const Contacts = () => {
                     </div>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <Label htmlFor="firstName" className="text-white">First Name *</Label>
+                        <Label htmlFor="firstName" className="text-white">
+                          First Name *
+                        </Label>
                         <Input
                           placeholder="First name"
                           id="firstName"
@@ -371,7 +375,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="lastName" className="text-white">Last Name *</Label>
+                        <Label htmlFor="lastName" className="text-white">
+                          Last Name *
+                        </Label>
                         <Input
                           placeholder="Last name"
                           id="lastName"
@@ -382,7 +388,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="phone" className="text-white">Phone Number *</Label>
+                        <Label htmlFor="phone" className="text-white">
+                          Phone Number *
+                        </Label>
                         <Input
                           type="tel"
                           placeholder="(555) 123-4567"
@@ -394,7 +402,9 @@ const Contacts = () => {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email" className="text-white">Email Address *</Label>
+                        <Label htmlFor="email" className="text-white">
+                          Email Address *
+                        </Label>
                         <Input
                           type="email"
                           placeholder="john.doe@example.com"
@@ -408,76 +418,20 @@ const Contacts = () => {
                     </div>
                   </div>
 
-                  {/* Section 2: Service Location */}
+                  {/* Address Field */}
                   <div className="space-y-6">
-                    <div className="border-b border-white/20 pb-4">
-                      <h3 className="text-lg font-semibold text-white">Service Location</h3>
-                      <p className="text-sm text-white/70 mt-1">Where should we deliver the dumpster?</p>
-                    </div>
-                    <div className="grid gap-6">
-                      <div className="grid md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2">
-                          <Label htmlFor="address" className="text-white">Street Address *</Label>
-                          <GooglePlacesAutocomplete
-                            id="address"
-                            placeholder="123 Main Street"
-                            value={formData.address}
-                            onPlaceSelect={handlePlaceSelect}
-                            className="mt-1.5 bg-white h-11 shadow-none"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="address2" className="text-white truncate">Apt/Suite (Optional)</Label>
-                          <Input
-                            placeholder="Apt, suite, unit, etc."
-                            id="address2"
-                            type="text"
-                            value={formData.address2}
-                            onChange={handleInputChange}
-                            className="mt-1.5 bg-white h-11 shadow-none"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid md:grid-cols-3 gap-6">
-                        <div>
-                          <Label htmlFor="city" className="text-white">City *</Label>
-                          <Input
-                            placeholder="City"
-                            id="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            className="mt-1.5 bg-white h-11 shadow-none"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="state" className="text-white">State *</Label>
-                          <Input
-                            placeholder="FL"
-                            id="state"
-                            value={formData.state}
-                            onChange={handleInputChange}
-                            maxLength={2}
-                            className="mt-1.5 bg-white h-11 shadow-none"
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="zipCode" className="text-white">ZIP Code *</Label>
-                          <Input
-                            type="tel"
-                            placeholder="12345"
-                            id="zipCode"
-                            value={formData.zipCode}
-                            onChange={handleInputChange}
-                            maxLength={5}
-                            pattern="[0-9]{5}"
-                            className="mt-1.5 bg-white h-11 shadow-none"
-                            required
-                          />
-                        </div>
-                      </div>
+                    <div>
+                      <Label htmlFor="address" className="text-white">
+                        Service Address *
+                      </Label>
+                      <GooglePlacesAutocomplete
+                        id="address"
+                        placeholder="123 Main Street, City, State 12345"
+                        value={formData.address}
+                        onPlaceSelect={handlePlaceSelect}
+                        className="mt-1.5 bg-white h-11 shadow-none"
+                        required
+                      />
                     </div>
                   </div>
 
@@ -485,18 +439,22 @@ const Contacts = () => {
                   <div className="space-y-6">
                     <div className="border-b border-white/20 pb-4">
                       <h3 className="text-lg font-semibold text-white">Service Details</h3>
-                      <p className="text-sm text-white/70 mt-1">When do you need the dumpster and for how long?</p>
+                      <p className="text-sm text-white/70 mt-1">
+                        When do you need the dumpster and for how long?
+                      </p>
                     </div>
                     <div className="grid gap-6">
                       <div className="grid md:grid-cols-3 gap-6">
                         <div>
                           <DropoffCalendar
-                            value={formData.dropoffDate}
-                            onChange={date => handleSelectChange('dropoffDate', date)}
+                            value={formData.serviceDate}
+                            onChange={date => handleSelectChange('serviceDate', date)}
                           />
                         </div>
                         <div>
-                          <Label htmlFor="timeNeeded" className="text-white">Rental Duration *</Label>
+                          <Label htmlFor="timeNeeded" className="text-white">
+                            Rental Duration *
+                          </Label>
                           <Select
                             value={formData.timeNeeded}
                             onValueChange={value => handleSelectChange('timeNeeded', value)}
@@ -517,7 +475,9 @@ const Contacts = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label htmlFor="dumpsterSize" className="text-white">Dumpster Size *</Label>
+                          <Label htmlFor="dumpsterSize" className="text-white">
+                            Dumpster Size *
+                          </Label>
                           <Select
                             value={formData.dumpsterSize}
                             onValueChange={value => handleSelectChange('dumpsterSize', value)}
@@ -529,7 +489,7 @@ const Contacts = () => {
                             <SelectContent>
                               <SelectGroup>
                                 <SelectLabel>Available sizes</SelectLabel>
-                                <SelectItem value="15">15 Yard Dump Trailer</SelectItem>
+                                <SelectItem value="15">15 Yard Dumpster</SelectItem>
                                 <SelectItem value="20">20 Yard Dumpster</SelectItem>
                               </SelectGroup>
                             </SelectContent>
@@ -537,7 +497,9 @@ const Contacts = () => {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="message" className="text-white">Project Details</Label>
+                        <Label htmlFor="message" className="text-white">
+                          Project Details
+                        </Label>
                         <Textarea
                           id="message"
                           placeholder="Tell us about your project and what type of materials you'll be disposing of..."
@@ -546,7 +508,9 @@ const Contacts = () => {
                           className="mt-1.5 bg-white shadow-none"
                           rows={4}
                         />
-                        <p className="text-xs text-white/60 mt-1">Help us provide an accurate quote by describing your project</p>
+                        <p className="text-xs text-white/60 mt-1">
+                          Help us provide an accurate quote by describing your project
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -80,7 +80,9 @@ export async function listImages(folder: string = '') {
 
     // Use proxy endpoint when enabled
     const baseUrl = 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/storage-list?folder=${encodeURIComponent(folder)}`);
+    const response = await fetch(
+      `${baseUrl}/api/storage-list?folder=${encodeURIComponent(folder)}`
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -89,14 +91,17 @@ export async function listImages(folder: string = '') {
     }
 
     const data = await response.json();
-    console.log(`✅ Successfully listed ${data.length} files from folder "${folder}" via service role proxy`);
+    console.log(
+      `✅ Successfully listed ${data.length} files from folder "${folder}" via service role proxy`
+    );
 
     return { data, error: null };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in listImages call:', error);
-    return { data: [], error };
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return { data: [], error: errorMessage };
   }
-}/**
+} /**
  * Download an image as a blob
  * @param imagePath - Path to the image in the bucket
  * @returns Promise with image blob

@@ -1,17 +1,13 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { RiArrowDownSLine } from "@remixicon/react"
+import * as React from 'react';
+import { RiArrowDownSLine } from '@remixicon/react';
 
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface DateTimePickerProps {
   date?: Date | undefined;
@@ -28,11 +24,11 @@ export function DateTimePicker({
   time,
   onDateChange,
   onTimeChange,
-  dateLabel = "Date",
-  timeLabel = "Time",
-  disabled = false
+  dateLabel = 'Date',
+  timeLabel = 'Time',
+  disabled = false,
 }: DateTimePickerProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
   return (
     <div className="flex gap-4">
@@ -48,7 +44,7 @@ export function DateTimePicker({
               className="w-32 justify-between font-normal"
               disabled={disabled}
             >
-              {date ? date.toLocaleDateString() : "Select date"}
+              {date ? date.toLocaleDateString() : 'Select date'}
               <RiArrowDownSLine />
             </Button>
           </PopoverTrigger>
@@ -57,11 +53,11 @@ export function DateTimePicker({
               mode="single"
               selected={date}
               captionLayout="dropdown"
-              onSelect={(selectedDate) => {
-                onDateChange?.(selectedDate)
-                setOpen(false)
+              onSelect={selectedDate => {
+                onDateChange?.(selectedDate);
+                setOpen(false);
               }}
-              disabled={(date) => date < new Date()}
+              disabled={date => date < new Date()}
             />
           </PopoverContent>
         </Popover>
@@ -74,29 +70,20 @@ export function DateTimePicker({
           type="time"
           id="time-picker"
           step="1"
-          value={time || ""}
-          onChange={(e) => onTimeChange?.(e.target.value)}
+          value={time || ''}
+          onChange={e => onTimeChange?.(e.target.value)}
           disabled={disabled}
           className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
         />
       </div>
     </div>
-  )
+  );
 }
 
 // Keep the original component for backward compatibility
 export function Calendar24() {
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
-  const [time, setTime] = React.useState<string>("10:30:00")
+  const [date, setDate] = React.useState<Date | undefined>(undefined);
+  const [time, setTime] = React.useState<string>('10:30:00');
 
-  return (
-    <DateTimePicker
-      date={date}
-      time={time}
-      onDateChange={setDate}
-      onTimeChange={setTime}
-    />
-  )
+  return <DateTimePicker date={date} time={time} onDateChange={setDate} onTimeChange={setTime} />;
 }
-
-

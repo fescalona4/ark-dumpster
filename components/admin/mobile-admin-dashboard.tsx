@@ -3,13 +3,18 @@
 import React, { useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MobilePageContainer } from '@/components/layout/mobile-aware-layout';
-import { ResponsiveDataDisplay, MobileStatusFilters, PullToRefresh, MobileSearchBar } from '@/components/mobile/responsive-data-display';
+import {
+  ResponsiveDataDisplay,
+  MobileStatusFilters,
+  PullToRefresh,
+  MobileSearchBar,
+} from '@/components/mobile/responsive-data-display';
 import { CountingNumber } from '@/components/ui/counting-number';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { IconRefresh, IconPlus, IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
+import { IconTrendingUp, IconTrendingDown } from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
 
 interface MobileDashboardStats {
@@ -55,24 +60,38 @@ interface OrderData {
   reviewer: string; // Email
 }
 
+interface QuoteData {
+  id: string;
+  first_name: string;
+  last_name?: string;
+  email: string;
+  status: string;
+  quoted_price?: number;
+}
+
+interface DumpsterData {
+  id: string;
+  name: string;
+  status: string;
+  size?: string;
+}
+
 interface MobileAdminDashboardProps {
-  quotes: any[];
+  quotes?: QuoteData[];
   orders: OrderData[];
-  dumpsters: any[];
+  dumpsters?: DumpsterData[];
   stats: MobileDashboardStats;
   onRefresh?: () => Promise<void>;
   onOrderUpdate?: (orderId: number, updates: Partial<OrderData>) => void;
   onOrderSelect?: (order: OrderData) => void;
 }
 
-export function MobileAdminDashboard({ 
-  quotes, 
-  orders, 
-  dumpsters, 
+export function MobileAdminDashboard({
+  orders,
   stats,
   onRefresh,
   onOrderUpdate,
-  onOrderSelect
+  onOrderSelect,
 }: MobileAdminDashboardProps) {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState('overview');
@@ -84,10 +103,11 @@ export function MobileAdminDashboard({
     let filtered = orders;
 
     if (searchQuery) {
-      filtered = filtered.filter(order => 
-        order.header.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.reviewer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.type.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        order =>
+          order.header.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          order.reviewer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          order.type.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -104,9 +124,7 @@ export function MobileAdminDashboard({
     // Return desktop version or fallback
     return (
       <div className="space-y-6">
-        <div className="text-center py-8 text-muted-foreground">
-          Desktop dashboard view
-        </div>
+        <div className="text-center py-8 text-muted-foreground">Desktop dashboard view</div>
       </div>
     );
   }
@@ -117,9 +135,15 @@ export function MobileAdminDashboard({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Mobile Tab Navigation */}
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-            <TabsTrigger value="orders" className="text-xs">Orders</TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="text-xs">
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs">
+              Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -168,28 +192,19 @@ export function MobileAdminDashboard({
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
                     <div className="text-xl font-bold text-blue-600">
-                      <CountingNumber 
-                        number={stats.orders.in_progress} 
-                        inView={true}
-                      />
+                      <CountingNumber number={stats.orders.in_progress} inView={true} />
                     </div>
                     <div className="text-xs text-muted-foreground">In Progress</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-green-600">
-                      <CountingNumber 
-                        number={stats.orders.completed} 
-                        inView={true}
-                      />
+                      <CountingNumber number={stats.orders.completed} inView={true} />
                     </div>
                     <div className="text-xs text-muted-foreground">Completed</div>
                   </div>
                   <div>
                     <div className="text-xl font-bold text-orange-600">
-                      <CountingNumber 
-                        number={stats.dumpsters.in_transit} 
-                        inView={true}
-                      />
+                      <CountingNumber number={stats.dumpsters.in_transit} inView={true} />
                     </div>
                     <div className="text-xs text-muted-foreground">In Transit</div>
                   </div>
@@ -205,7 +220,7 @@ export function MobileAdminDashboard({
               value={searchQuery}
               onChange={setSearchQuery}
             />
-            
+
             <MobileStatusFilters
               statuses={orderStatuses}
               currentStatus={selectedStatus}
@@ -252,14 +267,14 @@ interface MetricCardProps {
   onClick?: () => void;
 }
 
-function MetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  trend, 
-  icon, 
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  trend,
+  icon,
   color = 'blue',
-  onClick 
+  onClick,
 }: MetricCardProps) {
   const colorClasses = {
     blue: 'bg-blue-50 border-blue-200 dark:bg-blue-950/20',
@@ -270,7 +285,7 @@ function MetricCard({
   };
 
   return (
-    <Card 
+    <Card
       className={cn(
         'cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98]',
         'touch-manipulation',
@@ -281,9 +296,7 @@ function MetricCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-muted-foreground truncate mb-1">
-              {title}
-            </div>
+            <div className="text-xs text-muted-foreground truncate mb-1">{title}</div>
             <div className="text-xl font-bold text-foreground">
               {typeof value === 'number' && value > 999 ? (
                 <CountingNumber number={value} inView={true} />
@@ -291,16 +304,14 @@ function MetricCard({
                 value
               )}
             </div>
-            {subtitle && (
-              <div className="text-xs text-muted-foreground mt-0.5">
-                {subtitle}
-              </div>
-            )}
+            {subtitle && <div className="text-xs text-muted-foreground mt-0.5">{subtitle}</div>}
             {trend !== undefined && (
-              <div className={cn(
-                'flex items-center text-xs mt-1',
-                trend >= 0 ? 'text-green-600' : 'text-red-600'
-              )}>
+              <div
+                className={cn(
+                  'flex items-center text-xs mt-1',
+                  trend >= 0 ? 'text-green-600' : 'text-red-600'
+                )}
+              >
                 {trend >= 0 ? (
                   <IconTrendingUp className="h-3 w-3 mr-1" />
                 ) : (
@@ -310,11 +321,7 @@ function MetricCard({
               </div>
             )}
           </div>
-          {icon && (
-            <div className="text-2xl ml-2 flex-shrink-0">
-              {icon}
-            </div>
-          )}
+          {icon && <div className="text-2xl ml-2 flex-shrink-0">{icon}</div>}
         </div>
       </CardContent>
     </Card>
@@ -331,10 +338,12 @@ function UrgentActionsCard({ orders }: UrgentActionsCardProps) {
     const today = new Date();
     return orders.filter(order => {
       if (order.status === 'completed') return false;
-      
+
       const deliveryDate = new Date(order.target);
-      const daysUntilDelivery = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      
+      const daysUntilDelivery = Math.ceil(
+        (deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
       return daysUntilDelivery <= 1; // Due today or overdue
     });
   }, [orders]);
@@ -366,10 +375,15 @@ function UrgentActionsCard({ orders }: UrgentActionsCardProps) {
       </CardHeader>
       <CardContent className="pt-0 space-y-2">
         {urgentOrders.slice(0, 3).map(order => (
-          <div key={order.id} className="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded">
+          <div
+            key={order.id}
+            className="flex items-center justify-between p-2 bg-white dark:bg-gray-900 rounded"
+          >
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm truncate">{order.header}</div>
-              <div className="text-xs text-muted-foreground">{order.type} • {order.target}</div>
+              <div className="text-xs text-muted-foreground">
+                {order.type} • {order.target}
+              </div>
             </div>
             <Badge variant="destructive" className="text-xs">
               {order.target === new Date().toISOString().split('T')[0] ? 'Due Today' : 'Overdue'}
