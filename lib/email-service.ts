@@ -1,5 +1,6 @@
 import { EmailTemplate } from '@/components/email/email-template';
 import { CompanyNotificationEmail } from '@/components/email/company-notification-email';
+import { OrderStatusEmail } from '@/components/email/order-status-email';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { QuoteFormData } from './database-service';
@@ -250,8 +251,23 @@ export async function sendOrderStatusEmail(
 
     const subject = `${statusMessages[status as keyof typeof statusMessages] || 'Order Update'} - Order #${orderNumber}`;
     
-    // Generate email content
-    const emailHtml = generateOrderStatusEmailHtml(options);
+    // Generate email content using new React component
+    const validStatuses = ['on_way', 'delivered', 'picked_up', 'completed'] as const;
+    const emailStatus = validStatuses.includes(status as any) ? status : 'delivered';
+    
+    const emailHtml = await render(
+      OrderStatusEmail({
+        customerName,
+        orderNumber,
+        status: emailStatus as 'on_way' | 'delivered' | 'picked_up' | 'completed',
+        dropoffDate: options.dropoffDate || undefined,
+        dropoffTime: options.dropoffTime || undefined,
+        address: options.address || undefined,
+        city: options.city || undefined,
+        state: options.state || undefined,
+        deliveryImage: !!options.deliveryImage,
+      })
+    );
     const emailText = generateOrderStatusEmailText(options);
 
     const emailPayload: any = {
