@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -38,14 +39,15 @@ export function OrderEditDialog({
       <DialogTrigger asChild>
         {/* Trigger will be handled externally */}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(800px,85vh)] max-w-3xl [&>button:last-child]:top-3.5">
+        <DialogHeader className="contents space-y-0 text-left">
+          <DialogTitle className="border-b px-6 py-4 text-base">
             Edit Order - {order.first_name} {order.last_name}
           </DialogTitle>
-          <DialogDescription>Update customer information for order {order.order_number}.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6">
+          <div className="overflow-y-auto">
+            <div className="px-6 py-4">
+              <DialogDescription className="text-sm text-muted-foreground mb-6">Update customer information for order {order.order_number}.</DialogDescription>
+              <div className="space-y-6">
           {/* Customer Information Section */}
           <div>
             <h4 className="font-semibold mb-3 text-lg">Customer Information</h4>
@@ -244,24 +246,25 @@ export function OrderEditDialog({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              variant="default"
-              className="flex-1"
-              onClick={async () => {
-                await onSave(order.id);
-                onOpenChange(false);
-              }}
-            >
-              <RiSaveLine className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </DialogHeader>
+        <DialogFooter className="border-t px-6 py-4 sm:items-center">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="default"
+            onClick={async () => {
+              await onSave(order.id);
+              onOpenChange(false);
+            }}
+          >
+            <RiSaveLine className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

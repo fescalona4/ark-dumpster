@@ -59,7 +59,8 @@
       "Bash(curl:*)",
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_handle_dialog",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []

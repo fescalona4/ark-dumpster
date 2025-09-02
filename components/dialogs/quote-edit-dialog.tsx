@@ -16,6 +16,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -71,14 +72,15 @@ export function QuoteEditDialog({
           <RiEditLine className="h-4 w-4" />
         </Button> */}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(800px,85vh)] max-w-4xl [&>button:last-child]:top-3.5">
+        <DialogHeader className="contents space-y-0 text-left">
+          <DialogTitle className="border-b px-6 py-4 text-base">
             Edit Quote - {quote.first_name} {quote.last_name}
           </DialogTitle>
-          <DialogDescription>Update all quote and customer information.</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-6">
+          <div className="overflow-y-auto">
+            <div className="px-6 py-4">
+              <DialogDescription className="text-sm text-muted-foreground mb-6">Update all quote and customer information.</DialogDescription>
+              <div className="space-y-6">
           {/* Customer Information Section */}
           <div>
             <h4 className="font-semibold mb-3 text-lg">Customer Information</h4>
@@ -354,24 +356,25 @@ export function QuoteEditDialog({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
-            <Button
-              variant="default"
-              className="flex-1"
-              onClick={async () => {
-                await onSave(quote.id);
-                onOpenChange(false);
-              }}
-            >
-              <RiSaveLine className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </DialogHeader>
+        <DialogFooter className="border-t px-6 py-4 sm:items-center">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="default"
+            onClick={async () => {
+              await onSave(quote.id);
+              onOpenChange(false);
+            }}
+          >
+            <RiSaveLine className="h-4 w-4 mr-2" />
+            Save Changes
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

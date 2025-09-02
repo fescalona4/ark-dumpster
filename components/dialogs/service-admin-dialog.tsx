@@ -203,19 +203,20 @@ export function ServiceAdminDialog({
   };
 
   const dialogContent = (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="service-dialog-description">
-      <DialogHeader>
-        <DialogTitle>
+    <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(800px,85vh)] max-w-4xl [&>button:last-child]:top-3.5" aria-describedby="service-dialog-description">
+      <DialogHeader className="contents space-y-0 text-left">
+        <DialogTitle className="border-b px-6 py-4 text-base">
           {isEditing ? 'Edit Service' : 'Create New Service'}
         </DialogTitle>
-        <DialogDescription id="service-dialog-description">
-          {isEditing
-            ? 'Update the service information below.'
-            : 'Fill in the details to create a new service.'}
-        </DialogDescription>
-      </DialogHeader>
+        <div className="overflow-y-auto">
+          <div className="px-6 py-4">
+            <DialogDescription id="service-dialog-description" className="text-sm text-muted-foreground mb-6">
+              {isEditing
+                ? 'Update the service information below.'
+                : 'Fill in the details to create a new service.'}
+            </DialogDescription>
 
-      <div className="grid gap-6 py-4">
+            <div className="grid gap-6">
         {/* Basic Information */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Basic Information</h3>
@@ -476,10 +477,12 @@ export function ServiceAdminDialog({
               <Label htmlFor="is_taxable">Taxable</Label>
             </div>
           </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <DialogFooter>
+    </DialogHeader>
+      <DialogFooter className="border-t px-6 py-4 sm:items-center">
         <Button
           variant="outline"
           onClick={() => setDialogOpen(false)}

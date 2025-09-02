@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -324,182 +325,186 @@ export function AddServicesDialog({
           Add Services
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" aria-describedby="add-services-description">
-        <DialogHeader>
-          <DialogTitle>Add Services to {type === 'quote' ? 'Quote' : 'Order'}</DialogTitle>
-          <p id="add-services-description" className="text-sm text-muted-foreground">
-            Select services from the available options below and configure quantities and pricing as needed.
-          </p>
-        </DialogHeader>
+      <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(720px,85vh)] max-w-4xl [&>button:last-child]:top-3.5" aria-describedby="add-services-description">
+        <DialogHeader className="contents space-y-0 text-left">
+          <DialogTitle className="border-b px-6 py-4 text-base">
+            Add Services to {type === 'quote' ? 'Quote' : 'Order'}
+          </DialogTitle>
+          <div className="overflow-y-auto">
+            <div className="px-6 py-4">
+              <p id="add-services-description" className="text-sm text-muted-foreground mb-6">
+                Select services from the available options below and configure quantities and pricing as needed.
+              </p>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Spinner variant="circle-filled" size={32} />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Category Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="category-filter">Filter by Category</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger id="category-filter" className="w-full" aria-label="Filter services by category">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(category => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Available Services */}
-            <div className="space-y-2">
-              <Label>Available Services</Label>
-              <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-2">
-                {filteredServices.map(service => (
-                  <div
-                    key={service.id}
-                    className="flex items-center justify-between p-2 border rounded hover:bg-muted/50 cursor-pointer"
-                    onClick={() => addService(service)}
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{service.display_name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {categories.find(c => c.id === service.category_id)?.display_name}
-                        </Badge>
-                      </div>
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-medium ${service.base_price < 0 ? 'text-green-600' : ''}`}>
-                        ${service.base_price < 0 ? service.base_price : service.base_price}
-                      </div>
-                      <div className="text-xs text-muted-foreground">{service.price_type}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Selected Services */}
-            {selectedServices.length > 0 && (
-              <div className="space-y-2">
-                <Label>Selected Services</Label>
-                <div className="space-y-3 border rounded-md p-3">
-                  {selectedServices.map(selectedService => (
-                    <div
-                      key={selectedService.service_id}
-                      className="grid gap-3 p-3 bg-muted/30 rounded-md"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{selectedService.service?.display_name || 'Unknown'}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeService(selectedService.service_id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          aria-label={`Remove ${selectedService.service?.display_name || 'service'} from selection`}
-                        >
-                          <RiDeleteBin2Line className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Quantity</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={selectedService.quantity}
-                            onChange={e =>
-                              updateServiceQuantity(
-                                selectedService.service_id,
-                                Math.max(1, parseInt(e.target.value) || 1)
-                              )
-                            }
-                            className="h-9"
-                            aria-label={`Quantity for ${selectedService.service?.display_name || 'service'}`}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Unit Price ($)</Label>
-                          <Input
-                            type="number"
-                            step="10"
-                            value={selectedService.unit_price}
-                            onChange={e =>
-                              updateServiceUnitPrice(
-                                selectedService.service_id,
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="h-9"
-                            aria-label={`Unit price for ${selectedService.service?.display_name || 'service'}`}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Total</Label>
-                          <Input
-                            type="text"
-                            value={`$${selectedService.total_price.toFixed(2)}`}
-                            readOnly
-                            className={`h-9 bg-muted ${selectedService.total_price < 0 ? 'text-green-600' : ''}`}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <Label className="text-xs">Notes (optional)</Label>
-                        <Textarea
-                          value={selectedService.notes}
-                          onChange={e =>
-                            updateServiceNotes(selectedService.service_id, e.target.value)
-                          }
-                          placeholder="Additional notes for this service..."
-                          className="h-20 text-sm"
-                        />
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="pt-2 border-t">
-                    <div className="flex justify-between items-center font-medium">
-                      <span>Total Amount:</span>
-                      <span className={`text-lg ${totalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        ${totalAmount.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Spinner variant="circle-filled" size={32} />
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-6">
+                  {/* Category Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="category-filter">Filter by Category</Label>
+                    <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                      <SelectTrigger id="category-filter" className="w-full" aria-label="Filter services by category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        {categories.map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={saving || selectedServices.length === 0}>
-                {saving ? (
-                  <>
-                    <Spinner variant="circle" size={16} className="mr-2" />
-                    Adding Services...
-                  </>
-                ) : (
-                  `Add ${selectedServices.length} Service${selectedServices.length !== 1 ? 's' : ''} to ${type === 'quote' ? 'Quote' : 'Order'}`
-                )}
-              </Button>
+                  {/* Available Services */}
+                  <div className="space-y-2">
+                    <Label>Available Services</Label>
+                    <div className="grid gap-2 max-h-48 overflow-y-auto border rounded-md p-2">
+                      {filteredServices.map(service => (
+                        <div
+                          key={service.id}
+                          className="flex items-center justify-between p-2 border rounded hover:bg-muted/50 cursor-pointer"
+                          onClick={() => addService(service)}
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{service.display_name}</span>
+                              <Badge variant="outline" className="text-xs">
+                                {categories.find(c => c.id === service.category_id)?.display_name}
+                              </Badge>
+                            </div>
+                            {service.description && (
+                              <p className="text-sm text-muted-foreground">{service.description}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className={`font-medium ${service.base_price < 0 ? 'text-green-600' : ''}`}>
+                              ${service.base_price < 0 ? service.base_price : service.base_price}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{service.price_type}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Selected Services */}
+                  {selectedServices.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Selected Services</Label>
+                      <div className="space-y-3 border rounded-md p-3">
+                        {selectedServices.map(selectedService => (
+                          <div
+                            key={selectedService.service_id}
+                            className="grid gap-3 p-3 bg-muted/30 rounded-md"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">{selectedService.service?.display_name || 'Unknown'}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeService(selectedService.service_id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                aria-label={`Remove ${selectedService.service?.display_name || 'service'} from selection`}
+                              >
+                                <RiDeleteBin2Line className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                              <div className="space-y-1">
+                                <Label className="text-xs">Quantity</Label>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  value={selectedService.quantity}
+                                  onChange={e =>
+                                    updateServiceQuantity(
+                                      selectedService.service_id,
+                                      Math.max(1, parseInt(e.target.value) || 1)
+                                    )
+                                  }
+                                  className="h-9"
+                                  aria-label={`Quantity for ${selectedService.service?.display_name || 'service'}`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Unit Price ($)</Label>
+                                <Input
+                                  type="number"
+                                  step="10"
+                                  value={selectedService.unit_price}
+                                  onChange={e =>
+                                    updateServiceUnitPrice(
+                                      selectedService.service_id,
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  className="h-9"
+                                  aria-label={`Unit price for ${selectedService.service?.display_name || 'service'}`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-xs">Total</Label>
+                                <Input
+                                  type="text"
+                                  value={`$${selectedService.total_price.toFixed(2)}`}
+                                  readOnly
+                                  className={`h-9 bg-muted ${selectedService.total_price < 0 ? 'text-green-600' : ''}`}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-xs">Notes (optional)</Label>
+                              <Textarea
+                                value={selectedService.notes}
+                                onChange={e =>
+                                  updateServiceNotes(selectedService.service_id, e.target.value)
+                                }
+                                placeholder="Additional notes for this service..."
+                                className="h-20 text-sm"
+                              />
+                            </div>
+                          </div>
+                        ))}
+
+                        <div className="pt-2 border-t">
+                          <div className="flex justify-between items-center font-medium">
+                            <span>Total Amount:</span>
+                            <span className={`text-lg ${totalAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ${totalAmount.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </DialogHeader>
+        <DialogFooter className="border-t px-6 py-4 sm:items-center">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving || selectedServices.length === 0}>
+            {saving ? (
+              <>
+                <Spinner variant="circle" size={16} className="mr-2" />
+                Adding Services...
+              </>
+            ) : (
+              `Add ${selectedServices.length} Service${selectedServices.length !== 1 ? 's' : ''} to ${type === 'quote' ? 'Quote' : 'Order'}`
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

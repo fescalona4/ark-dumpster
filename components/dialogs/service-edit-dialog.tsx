@@ -214,15 +214,15 @@ export function ServiceEditDialog({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Service</DialogTitle>
-            <DialogDescription>
-              Update the quantity and pricing for {service.services?.display_name || 'this service'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
+        <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(600px,85vh)] sm:max-w-md [&>button:last-child]:top-3.5">
+          <DialogHeader className="contents space-y-0 text-left">
+            <DialogTitle className="border-b px-6 py-4 text-base">Edit Service</DialogTitle>
+            <div className="overflow-y-auto">
+              <div className="px-6 py-4">
+                <DialogDescription className="text-sm text-muted-foreground mb-4">
+                  Update the quantity and pricing for {service.services?.display_name || 'this service'}
+                </DialogDescription>
+                <div className="space-y-4">
             {/* Service Name */}
             <div>
               <Label className="text-sm font-medium">Service</Label>
@@ -286,41 +286,39 @@ export function ServiceEditDialog({
                   ? 'Included in order total'
                   : `$${totalPrice.toFixed(2)}`}
               </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <DialogFooter className="flex justify-between">
+        </DialogHeader>
+          <DialogFooter className="border-t px-6 py-4 sm:items-center">
             {!service.is_main_service || (service.is_main_service && type === 'quote') ? (
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 mr-auto"
                 disabled={service.is_main_service && type === 'quote'}
               >
                 <RiDeleteBinLine className="h-4 w-4 mr-2" />
                 {service.is_main_service && type === 'quote' ? 'Cannot Delete' : 'Delete'}
               </Button>
-            ) : (
-              <div></div>
-            )}
+            ) : null}
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={onClose}>
-                {service.is_main_service && type === 'order' ? 'Close' : 'Cancel'}
+            <Button variant="outline" onClick={onClose}>
+              {service.is_main_service && type === 'order' ? 'Close' : 'Cancel'}
+            </Button>
+            {(!service.is_main_service || (service.is_main_service && type === 'quote')) && (
+              <Button onClick={handleSave} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Spinner variant="circle" size={16} className="mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </Button>
-              {(!service.is_main_service || (service.is_main_service && type === 'quote')) && (
-                <Button onClick={handleSave} disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Spinner variant="circle" size={16} className="mr-2" />
-                      Saving...
-                    </>
-                  ) : (
-                    'Save Changes'
-                  )}
-                </Button>
-              )}
-            </div>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

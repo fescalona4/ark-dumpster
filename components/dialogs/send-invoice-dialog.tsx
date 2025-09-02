@@ -137,18 +137,18 @@ export function SendInvoiceDialog({
             </Button>
           )}
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="flex flex-col gap-0 p-0 sm:max-h-[min(600px,85vh)] sm:max-w-[450px] [&>button:last-child]:top-3.5">
+          <DialogHeader className="contents space-y-0 text-left">
+            <DialogTitle className="border-b px-6 py-4 text-base flex items-center gap-2">
               <Send className="h-5 w-5" />
               Send Invoice
             </DialogTitle>
-            <DialogDescription>
-              Send the Square invoice for order {orderNumber} to your customer
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
+            <div className="overflow-y-auto">
+              <div className="px-6 py-4">
+                <DialogDescription className="text-sm text-muted-foreground mb-4">
+                  Send the Square invoice for order {orderNumber} to your customer
+                </DialogDescription>
+                <div className="space-y-4">
             <div className="space-y-3">
               <Label>Delivery Method</Label>
               <Select
@@ -206,10 +206,12 @@ export function SendInvoiceDialog({
                   <strong>Share Manually:</strong> The invoice will be marked as sent, but you'll need to share the payment link with your customer manually.
                 </p>
               </div>
-            )}
+                )}
+              </div>
+            </div>
           </div>
-
-          <DialogFooter>
+        </DialogHeader>
+          <DialogFooter className="border-t px-6 py-4 sm:items-center">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
