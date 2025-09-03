@@ -39,13 +39,6 @@ export function MobileTabNavigation({
       isActive: pathname === '/admin',
     },
     {
-      href: '/admin/orders',
-      icon: <IconTruck className="h-5 w-5" />,
-      label: 'Orders',
-      badge: pendingOrders,
-      isActive: pathname.startsWith('/admin/orders'),
-    },
-    {
       href: '/admin/quotes',
       icon: <IconMessage className="h-5 w-5" />,
       label: 'Quotes',
@@ -53,10 +46,17 @@ export function MobileTabNavigation({
       isActive: pathname.startsWith('/admin/quotes'),
     },
     {
-      href: '/admin/dumpsters',
-      icon: <IconMapPin className="h-5 w-5" />,
-      label: 'Dumpsters',
-      isActive: pathname.startsWith('/admin/dumpsters'),
+      href: '/admin/orders',
+      icon: <IconTruck className="h-5 w-5" />,
+      label: 'Orders',
+      badge: pendingOrders,
+      isActive: pathname.startsWith('/admin/orders'),
+    },
+    {
+      href: '/admin/create-order',
+      icon: <IconPlus className="h-5 w-5" />,
+      label: 'Create Order',
+      isActive: pathname.startsWith('/admin/create-order'),
     },
   ];
 
@@ -84,8 +84,6 @@ export function MobileTabNavigation({
         </div>
       </div>
 
-      {/* Floating Action Button */}
-      <FloatingActionButton onClick={onFabClick} />
 
       {/* Bottom padding to account for fixed navigation */}
       <style jsx global>{`
