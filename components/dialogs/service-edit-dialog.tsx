@@ -61,7 +61,6 @@ export function ServiceEditDialog({
 
   const totalPrice = quantity * unitPrice;
   const tableName = type === 'quote' ? 'quote_services' : 'order_services';
-  const idField = type === 'quote' ? 'quote_id' : 'order_id';
 
   const handleSave = async () => {
     if (!service.id) return;
@@ -174,7 +173,11 @@ export function ServiceEditDialog({
   };
 
   const handleDelete = async () => {
-    if (!service.id) return;
+    if (!service.id || service.id === 'order-service') {
+      toast.error('Cannot delete service: Invalid service ID');
+      setShowDeleteConfirm(false);
+      return;
+    }
 
     // Handle main services differently - only prevent deletion for orders
     if (service.is_main_service && type === 'order') {

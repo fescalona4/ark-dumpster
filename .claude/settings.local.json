@@ -60,7 +60,9 @@
       "mcp__playwright__browser_fill_form",
       "mcp__playwright__browser_handle_dialog",
       "Bash(npm ls:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql"
     ],
     "deny": [],
     "ask": []

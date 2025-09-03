@@ -282,6 +282,7 @@ function OrdersPageContent() {
         .from('order_services')
         .select(
           `
+          id,
           order_id,
           quantity,
           unit_price,
