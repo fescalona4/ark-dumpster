@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { MobileAwareLayout } from '@/components/layout/mobile-aware-layout';
 import AdminAuthGuard from '@/components/providers/admin-auth-guard';
+import './admin.css';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard - ARK Dumpster Rentals',

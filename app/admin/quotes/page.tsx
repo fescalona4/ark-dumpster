@@ -422,12 +422,12 @@ function QuotesPageContent() {
         toast.error('Failed to cancel quote. Please try again.');
         return;
       }
-      
+
       // Update local state to reflect the change immediately
-      setQuotes(quotes.map(q => 
+      setQuotes(quotes.map(q =>
         q.id === quoteId ? { ...q, status: 'cancelled' } : q
       ));
-      
+
       toast.success('Quote Canceled', {
         description: `Quote for ${customerName} has been canceled successfully.`,
       });
@@ -745,7 +745,7 @@ function QuotesPageContent() {
                 <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                   <Status
                     status={mapQuoteStatusToStatusType(quote.status)}
-                    className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
+                    className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center bg-zinc-200 dark:bg-muted/50"
                   >
                     <StatusIndicator />
                     <StatusLabel className="ml-2">{quote.status.toUpperCase()}</StatusLabel>
@@ -877,7 +877,7 @@ function QuotesPageContent() {
                                     0
                                   )
                                 }
-                                className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                className="w-full flex justify-between items-center text-sm p-2 rounded bg-zinc-200 dark:bg-muted/50 hover:bg-zinc-100 dark:hover:bg-muted/70 transition-colors cursor-pointer text-left"
                               >
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-4 w-4 flex-shrink-0" />
@@ -916,7 +916,7 @@ function QuotesPageContent() {
                                   <button
                                     key={`service-${index}`}
                                     onClick={() => handleServiceClick(service)}
-                                    className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                    className="w-full flex justify-between items-center text-sm bg-zinc-200 dark:bg-muted/50 p-2 rounded hover:bg-zinc-100 dark:hover:bg-muted/70 transition-colors cursor-pointer text-left"
                                   >
                                     <div className="flex items-center gap-2">
                                       <RiBox1Line className="h-4 w-4 flex-shrink-0" />
@@ -965,7 +965,7 @@ function QuotesPageContent() {
                       {quote.message && (
                         <div className="mt-6">
                           <h6 className="font-medium mb-1 text-sm pl-1">Customer Message:</h6>
-                          <p className="text-sm bg-muted/50 p-3 rounded font-light">{quote.message}</p>
+                          <p className="text-sm bg-zinc-200 dark:bg-muted/50 p-3 rounded font-light">{quote.message}</p>
                         </div>
                       )}
 
@@ -1250,7 +1250,7 @@ function QuotesPageContent() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
+                  <div className="mt-6 pt-4 border-t -mx-3 px-3 rounded-b-lg">
                     <div className="flex flex-wrap gap-3">
                       <Button
                         variant="outline"

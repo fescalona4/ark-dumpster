@@ -1140,7 +1140,7 @@ function OrdersPageContent() {
               <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
                 <Status
                   status={mapOrderStatusToStatusType(order.order_status)}
-                  className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center"
+                  className="text-sm px-3 py-2 font-semibold min-h-[44px] flex items-center bg-zinc-200 dark:bg-muted/50"
                 >
                   <StatusIndicator />
                   <StatusLabel className="flex items-center">
@@ -1303,7 +1303,7 @@ function OrdersPageContent() {
                                 onClick={() =>
                                   handleMainServiceClick(order.id, service.trim(), index)
                                 }
-                                className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                className="w-full flex justify-between items-center text-sm bg-zinc-200 dark:bg-muted/50 p-2 rounded hover:bg-zinc-100 dark:hover:bg-muted/70 transition-colors cursor-pointer text-left"
                               >
                                 <div className="flex items-center gap-2">
                                   <RiBox1Line className="h-4 w-4 flex-shrink-0" />
@@ -1341,7 +1341,7 @@ function OrdersPageContent() {
                                 <button
                                   key={`order-service-${index}`}
                                   onClick={() => handleServiceClick(service)}
-                                  className="w-full flex justify-between items-center text-sm bg-muted/50 p-2 rounded hover:bg-muted/70 transition-colors cursor-pointer text-left"
+                                  className="w-full flex justify-between items-center text-sm bg-zinc-200 dark:bg-muted/50 p-2 rounded hover:bg-zinc-100 dark:hover:bg-muted/70 transition-colors cursor-pointer text-left"
                                 >
                                   <div className="flex items-center gap-2">
                                     <RiBox1Line className="h-4 w-4 flex-shrink-0" />
@@ -1783,7 +1783,7 @@ function OrdersPageContent() {
                 </div>
 
                 {/* Driver Action Buttons */}
-                <div className="mt-6 pt-4 border-t bg-muted/20 -mx-3 px-3 rounded-b-lg">
+                <div className="mt-6 pt-4 border-t -mx-3 px-3 rounded-b-lg">
                   <div className="flex flex-wrap gap-3">
                     {/* Status-specific buttons */}
                     {order.order_status === 'scheduled' && (
@@ -1793,7 +1793,7 @@ function OrdersPageContent() {
                             <Button
                               variant="destructive"
                               size="sm"
-                              className="min-h-[44px] px-4 touch-manipulation font-semibold"
+                              className="min-h-[44px] pl-4 pr-8 touch-manipulation font-semibold"
                             >
                               <RiCloseLine className="h-4 w-4" />
                               Cancel
